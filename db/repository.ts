@@ -23,6 +23,18 @@ export type BlogPost = {
   status: string;
 };
 
+export type Testimonial = {
+  id: string;
+  name: string;
+  program: string | null;
+  quote: string;
+  videoUrl: string;
+  thumbnail: string;
+  rating: number | null;
+  visible: boolean;
+  displayOrder: number;
+};
+
 export type Contact = {
   id: string;
   name: string;
@@ -140,6 +152,53 @@ export const postSeeds: BlogPost[] = [
   },
 ];
 
+export const testimonialSeeds: Testimonial[] = [
+  {
+    id: "testimonial-student-nfa",
+    name: "Testimonio de una de nuestras estudiantes",
+    program: "Neurofitness Active",
+    quote: "",
+    videoUrl: "https://www.youtube.com/shorts/Cjujway89xA",
+    thumbnail: "/images/testimonials/student-nfa.jpg",
+    rating: null,
+    visible: true,
+    displayOrder: 1,
+  },
+  {
+    id: "testimonial-3",
+    name: "Testimonio 3",
+    program: null,
+    quote: "",
+    videoUrl: "https://www.youtube.com/shorts/UmwJehaf-ok",
+    thumbnail: "/images/testimonials/testimonio-3.jpg",
+    rating: null,
+    visible: true,
+    displayOrder: 2,
+  },
+  {
+    id: "testimonial-4",
+    name: "Testimonio 4",
+    program: null,
+    quote: "",
+    videoUrl: "https://www.youtube.com/shorts/4dAdgpQGDNs",
+    thumbnail: "/images/testimonials/testimonio-4.jpg",
+    rating: null,
+    visible: true,
+    displayOrder: 3,
+  },
+  {
+    id: "testimonial-saulo-neurotraumas",
+    name: "Saulo",
+    program: "Neurotraumas",
+    quote: "",
+    videoUrl: "https://www.youtube.com/shorts/trgHVER5gds",
+    thumbnail: "/images/testimonials/saulo-neurotraumas.jpg",
+    rating: null,
+    visible: true,
+    displayOrder: 4,
+  },
+];
+
 const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, role TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS trainings (id TEXT PRIMARY KEY, name TEXT NOT NULL, acronym TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, short_description TEXT NOT NULL, full_description TEXT NOT NULL DEFAULT '', logo TEXT NOT NULL, hero_image TEXT, cta_label TEXT NOT NULL DEFAULT 'Consultar', status TEXT NOT NULL DEFAULT 'PUBLISHED', display_order INTEGER NOT NULL DEFAULT 0, seo_title TEXT, seo_description TEXT, deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
@@ -177,10 +236,14 @@ export function ensureDatabase() {
       db.prepare(`INSERT OR IGNORE INTO blog_posts (id, title, slug, excerpt, content, category, status, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
         .bind(item.id, item.title, item.slug, item.excerpt, item.content, item.category, item.status, item.publishedAt),
     );
+    const testimonialBatch = testimonialSeeds.map((item) =>
+      db.prepare(`INSERT OR IGNORE INTO testimonials (id, name, program, quote, video_url, thumbnail, rating, visible, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        .bind(item.id, item.name, item.program, item.quote, item.videoUrl, item.thumbnail, item.rating, item.visible ? 1 : 0, item.displayOrder),
+    );
     const trainingLogoSyncBatch = trainingSeeds.map((item) =>
       db.prepare(`UPDATE trainings SET logo = ? WHERE id = ?`).bind(item.logo, item.id),
     );
-    await db.batch([...trainingBatch, ...postBatch, ...trainingLogoSyncBatch]);
+    await db.batch([...trainingBatch, ...postBatch, ...testimonialBatch, ...trainingLogoSyncBatch]);
     return db;
   })().catch((error) => {
     ready = null;
@@ -215,6 +278,20 @@ function mapPost(row: Record<string, unknown>): BlogPost {
     category: String(row.category),
     publishedAt: row.published_at ? String(row.published_at) : null,
     status: String(row.status),
+  };
+}
+
+function mapTestimonial(row: Record<string, unknown>): Testimonial {
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    program: row.program ? String(row.program) : null,
+    quote: String(row.quote ?? ""),
+    videoUrl: String(row.video_url),
+    thumbnail: String(row.thumbnail),
+    rating: row.rating === null || row.rating === undefined ? null : Number(row.rating),
+    visible: Boolean(Number(row.visible)),
+    displayOrder: Number(row.display_order),
   };
 }
 
@@ -281,6 +358,20 @@ export async function getPost(slug: string) {
     return row ? mapPost(row) : null;
   } catch (error) {
     if (isDatabaseUnavailable(error)) return postSeeds.find((item) => item.slug === slug && item.status === "PUBLISHED") ?? null;
+    throw error;
+  }
+}
+
+export async function getTestimonials(includeHidden = false) {
+  try {
+    const db = await ensureDatabase();
+    const statement = includeHidden
+      ? db.prepare(`SELECT * FROM testimonials ORDER BY display_order, created_at`)
+      : db.prepare(`SELECT * FROM testimonials WHERE visible = 1 ORDER BY display_order, created_at`);
+    const result = await statement.all<Record<string, unknown>>();
+    return result.results.map(mapTestimonial);
+  } catch (error) {
+    if (isDatabaseUnavailable(error)) return testimonialSeeds.filter((item) => includeHidden || item.visible);
     throw error;
   }
 }

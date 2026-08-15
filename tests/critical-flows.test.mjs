@@ -9,7 +9,33 @@ test("la Home conserva la propuesta central y usa contenido persistente", async 
   assert.match(page, /Entrena tu cerebro/);
   assert.match(page, /getTrainings\(\)/);
   assert.match(page, /getPosts\(\)/);
+  assert.match(page, /getTestimonials\(\)/);
+  assert.match(page, /trainings\.slice\(0, 3\)/);
+  assert.match(page, /Ver m.s entrenamientos/);
   assert.doesNotMatch(page, /codex-preview|SkeletonPreview/);
+});
+
+test("el acceso administrativo no conserva la navegacion publica", async () => {
+  const [shell, login] = await Promise.all([
+    read("../app/components/PublicShell.tsx"),
+    read("../app/(public)/login/page.tsx"),
+  ]);
+  assert.match(shell, /pathname === "\/login"/);
+  assert.match(shell, /auth-main/);
+  assert.match(login, /login-back/);
+  assert.match(login, /href="\/"/);
+});
+
+test("la Home muestra los cuatro testimonios reales con sus videos", async () => {
+  const [stories, repository] = await Promise.all([
+    read("../app/components/TestimonialStories.tsx"),
+    read("../db/repository.ts"),
+  ]);
+  assert.match(stories, /Historias reales/);
+  assert.match(stories, /youtube-nocookie\.com\/embed/);
+  for (const videoId of ["Cjujway89xA", "UmwJehaf-ok", "4dAdgpQGDNs", "trgHVER5gds"]) {
+    assert.match(repository, new RegExp(videoId));
+  }
 });
 
 test("el formulario público guarda contactos en el CRM", async () => {

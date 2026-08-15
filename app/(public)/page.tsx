@@ -1,16 +1,17 @@
 import Image from "next/image";
 import { ArrowRight, Compass, Globe2, MessageCircle, Sparkles, Users } from "lucide-react";
 import type { Metadata } from "next";
-import { getPosts, getSettings, getTrainings } from "../../db/repository";
+import { getPosts, getSettings, getTestimonials, getTrainings } from "../../db/repository";
 import { BlogCard, TrainingCard } from "../components/PublicUI";
 import { SectionEyebrow } from "../components/SiteChrome";
+import { TestimonialStories } from "../components/TestimonialStories";
 import { whatsappUrl } from "../../lib/whatsapp";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Gimnasio del Cerebro | Entrena tu cerebro. Transforma tu vida.", description: "Entrenamientos de desarrollo personal, mente y aprendizaje consciente desde 2014." };
 
 export default async function Home() {
-  const [trainings, posts, settings] = await Promise.all([getTrainings(), getPosts(), getSettings()]);
+  const [trainings, posts, settings, testimonials] = await Promise.all([getTrainings(), getPosts(), getSettings(), getTestimonials()]);
   const heroParts = settings.heroTitle.split(".").filter(Boolean);
   return (
     <>
@@ -36,8 +37,10 @@ export default async function Home() {
       </section>
 
       <section className="trainings-section" id="entrenamientos">
-        <div className="shell"><div className="section-heading section-heading--split"><div><SectionEyebrow>Rutas de transformación</SectionEyebrow><h2>Nuestros entrenamientos</h2></div><div><p>Seis programas con enfoques distintos, conectados por una misma intención: comprender, entrenar y ampliar posibilidades.</p><a className="text-link" href="/entrenamientos">Ver todos <ArrowRight size={16} /></a></div></div><div className="training-grid">{trainings.map((training, index) => <TrainingCard training={training} index={index} key={training.id} />)}</div></div>
+        <div className="shell"><div className="section-heading section-heading--split"><div><SectionEyebrow>Rutas de transformación</SectionEyebrow><h2>Nuestros entrenamientos</h2></div><div><p>Seis programas con enfoques distintos, conectados por una misma intención: comprender, entrenar y ampliar posibilidades.</p></div></div><div className="training-grid">{trainings.slice(0, 3).map((training, index) => <TrainingCard training={training} index={index} key={training.id} />)}</div><div className="section-more"><a className="button button--primary" href="/entrenamientos">Ver más entrenamientos <ArrowRight size={18} /></a></div></div>
       </section>
+
+      <TestimonialStories testimonials={testimonials} />
 
       <section className="manifesto"><div className="shell manifesto__grid"><div className="manifesto__visual"><div className="manifesto__brain"><img src="/images/brain-orbit-transparent-v2.png" alt="Cerebro transparente rodeado por anillos de conexión" width={720} height={720} /></div></div><div className="manifesto__copy"><SectionEyebrow>Conocer para transformar</SectionEyebrow><h2>No se trata de saber más. Se trata de <em>comprender mejor.</em></h2><p>Gimnasio del Cerebro propone espacios de entrenamiento donde el conocimiento se vuelve experiencia, observación y nuevas formas de actuar.</p><div className="manifesto__points"><div><span>01</span><p><strong>Consciencia</strong>Observar cómo pensamos, sentimos y respondemos.</p></div><div><span>02</span><p><strong>Entrenamiento</strong>Llevar lo aprendido a la práctica cotidiana.</p></div><div><span>03</span><p><strong>Transformación</strong>Ampliar posibilidades desde una comprensión más profunda.</p></div></div><a className="button button--primary" href="/contacto">Conocer Gimnasio del Cerebro <ArrowRight size={18} /></a></div></div></section>
 
