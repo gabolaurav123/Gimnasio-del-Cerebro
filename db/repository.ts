@@ -1,4 +1,4 @@
-import { env } from "cloudflare:workers";
+import { getRuntimeDatabase, isDatabaseUnavailable, type AppDatabase } from "./runtime";
 
 export type Training = {
   id: string;
@@ -157,19 +157,18 @@ const schemaStatements = [
   `CREATE INDEX IF NOT EXISTS idx_contact_activities_contact_id ON contact_activities(contact_id)`,
 ];
 
-let ready: Promise<D1Database> | null = null;
+const postgresSchemaStatements = [
+  `CREATE TABLE IF NOT EXISTS media_blobs (media_id TEXT PRIMARY KEY, body BYTEA NOT NULL)`,
+];
 
-function getBinding() {
-  const db = (env as unknown as { DB?: D1Database }).DB;
-  if (!db) throw new Error("D1 binding DB is unavailable");
-  return db;
-}
+let ready: Promise<AppDatabase> | null = null;
 
 export function ensureDatabase() {
   if (ready) return ready;
   ready = (async () => {
-    const db = getBinding();
-    await db.batch(schemaStatements.map((statement) => db.prepare(statement)));
+    const db = await getRuntimeDatabase();
+    const statements = db.dialect === "postgres" ? [...schemaStatements, ...postgresSchemaStatements] : schemaStatements;
+    await db.batch(statements.map((statement) => db.prepare(statement)));
     const trainingBatch = trainingSeeds.map((item) =>
       db.prepare(`INSERT OR IGNORE INTO trainings (id, name, acronym, slug, short_description, full_description, logo, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
         .bind(item.id, item.name, item.acronym, item.slug, item.shortDescription, item.fullDescription, item.logo, item.status, item.displayOrder),
@@ -180,7 +179,10 @@ export function ensureDatabase() {
     );
     await db.batch([...trainingBatch, ...postBatch]);
     return db;
-  })();
+  })().catch((error) => {
+    ready = null;
+    throw error;
+  });
   return ready;
 }
 
@@ -231,33 +233,53 @@ function mapContact(row: Record<string, unknown>): Contact {
 }
 
 export async function getTrainings(includeHidden = false) {
-  const db = await ensureDatabase();
-  const statement = includeHidden
-    ? db.prepare(`SELECT * FROM trainings WHERE deleted_at IS NULL ORDER BY display_order, name`)
-    : db.prepare(`SELECT * FROM trainings WHERE status = 'PUBLISHED' AND deleted_at IS NULL ORDER BY display_order, name`);
-  const result = await statement.all<Record<string, unknown>>();
-  return result.results.map(mapTraining);
+  try {
+    const db = await ensureDatabase();
+    const statement = includeHidden
+      ? db.prepare(`SELECT * FROM trainings WHERE deleted_at IS NULL ORDER BY display_order, name`)
+      : db.prepare(`SELECT * FROM trainings WHERE status = 'PUBLISHED' AND deleted_at IS NULL ORDER BY display_order, name`);
+    const result = await statement.all<Record<string, unknown>>();
+    return result.results.map(mapTraining);
+  } catch (error) {
+    if (isDatabaseUnavailable(error)) return trainingSeeds.filter((item) => includeHidden || item.status === "PUBLISHED");
+    throw error;
+  }
 }
 
 export async function getTraining(slug: string) {
-  const db = await ensureDatabase();
-  const row = await db.prepare(`SELECT * FROM trainings WHERE slug = ? AND deleted_at IS NULL LIMIT 1`).bind(slug).first<Record<string, unknown>>();
-  return row ? mapTraining(row) : null;
+  try {
+    const db = await ensureDatabase();
+    const row = await db.prepare(`SELECT * FROM trainings WHERE slug = ? AND deleted_at IS NULL LIMIT 1`).bind(slug).first<Record<string, unknown>>();
+    return row ? mapTraining(row) : null;
+  } catch (error) {
+    if (isDatabaseUnavailable(error)) return trainingSeeds.find((item) => item.slug === slug) ?? null;
+    throw error;
+  }
 }
 
 export async function getPosts(includeDrafts = false) {
-  const db = await ensureDatabase();
-  const statement = includeDrafts
-    ? db.prepare(`SELECT * FROM blog_posts ORDER BY published_at DESC, created_at DESC`)
-    : db.prepare(`SELECT * FROM blog_posts WHERE status = 'PUBLISHED' ORDER BY published_at DESC, created_at DESC`);
-  const result = await statement.all<Record<string, unknown>>();
-  return result.results.map(mapPost);
+  try {
+    const db = await ensureDatabase();
+    const statement = includeDrafts
+      ? db.prepare(`SELECT * FROM blog_posts ORDER BY published_at DESC, created_at DESC`)
+      : db.prepare(`SELECT * FROM blog_posts WHERE status = 'PUBLISHED' ORDER BY published_at DESC, created_at DESC`);
+    const result = await statement.all<Record<string, unknown>>();
+    return result.results.map(mapPost);
+  } catch (error) {
+    if (isDatabaseUnavailable(error)) return postSeeds.filter((item) => includeDrafts || item.status === "PUBLISHED");
+    throw error;
+  }
 }
 
 export async function getPost(slug: string) {
-  const db = await ensureDatabase();
-  const row = await db.prepare(`SELECT * FROM blog_posts WHERE slug = ? AND status = 'PUBLISHED' LIMIT 1`).bind(slug).first<Record<string, unknown>>();
-  return row ? mapPost(row) : null;
+  try {
+    const db = await ensureDatabase();
+    const row = await db.prepare(`SELECT * FROM blog_posts WHERE slug = ? AND status = 'PUBLISHED' LIMIT 1`).bind(slug).first<Record<string, unknown>>();
+    return row ? mapPost(row) : null;
+  } catch (error) {
+    if (isDatabaseUnavailable(error)) return postSeeds.find((item) => item.slug === slug && item.status === "PUBLISHED") ?? null;
+    throw error;
+  }
 }
 
 export async function createContact(input: Omit<Contact, "id" | "status" | "source" | "createdAt" | "updatedAt" | "nextFollowUp">) {
@@ -322,7 +344,7 @@ export async function getDashboardData() {
     db.prepare(`SELECT * FROM contact_activities ORDER BY created_at DESC LIMIT 6`).all<Record<string, unknown>>(),
   ]);
   return {
-    counts: { contacts: contactsResult?.count ?? 0, newContacts: newResult?.count ?? 0, trainings: trainingsResult?.count ?? 0, posts: postsResult?.count ?? 0 },
+    counts: { contacts: Number(contactsResult?.count ?? 0), newContacts: Number(newResult?.count ?? 0), trainings: Number(trainingsResult?.count ?? 0), posts: Number(postsResult?.count ?? 0) },
     recent: recentResult.results.map(mapContact),
     activity: activityResult.results,
   };
@@ -370,11 +392,16 @@ export const defaultSettings: Record<string, string> = {
 };
 
 export async function getSettings() {
-  const db = await ensureDatabase();
-  const inserts = Object.entries(defaultSettings).map(([key, value]) => db.prepare(`INSERT OR IGNORE INTO site_settings (key, value) VALUES (?, ?)`).bind(key, value));
-  await db.batch(inserts);
-  const result = await db.prepare(`SELECT key, value FROM site_settings`).all<{ key: string; value: string }>();
-  return Object.fromEntries(result.results.map((row) => [row.key, row.value]));
+  try {
+    const db = await ensureDatabase();
+    const inserts = Object.entries(defaultSettings).map(([key, value]) => db.prepare(`INSERT OR IGNORE INTO site_settings (key, value) VALUES (?, ?)`).bind(key, value));
+    await db.batch(inserts);
+    const result = await db.prepare(`SELECT key, value FROM site_settings`).all<{ key: string; value: string }>();
+    return Object.fromEntries(result.results.map((row) => [row.key, row.value]));
+  } catch (error) {
+    if (isDatabaseUnavailable(error)) return { ...defaultSettings };
+    throw error;
+  }
 }
 
 export async function updateSettings(values: Record<string, string>) {
@@ -383,4 +410,23 @@ export async function updateSettings(values: Record<string, string>) {
   const entries = Object.entries(values).filter(([key]) => allowed.includes(key));
   if (!entries.length) return;
   await db.batch(entries.map(([key, value]) => db.prepare(`INSERT INTO site_settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP`).bind(key, value)));
+}
+
+export async function saveMedia(input: { id: string; name: string; key: string; mimeType: string; size: number; body?: Uint8Array }) {
+  const db = await ensureDatabase();
+  const statements = [
+    db.prepare(`INSERT INTO media_assets (id, name, key, mime_type, size) VALUES (?, ?, ?, ?, ?)`).bind(input.id, input.name, input.key, input.mimeType, input.size),
+  ];
+  if (db.dialect === "postgres" && input.body) {
+    statements.push(db.prepare(`INSERT INTO media_blobs (media_id, body) VALUES (?, ?)`).bind(input.id, input.body));
+  }
+  await db.batch(statements);
+}
+
+export async function getMedia(id: string) {
+  const db = await ensureDatabase();
+  if (db.dialect === "postgres") {
+    return db.prepare(`SELECT a.id, a.key, a.mime_type, a.size, b.body FROM media_assets a JOIN media_blobs b ON b.media_id = a.id WHERE a.id = ? LIMIT 1`).bind(id).first<Record<string, unknown>>();
+  }
+  return db.prepare(`SELECT id, key, mime_type, size FROM media_assets WHERE id = ? LIMIT 1`).bind(id).first<Record<string, unknown>>();
 }

@@ -1,11 +1,11 @@
 import bcrypt from "bcryptjs";
-import { env } from "cloudflare:workers";
 import { cookies } from "next/headers";
+import { getRuntimeValues } from "./runtime-env";
 
 const COOKIE_NAME = "gdc_admin_session";
 
-function config() {
-  const values = env as unknown as { ADMIN_EMAIL?: string; ADMIN_PASSWORD_HASH?: string; SESSION_SECRET?: string };
+async function config() {
+  const values = await getRuntimeValues(["ADMIN_EMAIL", "ADMIN_PASSWORD_HASH", "SESSION_SECRET"]);
   return { email: values.ADMIN_EMAIL ?? "", passwordHash: values.ADMIN_PASSWORD_HASH ?? "", secret: values.SESSION_SECRET ?? "" };
 }
 
@@ -17,7 +17,7 @@ async function signature(value: string, secret: string) {
 }
 
 export async function authenticate(email: string, password: string) {
-  const auth = config();
+  const auth = await config();
   if (!auth.email || !auth.passwordHash || !auth.secret) return null;
   if (email.trim().toLowerCase() !== auth.email.trim().toLowerCase()) return null;
   if (!(await bcrypt.compare(password, auth.passwordHash))) return null;
@@ -33,7 +33,7 @@ export async function verifySession(token?: string | null) {
   const payload = token.slice(0, lastDot);
   const received = token.slice(lastDot + 1);
   const [, expires] = payload.split(".");
-  const auth = config();
+  const auth = await config();
   if (!auth.secret || Number(expires) < Date.now()) return false;
   return received === await signature(payload, auth.secret);
 }

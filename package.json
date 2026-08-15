@@ -12,13 +12,14 @@
     "test": "node --test tests/*.test.mjs",
     "typecheck": "tsc --noEmit",
     "admin:hash": "node scripts/hash-admin.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern work",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "0.45.2",
     "lucide-react": "^1.31.0",
+    "postgres": "^3.4.7",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "zod": "^4.4.3"

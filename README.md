@@ -100,6 +100,7 @@ ADMIN_PASSWORD_HASH=
 SESSION_SECRET=
 WHATSAPP_NUMBER=543813004167
 SITE_URL=
+DATABASE_URL=
 ```
 
 La contraseña nunca se guarda en texto plano. Genera un hash bcrypt así:
@@ -120,7 +121,7 @@ El formulario público valida la información en frontend y backend, crea un `Co
 - Blog: creación de borradores y estados publicado/archivado.
 - Home: mensajes del hero y CTA final administrables.
 - Configuración: datos generales y redes.
-- Media: subida validada a R2.
+- Media: subida validada a R2 en Cloudflare o PostgreSQL en Seenode.
 - Testimonios: colección preparada y vacía hasta cargar testimonios reales.
 
 ## Contenido inicial
@@ -130,3 +131,15 @@ El primer arranque crea las tablas y carga únicamente los seis entrenamientos y
 ## Recursos visuales
 
 Los logos de GDC, NFA, NTR, BFT, NTM, ALP y NCO proceden de los archivos oficiales aportados. La fotografía del hero, su adaptación móvil y la tarjeta social fueron generadas específicamente para esta reconstrucción y no sustituyen logotipos oficiales.
+
+## Despliegue en Seenode
+
+El proyecto detecta automáticamente el entorno: usa D1/R2 en Cloudflare y PostgreSQL en Node.js cuando existe `DATABASE_URL`. En Seenode:
+
+1. Crea una base de datos PostgreSQL y asígnala al Web Service.
+2. Copia su cadena de conexión completa en la variable `DATABASE_URL`.
+3. Configura el build como `npm install --include=dev --no-audit --no-fund && npm run build`.
+4. Configura el inicio como `npm run start -- --hostname 0.0.0.0 --port 3000` y el puerto como `3000`.
+5. Añade las variables administrativas de `.env.example` y vuelve a desplegar.
+
+Las tablas y los datos iniciales se crean automáticamente en la primera solicitud. En PostgreSQL, los archivos multimedia se guardan junto con sus metadatos para evitar depender de R2.

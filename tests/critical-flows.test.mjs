@@ -32,3 +32,18 @@ test("todos los enlaces públicos de WhatsApp usan el número oficial", async ()
   const whatsapp = await read("../lib/whatsapp.ts");
   assert.match(whatsapp, /543813004167/);
 });
+
+test("el servidor Node de Seenode no carga cloudflare:workers al iniciar", async () => {
+  const [repository, auth, media, runtime, packageJson] = await Promise.all([
+    read("../db/repository.ts"),
+    read("../lib/auth.ts"),
+    read("../app/api/admin/media/route.ts"),
+    read("../lib/runtime-env.ts"),
+    read("../package.json"),
+  ]);
+  assert.doesNotMatch(repository, /from ["']cloudflare:workers["']/);
+  assert.doesNotMatch(auth, /from ["']cloudflare:workers["']/);
+  assert.doesNotMatch(media, /from ["']cloudflare:workers["']/);
+  assert.match(runtime, /await import\("cloudflare:workers"\)/);
+  assert.match(packageJson, /"postgres"/);
+});
