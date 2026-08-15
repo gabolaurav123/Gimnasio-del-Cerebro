@@ -46,7 +46,7 @@ export const trainingSeeds: Training[] = [
     slug: "neurofitness-active",
     shortDescription: "Entrenamiento base orientado a comprender el funcionamiento de la mente y desarrollar capacidades de autogestión.",
     fullDescription: "Un punto de partida para observar el funcionamiento de la mente, reconocer patrones y desarrollar herramientas de autogestión aplicables a la vida cotidiana.",
-    logo: "/logos/nfa.jpg",
+    logo: "/logos/nfa-full-v2.jpg",
     status: "PUBLISHED",
     displayOrder: 1,
   },
@@ -57,7 +57,7 @@ export const trainingSeeds: Training[] = [
     slug: "neurotraumas",
     shortDescription: "Herramientas para detectar, comprender y trabajar bloqueos que condicionan las respuestas emocionales.",
     fullDescription: "Una propuesta para identificar bloqueos profundos y comprender cómo influyen en nuestras respuestas emocionales, utilizando el contenido actual del programa.",
-    logo: "/logos/ntr.jpg",
+    logo: "/logos/ntr-full-v2.jpg",
     status: "PUBLISHED",
     displayOrder: 2,
   },
@@ -68,7 +68,7 @@ export const trainingSeeds: Training[] = [
     slug: "brain-full-training",
     shortDescription: "Recorrido integral por los principales entrenamientos para acelerar el proceso de transformación personal.",
     fullDescription: "Un recorrido integral por los principales entrenamientos de Gimnasio del Cerebro, organizado para profundizar el proceso de transformación personal.",
-    logo: "/logos/bft.jpg",
+    logo: "/logos/bft-full-v2.jpg",
     status: "PUBLISHED",
     displayOrder: 3,
   },
@@ -79,7 +79,7 @@ export const trainingSeeds: Training[] = [
     slug: "neurotrainer-maestria",
     shortDescription: "Formación avanzada para profundizar en el método y acompañar procesos de transformación.",
     fullDescription: "Formación avanzada dirigida a quienes desean profundizar en el método de Neurofitness Active y acompañar procesos de transformación.",
-    logo: "/logos/ntm.jpg",
+    logo: "/logos/ntm-full-v2.jpg",
     status: "PUBLISHED",
     displayOrder: 4,
   },
@@ -90,7 +90,7 @@ export const trainingSeeds: Training[] = [
     slug: "algoritmos-pedagogicos",
     shortDescription: "Metodologías para comprender y optimizar procesos de aprendizaje desde una perspectiva neurocientífica y pedagógica.",
     fullDescription: "Metodologías orientadas a comprender y optimizar procesos de aprendizaje desde una perspectiva neurocientífica y pedagógica.",
-    logo: "/logos/alp.jpg",
+    logo: "/logos/alp-full-v2.jpg",
     status: "PUBLISHED",
     displayOrder: 5,
   },
@@ -101,7 +101,7 @@ export const trainingSeeds: Training[] = [
     slug: "neuroconstelaciones-holograficas",
     shortDescription: "Herramientas para identificar bloqueos profundos y ampliar nuevas posibilidades de desarrollo.",
     fullDescription: "Herramientas orientadas a identificar bloqueos profundos y ampliar nuevas posibilidades de desarrollo personal.",
-    logo: "/logos/nco.jpg",
+    logo: "/logos/nco-full-v2.jpg",
     status: "PUBLISHED",
     displayOrder: 6,
   },
@@ -177,7 +177,10 @@ export function ensureDatabase() {
       db.prepare(`INSERT OR IGNORE INTO blog_posts (id, title, slug, excerpt, content, category, status, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
         .bind(item.id, item.title, item.slug, item.excerpt, item.content, item.category, item.status, item.publishedAt),
     );
-    await db.batch([...trainingBatch, ...postBatch]);
+    const trainingLogoSyncBatch = trainingSeeds.map((item) =>
+      db.prepare(`UPDATE trainings SET logo = ? WHERE id = ?`).bind(item.logo, item.id),
+    );
+    await db.batch([...trainingBatch, ...postBatch, ...trainingLogoSyncBatch]);
     return db;
   })().catch((error) => {
     ready = null;
@@ -354,7 +357,7 @@ export async function createTraining(input: { name: string; acronym: string; slu
   const db = await ensureDatabase();
   const id = crypto.randomUUID();
   const result = await db.prepare(`SELECT COALESCE(MAX(display_order), 0) + 1 AS next_order FROM trainings`).first<{ next_order: number }>();
-  await db.prepare(`INSERT INTO trainings (id, name, acronym, slug, short_description, full_description, logo, status, display_order) VALUES (?, ?, ?, ?, ?, ?, '/logos/gdc-primary.jpg', 'DRAFT', ?)`)
+  await db.prepare(`INSERT INTO trainings (id, name, acronym, slug, short_description, full_description, logo, status, display_order) VALUES (?, ?, ?, ?, ?, ?, '/logos/gdc-full-v2.jpg', 'DRAFT', ?)`)
     .bind(id, input.name, input.acronym, input.slug, input.shortDescription, input.shortDescription, result?.next_order ?? 1).run();
   return id;
 }

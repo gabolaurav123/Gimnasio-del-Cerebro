@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, BrainCircuit, Menu, MessageCircle, X } from "lucide-react";
 import { whatsappUrl } from "../../lib/whatsapp";
@@ -15,12 +13,12 @@ const nav = [
 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
-    <Link className={`brand ${compact ? "brand--compact" : ""}`} href="/" aria-label="Gimnasio del Cerebro, inicio">
+    <a className={`brand ${compact ? "brand--compact" : ""}`} href="/" aria-label="Gimnasio del Cerebro, inicio">
       <span className="brand__mark">
-        <Image src="/logos/gdc-primary.jpg" alt="" width={72} height={72} priority />
+        <img src="/logos/gdc-full-v2.jpg" alt="" width={72} height={72} />
       </span>
       <span className="brand__type"><strong>Gimnasio</strong><span>del Cerebro</span></span>
-    </Link>
+    </a>
   );
 }
 
@@ -39,10 +37,10 @@ export function SiteHeader() {
       <div className="shell site-header__inner">
         <Brand />
         <nav className="desktop-nav" aria-label="Navegación principal">
-          {nav.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
+          {nav.map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}
         </nav>
         <div className="site-header__actions">
-          <Link className="login-link" href="/login">Ingresar</Link>
+          <a className="login-link" href="/login">Ingresar</a>
           <a className="button button--whatsapp button--small" href={whatsappUrl("Hola, visité la web de Gimnasio del Cerebro y quisiera recibir más información.")} target="_blank" rel="noreferrer">
             <MessageCircle size={17} /> WhatsApp
           </a>
@@ -53,8 +51,8 @@ export function SiteHeader() {
       </div>
       <div id="mobile-menu" className={`mobile-menu ${open ? "mobile-menu--open" : ""}`}>
         <nav className="shell" aria-label="Navegación móvil">
-          {nav.map((item) => <Link href={item.href} key={item.href} onClick={() => setOpen(false)}>{item.label}<ArrowUpRight size={17} /></Link>)}
-          <Link href="/login" onClick={() => setOpen(false)}>Acceso administrativo<ArrowUpRight size={17} /></Link>
+          {nav.map((item) => <a href={item.href} key={item.href} onClick={() => setOpen(false)}>{item.label}<ArrowUpRight size={17} /></a>)}
+          <a href="/login" onClick={() => setOpen(false)}>Acceso administrativo<ArrowUpRight size={17} /></a>
         </nav>
       </div>
     </header>
@@ -70,11 +68,11 @@ export function SiteFooter() {
           <Brand compact />
           <p>Entrenamos nuevas formas de comprender la mente para impulsar procesos de desarrollo humano y aprendizaje consciente.</p>
         </div>
-        <div><h3>Navegación</h3>{nav.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}</div>
-        <div><h3>Entrenamientos</h3><Link href="/entrenamientos/neurofitness-active">Neurofitness Active</Link><Link href="/entrenamientos/neurotraumas">Neurotraumas</Link><Link href="/entrenamientos/brain-full-training">Brain Full Training</Link></div>
-        <div><h3>Contacto</h3><a href={whatsappUrl("Hola, quisiera recibir información sobre los entrenamientos de Gimnasio del Cerebro.")} target="_blank" rel="noreferrer">+54 381 300-4167</a><Link href="/contacto">Enviar una consulta</Link></div>
+        <div><h3>Navegación</h3>{nav.map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}</div>
+        <div><h3>Entrenamientos</h3><a href="/entrenamientos/neurofitness-active">Neurofitness Active</a><a href="/entrenamientos/neurotraumas">Neurotraumas</a><a href="/entrenamientos/brain-full-training">Brain Full Training</a></div>
+        <div><h3>Contacto</h3><a href={whatsappUrl("Hola, quisiera recibir información sobre los entrenamientos de Gimnasio del Cerebro.")} target="_blank" rel="noreferrer">+54 381 300-4167</a><a href="/contacto">Enviar una consulta</a></div>
       </div>
-      <div className="shell footer-bottom"><span>© {year} Gimnasio del Cerebro</span><span>Conocimiento · Desarrollo humano · Tecnología</span><Link href="/login">Administración</Link></div>
+      <div className="shell footer-bottom"><span>© {year} Gimnasio del Cerebro</span><span>Conocimiento · Desarrollo humano · Tecnología</span><a href="/login">Administración</a></div>
     </footer>
   );
 }

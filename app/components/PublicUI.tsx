@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { ArrowRight, Check, MessageCircle, Search, Send } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
 import type { BlogPost, Training } from "../../db/repository";
@@ -11,9 +9,9 @@ export function TrainingCard({ training, index }: { training: Training; index: n
   return (
     <article className="training-card" style={{ "--order": index } as React.CSSProperties}>
       <div className="training-card__top"><span>{String(index + 1).padStart(2, "0")}</span><strong>{training.acronym}</strong></div>
-      <div className="training-card__logo"><Image src={training.logo} alt={`Logo oficial de ${training.name}`} width={520} height={520} /></div>
+      <div className="training-card__logo"><img src={training.logo} alt={`Logo oficial de ${training.name}`} width={520} height={520} loading="lazy" /></div>
       <div className="training-card__body"><h3>{training.name}</h3><p>{training.shortDescription}</p></div>
-      <div className="training-card__links"><Link href={`/entrenamientos/${training.slug}`}>Ver entrenamiento <ArrowRight size={17} /></Link><a href={whatsappUrl(`Hola, quisiera recibir más información sobre ${training.name}.`)} target="_blank" rel="noreferrer" aria-label={`Consultar por ${training.name}`}><MessageCircle size={17} /></a></div>
+      <div className="training-card__links"><a href={`/entrenamientos/${training.slug}`}>Ver entrenamiento <ArrowRight size={17} /></a><a href={whatsappUrl(`Hola, quisiera recibir más información sobre ${training.name}.`)} target="_blank" rel="noreferrer" aria-label={`Consultar por ${training.name}`}><MessageCircle size={17} /></a></div>
     </article>
   );
 }
@@ -38,8 +36,8 @@ export function BlogCard({ post, index }: { post: BlogPost; index: number }) {
   const date = post.publishedAt ? new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${post.publishedAt}T12:00:00`)) : "";
   return (
     <article className="blog-card">
-      <Link className={`blog-card__visual blog-card__visual--${(index % 3) + 1}`} href={`/blog/${post.slug}`} aria-label={`Leer ${post.title}`}><span>Lecturas para<br />entrenar la mente.</span><ArrowRight /></Link>
-      <div className="blog-card__content"><div className="blog-card__meta"><span>{post.category}</span><time>{date}</time></div><h3><Link href={`/blog/${post.slug}`}>{post.title}</Link></h3><p>{post.excerpt}</p><Link className="text-link" href={`/blog/${post.slug}`}>Leer artículo <ArrowRight size={16} /></Link></div>
+      <a className={`blog-card__visual blog-card__visual--${(index % 3) + 1}`} href={`/blog/${post.slug}`} aria-label={`Leer ${post.title}`}><span>Lecturas para<br />entrenar la mente.</span><ArrowRight /></a>
+      <div className="blog-card__content"><div className="blog-card__meta"><span>{post.category}</span><time>{date}</time></div><h3><a href={`/blog/${post.slug}`}>{post.title}</a></h3><p>{post.excerpt}</p><a className="text-link" href={`/blog/${post.slug}`}>Leer artículo <ArrowRight size={16} /></a></div>
     </article>
   );
 }

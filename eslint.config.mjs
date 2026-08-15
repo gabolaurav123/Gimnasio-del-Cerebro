@@ -35,6 +35,12 @@ const eslintConfig = defineConfig([
         version: "detect",
       },
     },
+    rules: {
+      // Public routes intentionally use document navigations so they work on both Sites and Seenode.
+      "@next/next/no-html-link-for-pages": "off",
+      // Official logos bypass the image optimizer to prevent stale cropped variants in production.
+      "@next/next/no-img-element": "off",
+    },
   },
 ]);
 
