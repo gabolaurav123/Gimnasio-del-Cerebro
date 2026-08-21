@@ -4,7 +4,12 @@ function nodeValues(): RuntimeValues {
   return typeof process !== "undefined" ? process.env : {};
 }
 
+function isCloudflareWorker() {
+  return typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers";
+}
+
 async function cloudflareValues(): Promise<RuntimeValues> {
+  if (!isCloudflareWorker()) return {};
   try {
     const { env } = await import("cloudflare:workers");
     return env as unknown as RuntimeValues;
@@ -26,6 +31,7 @@ export function getDatabaseUrl() {
 }
 
 export async function getCloudflareBindings() {
+  if (!isCloudflareWorker()) return {};
   try {
     const { env } = await import("cloudflare:workers");
     return env as unknown as { DB?: D1Database; MEDIA?: R2Bucket };

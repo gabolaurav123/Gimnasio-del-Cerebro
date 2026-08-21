@@ -107,5 +107,7 @@ test("el servidor Node de Seenode no carga cloudflare:workers al iniciar", async
   assert.doesNotMatch(auth, /from ["']cloudflare:workers["']/);
   assert.doesNotMatch(media, /from ["']cloudflare:workers["']/);
   assert.match(runtime, /await import\("cloudflare:workers"\)/);
+  assert.match(runtime, /navigator\.userAgent === "Cloudflare-Workers"/);
+  assert.match(runtime, /if \(!isCloudflareWorker\(\)\) return \{\};/);
   assert.match(packageJson, /"postgres"/);
 });
