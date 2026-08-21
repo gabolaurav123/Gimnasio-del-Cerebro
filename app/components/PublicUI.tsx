@@ -4,14 +4,16 @@ import { ArrowRight, Check, MessageCircle, Search, Send } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
 import type { BlogPost, Training } from "../../db/repository";
 import { whatsappUrl } from "../../lib/whatsapp";
+import { useWhatsAppNumber } from "./WhatsAppContext";
 
 export function TrainingCard({ training, index }: { training: Training; index: number }) {
+  const whatsapp = useWhatsAppNumber();
   return (
     <article className="training-card" style={{ "--order": index } as React.CSSProperties}>
       <div className="training-card__top"><span>{String(index + 1).padStart(2, "0")}</span><strong>{training.acronym}</strong></div>
       <div className="training-card__logo"><img src={training.logo} alt={`Logo oficial de ${training.name}`} width={520} height={520} loading="lazy" /></div>
       <div className="training-card__body"><h3>{training.name}</h3><p>{training.shortDescription}</p></div>
-      <div className="training-card__links"><a href={`/entrenamientos/${training.slug}`}>Ver entrenamiento <ArrowRight size={17} /></a><a href={whatsappUrl(`Hola, quisiera recibir más información sobre ${training.name}.`)} target="_blank" rel="noreferrer" aria-label={`Consultar por ${training.name}`}><MessageCircle size={17} /></a></div>
+      <div className="training-card__links"><a href={`/entrenamientos/${training.slug}`}>Ver entrenamiento <ArrowRight size={17} /></a><a href={whatsappUrl(`Hola, quisiera recibir más información sobre ${training.name}.`, whatsapp)} target="_blank" rel="noreferrer" aria-label={`Consultar por ${training.name}`}><MessageCircle size={17} /></a></div>
     </article>
   );
 }
@@ -36,13 +38,14 @@ export function BlogCard({ post, index }: { post: BlogPost; index: number }) {
   const date = post.publishedAt ? new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${post.publishedAt}T12:00:00`)) : "";
   return (
     <article className="blog-card">
-      <a className={`blog-card__visual blog-card__visual--${(index % 3) + 1}`} href={`/blog/${post.slug}`} aria-label={`Leer ${post.title}`}><span>Lecturas para<br />entrenar la mente.</span><ArrowRight /></a>
+      <a className={`blog-card__visual blog-card__visual--${(index % 3) + 1} ${post.image ? "blog-card__visual--image" : ""}`} href={`/blog/${post.slug}`} aria-label={`Leer ${post.title}`}>{post.image ? <img src={post.image} alt="" width={720} height={420} loading="lazy" /> : <span>Lecturas para<br />entrenar la mente.</span>}<ArrowRight /></a>
       <div className="blog-card__content"><div className="blog-card__meta"><span>{post.category}</span><time>{date}</time></div><h3><a href={`/blog/${post.slug}`}>{post.title}</a></h3><p>{post.excerpt}</p><a className="text-link" href={`/blog/${post.slug}`}>Leer artículo <ArrowRight size={16} /></a></div>
     </article>
   );
 }
 
 export function ContactForm({ trainings }: { trainings: Training[] }) {
+  const whatsapp = useWhatsAppNumber();
   const [state, setState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -54,13 +57,14 @@ export function ContactForm({ trainings }: { trainings: Training[] }) {
     if (!response.ok) { setState("error"); setMessage(payload.error ?? "No pudimos enviar tu consulta."); return; }
     setState("success"); setMessage(payload.message ?? "Recibimos tu consulta."); event.currentTarget.reset();
   }
-  if (state === "success") return <div className="form-success"><span><Check /></span><h2>Gracias por escribirnos</h2><p>{message}</p><a className="button button--primary" href={whatsappUrl("Hola, acabo de enviar una consulta desde la web de Gimnasio del Cerebro.")} target="_blank" rel="noreferrer">Continuar por WhatsApp</a></div>;
+  if (state === "success") return <div className="form-success"><span><Check /></span><h2>Gracias por escribirnos</h2><p>{message}</p><a className="button button--primary" href={whatsappUrl("Hola, acabo de enviar una consulta desde la web de Gimnasio del Cerebro.", whatsapp)} target="_blank" rel="noreferrer">Continuar por WhatsApp</a></div>;
   return (
     <form className="contact-form" onSubmit={submit}>
       <div className="field-row"><label>Nombre completo<input name="name" autoComplete="name" minLength={2} required /></label><label>Email<input name="email" type="email" autoComplete="email" required /></label></div>
       <div className="field-row"><label>WhatsApp / teléfono<input name="phone" autoComplete="tel" minLength={7} required /></label><label>País<input name="country" autoComplete="country-name" minLength={2} required /></label></div>
       <label>Entrenamiento de interés<select name="trainingInterest" defaultValue=""><option value="">Quiero orientación</option>{trainings.map((training) => <option value={training.name} key={training.id}>{training.name}</option>)}</select></label>
       <label>¿En qué podemos ayudarte?<textarea name="message" rows={5} minLength={10} maxLength={1200} required /></label>
+      <label className="form-honeypot" aria-hidden="true">Sitio web<input name="website" tabIndex={-1} autoComplete="off" /></label>
       <label className="consent"><input type="checkbox" required /><span>Acepto que Gimnasio del Cerebro utilice estos datos para responder mi consulta.</span></label>
       {state === "error" && <p className="form-error" role="alert">{message}</p>}
       <button className="button button--primary" type="submit" disabled={state === "loading"}>{state === "loading" ? "Enviando…" : <>Enviar consulta <Send size={17} /></>}</button>

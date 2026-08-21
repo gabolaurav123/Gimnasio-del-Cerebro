@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { ArrowUpRight, BrainCircuit, Menu, MessageCircle, X } from "lucide-react";
-import { whatsappUrl } from "../../lib/whatsapp";
+import { formatWhatsAppNumber, whatsappUrl } from "../../lib/whatsapp";
+import { useWhatsAppNumber } from "./WhatsAppContext";
 
 const nav = [
   { href: "/", label: "Inicio" },
@@ -23,6 +25,8 @@ export function Brand({ compact = false }: { compact?: boolean }) {
 }
 
 export function SiteHeader() {
+  const pathname = usePathname();
+  const whatsapp = useWhatsAppNumber();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
@@ -33,7 +37,7 @@ export function SiteHeader() {
   }, []);
 
   return (
-    <header className={`site-header ${scrolled ? "site-header--scrolled" : ""}`}>
+    <header className={`site-header ${pathname !== "/" ? "site-header--solid" : ""} ${scrolled ? "site-header--scrolled" : ""}`}>
       <div className="shell site-header__inner">
         <Brand />
         <nav className="desktop-nav" aria-label="Navegación principal">
@@ -41,7 +45,7 @@ export function SiteHeader() {
         </nav>
         <div className="site-header__actions">
           <a className="login-link" href="/login">Ingresar</a>
-          <a className="button button--whatsapp button--small" href={whatsappUrl("Hola, visité la web de Gimnasio del Cerebro y quisiera recibir más información.")} target="_blank" rel="noreferrer">
+          <a className="button button--whatsapp button--small" href={whatsappUrl("Hola, visité la web de Gimnasio del Cerebro y quisiera recibir más información.", whatsapp)} target="_blank" rel="noreferrer">
             <MessageCircle size={17} /> WhatsApp
           </a>
           <button className="menu-button" type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="mobile-menu" aria-label={open ? "Cerrar menú" : "Abrir menú"}>
@@ -61,6 +65,7 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
+  const whatsapp = useWhatsAppNumber();
   return (
     <footer className="site-footer">
       <div className="shell footer-grid">
@@ -70,7 +75,7 @@ export function SiteFooter() {
         </div>
         <div><h3>Navegación</h3>{nav.map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}</div>
         <div><h3>Entrenamientos</h3><a href="/entrenamientos/neurofitness-active">Neurofitness Active</a><a href="/entrenamientos/neurotraumas">Neurotraumas</a><a href="/entrenamientos/brain-full-training">Brain Full Training</a></div>
-        <div><h3>Contacto</h3><a href={whatsappUrl("Hola, quisiera recibir información sobre los entrenamientos de Gimnasio del Cerebro.")} target="_blank" rel="noreferrer">+54 381 300-4167</a><a href="/contacto">Enviar una consulta</a></div>
+        <div><h3>Contacto</h3><a href={whatsappUrl("Hola, quisiera recibir información sobre los entrenamientos de Gimnasio del Cerebro.", whatsapp)} target="_blank" rel="noreferrer">{formatWhatsAppNumber(whatsapp)}</a><a href="/contacto">Enviar una consulta</a></div>
       </div>
       <div className="shell footer-bottom"><span>© {year} Gimnasio del Cerebro</span><span>Conocimiento · Desarrollo humano · Tecnología</span><a href="/login">Administración</a></div>
     </footer>
@@ -78,7 +83,8 @@ export function SiteFooter() {
 }
 
 export function WhatsAppFloat() {
-  return <a className="whatsapp-float" href={whatsappUrl("Hola, visité la web de Gimnasio del Cerebro y quisiera recibir más información.")} target="_blank" rel="noreferrer" aria-label="Consultar por WhatsApp"><MessageCircle /></a>;
+  const whatsapp = useWhatsAppNumber();
+  return <a className="whatsapp-float" href={whatsappUrl("Hola, visité la web de Gimnasio del Cerebro y quisiera recibir más información.", whatsapp)} target="_blank" rel="noreferrer" aria-label="Consultar por WhatsApp"><MessageCircle /></a>;
 }
 
 export function SectionEyebrow({ children }: { children: React.ReactNode }) {

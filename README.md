@@ -101,6 +101,8 @@ SESSION_SECRET=
 WHATSAPP_NUMBER=543813004167
 SITE_URL=
 DATABASE_URL=
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-5-mini
 ```
 
 La contraseña nunca se guarda en texto plano. Genera un hash bcrypt así:
@@ -111,6 +113,8 @@ npm run admin:hash -- "una-contraseña-segura"
 
 Usa el resultado como `ADMIN_PASSWORD_HASH`. `SESSION_SECRET` debe ser un valor aleatorio largo.
 
+El usuario definido por `ADMIN_EMAIL` y `ADMIN_PASSWORD_HASH` se crea o sincroniza automáticamente como `SUPERADMIN`. Desde **Administración → Usuarios** puede crear usuarios adicionales con rol Editor o Comercial, cambiar contraseñas y desactivar accesos. Las sesiones se invalidan si el usuario queda inactivo.
+
 ## CRM
 
 El formulario público valida la información en frontend y backend, crea un `Contact` con `source = website_contact` y `status = NEW`, y registra la actividad de creación. El panel permite buscar, filtrar, abrir la ficha, cambiar el estado, programar seguimiento, añadir notas y abrir WhatsApp.
@@ -118,11 +122,12 @@ El formulario público valida la información en frontend y backend, crea un `Co
 ## CMS
 
 - Entrenamientos: creación de borradores y estados publicado/oculto.
-- Blog: creación de borradores y estados publicado/archivado.
+- Blog: creación y edición de borradores, imagen principal, autor, contenido y estados publicado/archivado.
 - Home: mensajes del hero y CTA final administrables.
 - Configuración: datos generales y redes.
 - Media: subida validada a R2 en Cloudflare o PostgreSQL en Seenode.
-- Testimonios: colección preparada y vacía hasta cargar testimonios reales.
+- Testimonios: cuatro videos reales incorporados desde el material oficial anterior.
+- OpenAI: asistente editorial opcional para generar un primer borrador. Requiere `OPENAI_API_KEY`; siempre se debe revisar el texto antes de publicarlo.
 
 ## Contenido inicial
 
@@ -141,5 +146,9 @@ El proyecto detecta automáticamente el entorno: usa D1/R2 en Cloudflare y Postg
 3. Configura el build como `npm install --include=dev --no-audit --no-fund && npm run build`.
 4. Configura el inicio como `npm run start -- --hostname 0.0.0.0 --port 3000` y el puerto como `3000`.
 5. Añade las variables administrativas de `.env.example` y vuelve a desplegar.
+
+Variables obligatorias en Seenode: `DATABASE_URL`, `SITE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` y `WHATSAPP_NUMBER`. `OPENAI_API_KEY` y `OPENAI_MODEL` solo son necesarias para el asistente editorial.
+
+Medidas activas: hash bcrypt, sesiones HMAC HttpOnly/Secure/SameSite Strict, verificación de usuario activo y rol en servidor, protección de origen/CSRF, límites de intentos de acceso y formularios, validación Zod, subida restringida por tipo y tamaño, consultas parametrizadas y cabeceras CSP/HSTS/anti-iframe.
 
 Las tablas y los datos iniciales se crean automáticamente en la primera solicitud. En PostgreSQL, los archivos multimedia se guardan junto con sus metadatos para evitar depender de R2.

@@ -9,6 +9,10 @@ interface Env {
   ADMIN_EMAIL?: string;
   ADMIN_PASSWORD_HASH?: string;
   SESSION_SECRET?: string;
+  WHATSAPP_NUMBER?: string;
+  SITE_URL?: string;
+  OPENAI_API_KEY?: string;
+  OPENAI_MODEL?: string;
   IMAGES: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {

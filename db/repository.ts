@@ -1,4 +1,16 @@
 import { getRuntimeDatabase, isDatabaseUnavailable, type AppDatabase } from "./runtime";
+import { getRuntimeValues } from "../lib/runtime-env";
+
+export type AdminRole = "SUPERADMIN" | "EDITOR" | "COMERCIAL";
+
+export type AdminUser = {
+  id: string;
+  email: string;
+  passwordHash: string;
+  role: AdminRole;
+  active: boolean;
+  createdAt: string;
+};
 
 export type Training = {
   id: string;
@@ -18,6 +30,8 @@ export type BlogPost = {
   slug: string;
   excerpt: string;
   content: string;
+  image: string | null;
+  author: string | null;
   category: string;
   publishedAt: string | null;
   status: string;
@@ -126,6 +140,8 @@ export const postSeeds: BlogPost[] = [
     slug: "autodescubrirnos-para-reconocer-quienes-somos",
     excerpt: "Una invitación a observarnos con mayor claridad y reconocer los patrones que influyen en nuestra manera de vivir.",
     content: "Autodescubrirnos implica mirar con honestidad nuestras experiencias, decisiones y respuestas. Este espacio editorial conserva el tema original y queda preparado para incorporar el artículo completo desde el administrador.",
+    image: null,
+    author: null,
     category: "Autoconocimiento",
     publishedAt: "2026-06-12",
     status: "PUBLISHED",
@@ -136,6 +152,8 @@ export const postSeeds: BlogPost[] = [
     slug: "podemos-enfermarnos-por-nuestras-emociones-negativas",
     excerpt: "Una aproximación responsable al vínculo entre emociones, bienestar y la forma en que interpretamos nuestras experiencias.",
     content: "Este artículo plantea preguntas sobre emociones y bienestar sin reemplazar la evaluación ni la orientación de profesionales de la salud. Su contenido original puede completarse desde el editor del blog.",
+    image: null,
+    author: null,
     category: "Bienestar",
     publishedAt: "2026-05-28",
     status: "PUBLISHED",
@@ -146,6 +164,8 @@ export const postSeeds: BlogPost[] = [
     slug: "que-nos-impide-ser-felices",
     excerpt: "Exploramos los bloqueos, hábitos y perspectivas que pueden limitar la forma en que construimos una vida consciente.",
     content: "La felicidad no responde a una única fórmula. Este texto abre un espacio de reflexión sobre aquello que limita nuestras posibilidades y la forma en que podemos observarlo.",
+    image: null,
+    author: null,
     category: "Desarrollo personal",
     publishedAt: "2026-05-08",
     status: "PUBLISHED",
@@ -228,6 +248,15 @@ export function ensureDatabase() {
     const db = await getRuntimeDatabase();
     const statements = db.dialect === "postgres" ? [...schemaStatements, ...postgresSchemaStatements] : schemaStatements;
     await db.batch(statements.map((statement) => db.prepare(statement)));
+    const adminConfig = await getRuntimeValues(["ADMIN_EMAIL", "ADMIN_PASSWORD_HASH"]);
+    if (adminConfig.ADMIN_EMAIL?.trim() && adminConfig.ADMIN_PASSWORD_HASH?.trim()) {
+      await db.batch([
+        db.prepare(`UPDATE users SET email = ?, password_hash = ?, role = 'SUPERADMIN', active = 1, updated_at = CURRENT_TIMESTAMP WHERE id = 'bootstrap-superadmin'`)
+          .bind(adminConfig.ADMIN_EMAIL.trim().toLowerCase(), adminConfig.ADMIN_PASSWORD_HASH.trim()),
+        db.prepare(`INSERT OR IGNORE INTO users (id, email, password_hash, role, active) VALUES ('bootstrap-superadmin', ?, ?, 'SUPERADMIN', 1)`)
+          .bind(adminConfig.ADMIN_EMAIL.trim().toLowerCase(), adminConfig.ADMIN_PASSWORD_HASH.trim()),
+      ]);
+    }
     const trainingBatch = trainingSeeds.map((item) =>
       db.prepare(`INSERT OR IGNORE INTO trainings (id, name, acronym, slug, short_description, full_description, logo, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
         .bind(item.id, item.name, item.acronym, item.slug, item.shortDescription, item.fullDescription, item.logo, item.status, item.displayOrder),
@@ -275,9 +304,22 @@ function mapPost(row: Record<string, unknown>): BlogPost {
     slug: String(row.slug),
     excerpt: String(row.excerpt),
     content: String(row.content),
+    image: row.image ? String(row.image) : null,
+    author: row.author ? String(row.author) : null,
     category: String(row.category),
     publishedAt: row.published_at ? String(row.published_at) : null,
     status: String(row.status),
+  };
+}
+
+function mapAdminUser(row: Record<string, unknown>): AdminUser {
+  return {
+    id: String(row.id),
+    email: String(row.email),
+    passwordHash: String(row.password_hash),
+    role: String(row.role) as AdminRole,
+    active: Boolean(Number(row.active)),
+    createdAt: String(row.created_at),
   };
 }
 
@@ -360,6 +402,12 @@ export async function getPost(slug: string) {
     if (isDatabaseUnavailable(error)) return postSeeds.find((item) => item.slug === slug && item.status === "PUBLISHED") ?? null;
     throw error;
   }
+}
+
+export async function getPostById(id: string) {
+  const db = await ensureDatabase();
+  const row = await db.prepare(`SELECT * FROM blog_posts WHERE id = ? LIMIT 1`).bind(id).first<Record<string, unknown>>();
+  return row ? mapPost(row) : null;
 }
 
 export async function getTestimonials(includeHidden = false) {
@@ -458,17 +506,68 @@ export async function setTrainingStatus(id: string, status: string) {
   await db.prepare(`UPDATE trainings SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(status, id).run();
 }
 
-export async function createPost(input: { title: string; slug: string; excerpt: string; content: string; category: string }) {
+export type PostInput = { title: string; slug: string; excerpt: string; content: string; category: string; image?: string | null; author?: string | null };
+
+export async function createPost(input: PostInput) {
   const db = await ensureDatabase();
   const id = crypto.randomUUID();
-  await db.prepare(`INSERT INTO blog_posts (id, title, slug, excerpt, content, category, status) VALUES (?, ?, ?, ?, ?, ?, 'DRAFT')`)
-    .bind(id, input.title, input.slug, input.excerpt, input.content, input.category).run();
+  await db.prepare(`INSERT INTO blog_posts (id, title, slug, excerpt, content, image, author, category, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT')`)
+    .bind(id, input.title, input.slug, input.excerpt, input.content, input.image ?? null, input.author ?? null, input.category).run();
   return id;
+}
+
+export async function updatePost(id: string, input: PostInput) {
+  const db = await ensureDatabase();
+  await db.prepare(`UPDATE blog_posts SET title = ?, slug = ?, excerpt = ?, content = ?, image = ?, author = ?, category = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+    .bind(input.title, input.slug, input.excerpt, input.content, input.image ?? null, input.author ?? null, input.category, id).run();
 }
 
 export async function setPostStatus(id: string, status: string) {
   const db = await ensureDatabase();
   await db.prepare(`UPDATE blog_posts SET status = ?, published_at = CASE WHEN ? = 'PUBLISHED' THEN COALESCE(published_at, date('now')) ELSE published_at END, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(status, status, id).run();
+}
+
+export async function getAdminUserByEmail(email: string) {
+  const db = await ensureDatabase();
+  const row = await db.prepare(`SELECT * FROM users WHERE email = ? LIMIT 1`).bind(email.trim().toLowerCase()).first<Record<string, unknown>>();
+  return row ? mapAdminUser(row) : null;
+}
+
+export async function getAdminUserById(id: string) {
+  const db = await ensureDatabase();
+  const row = await db.prepare(`SELECT * FROM users WHERE id = ? LIMIT 1`).bind(id).first<Record<string, unknown>>();
+  return row ? mapAdminUser(row) : null;
+}
+
+export async function getAdminUsers() {
+  const db = await ensureDatabase();
+  const result = await db.prepare(`SELECT * FROM users ORDER BY CASE role WHEN 'SUPERADMIN' THEN 0 WHEN 'EDITOR' THEN 1 ELSE 2 END, email`).all<Record<string, unknown>>();
+  return result.results.map(mapAdminUser);
+}
+
+export async function createAdminUser(input: { email: string; passwordHash: string; role: AdminRole }) {
+  const db = await ensureDatabase();
+  const id = crypto.randomUUID();
+  await db.prepare(`INSERT INTO users (id, email, password_hash, role, active) VALUES (?, ?, ?, ?, 1)`)
+    .bind(id, input.email.trim().toLowerCase(), input.passwordHash, input.role).run();
+  return id;
+}
+
+export async function updateAdminUser(id: string, input: { role: AdminRole; active: boolean; passwordHash?: string }) {
+  const db = await ensureDatabase();
+  if (input.passwordHash) {
+    await db.prepare(`UPDATE users SET role = ?, active = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+      .bind(input.role, input.active ? 1 : 0, input.passwordHash, id).run();
+    return;
+  }
+  await db.prepare(`UPDATE users SET role = ?, active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+    .bind(input.role, input.active ? 1 : 0, id).run();
+}
+
+export async function countActiveSuperadmins() {
+  const db = await ensureDatabase();
+  const row = await db.prepare(`SELECT COUNT(*) AS count FROM users WHERE role = 'SUPERADMIN' AND active = 1`).first<{ count: number }>();
+  return Number(row?.count ?? 0);
 }
 
 export const defaultSettings: Record<string, string> = {
@@ -488,12 +587,17 @@ export const defaultSettings: Record<string, string> = {
 export async function getSettings() {
   try {
     const db = await ensureDatabase();
-    const inserts = Object.entries(defaultSettings).map(([key, value]) => db.prepare(`INSERT OR IGNORE INTO site_settings (key, value) VALUES (?, ?)`).bind(key, value));
+    const runtime = await getRuntimeValues(["WHATSAPP_NUMBER"]);
+    const initialSettings = { ...defaultSettings, whatsapp: runtime.WHATSAPP_NUMBER?.trim() || defaultSettings.whatsapp };
+    const inserts = Object.entries(initialSettings).map(([key, value]) => db.prepare(`INSERT OR IGNORE INTO site_settings (key, value) VALUES (?, ?)`).bind(key, value));
     await db.batch(inserts);
     const result = await db.prepare(`SELECT key, value FROM site_settings`).all<{ key: string; value: string }>();
     return Object.fromEntries(result.results.map((row) => [row.key, row.value]));
   } catch (error) {
-    if (isDatabaseUnavailable(error)) return { ...defaultSettings };
+    if (isDatabaseUnavailable(error)) {
+      const runtime = await getRuntimeValues(["WHATSAPP_NUMBER"]);
+      return { ...defaultSettings, whatsapp: runtime.WHATSAPP_NUMBER?.trim() || defaultSettings.whatsapp };
+    }
     throw error;
   }
 }

@@ -23,7 +23,7 @@ export default async function Home() {
             <div className="eyebrow eyebrow--light"><Sparkles size={16} />{settings.heroEyebrow}</div>
             <h1>{heroParts[0]}.<br /><em>{heroParts.slice(1).join(".")}.</em></h1>
             <p>{settings.heroDescription}</p>
-            <div className="button-row"><a className="button button--light" href="/entrenamientos">Explorar entrenamientos <ArrowRight size={18} /></a><a className="button button--ghost-light" href={whatsappUrl("Hola, quisiera recibir información sobre los entrenamientos de Gimnasio del Cerebro.")} target="_blank" rel="noreferrer"><MessageCircle size={18} />Hablar por WhatsApp</a></div>
+            <div className="button-row"><a className="button button--light" href="/entrenamientos">Explorar entrenamientos <ArrowRight size={18} /></a><a className="button button--ghost-light" href={whatsappUrl("Hola, quisiera recibir información sobre los entrenamientos de Gimnasio del Cerebro.", settings.whatsapp)} target="_blank" rel="noreferrer"><MessageCircle size={18} />Hablar por WhatsApp</a></div>
             <div className="hero__trust"><span>Desde 2014</span><span>Presencia internacional</span><span>Metodologías propias</span></div>
           </div>
         </div>
@@ -46,7 +46,7 @@ export default async function Home() {
 
       <section className="journal-section"><div className="shell"><div className="section-heading section-heading--split"><div><SectionEyebrow>Ideas para seguir creciendo</SectionEyebrow><h2>Sigue entrenando tu mente</h2></div><div><p>Artículos, herramientas y contenido para seguir expandiendo tu consciencia.</p><a className="text-link" href="/blog">Ver todos los artículos <ArrowRight size={16} /></a></div></div><div className="blog-grid">{posts.slice(0, 3).map((post, index) => <BlogCard post={post} index={index} key={post.id} />)}</div></div></section>
 
-      <section className="final-cta"><div className="shell final-cta__inner"><div><span className="final-cta__kicker">Tu próximo paso</span><h2>{settings.ctaTitle}</h2><p>{settings.ctaDescription}</p></div><div className="button-row"><a className="button button--light" href="/entrenamientos">Explorar entrenamientos <ArrowRight size={18} /></a><a className="button button--ghost-light" href={whatsappUrl("Hola, quisiera orientación para elegir un entrenamiento de Gimnasio del Cerebro.")} target="_blank" rel="noreferrer">Hablar por WhatsApp</a></div></div></section>
+      <section className="final-cta"><div className="shell final-cta__inner"><div><span className="final-cta__kicker">Tu próximo paso</span><h2>{settings.ctaTitle}</h2><p>{settings.ctaDescription}</p></div><div className="button-row"><a className="button button--light" href="/entrenamientos">Explorar entrenamientos <ArrowRight size={18} /></a><a className="button button--ghost-light" href={whatsappUrl("Hola, quisiera orientación para elegir un entrenamiento de Gimnasio del Cerebro.", settings.whatsapp)} target="_blank" rel="noreferrer">Hablar por WhatsApp</a></div></div></section>
     </>
   );
 }

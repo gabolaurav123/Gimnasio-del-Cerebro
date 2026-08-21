@@ -42,6 +42,8 @@ test("el formulario público guarda contactos en el CRM", async () => {
   const [form, route, repository] = await Promise.all([read("../app/components/PublicUI.tsx"), read("../app/api/contact/route.ts"), read("../db/repository.ts")]);
   assert.match(form, /fetch\("\/api\/contact"/);
   assert.match(route, /createContact/);
+  assert.match(route, /public-contact/);
+  assert.match(form, /form-honeypot/);
   assert.match(repository, /website_contact/);
   assert.match(repository, /contact_activities/);
 });
@@ -50,8 +52,42 @@ test("la sesión administrativa usa cookie HttpOnly y contraseña bcrypt", async
   const auth = await read("../lib/auth.ts");
   assert.match(auth, /bcrypt\.compare/);
   assert.match(auth, /HttpOnly/);
-  assert.match(auth, /SameSite=Lax/);
+  assert.match(auth, /SameSite=Strict/);
+  assert.match(auth, /constantTimeEqual/);
+  assert.match(auth, /getAdminUserById/);
   assert.match(auth, /SESSION_SECRET/);
+});
+
+test("los permisos administrativos se validan en el servidor", async () => {
+  const [users, posts, contacts] = await Promise.all([
+    read("../app/api/admin/users/route.ts"),
+    read("../app/api/admin/posts/route.ts"),
+    read("../app/api/admin/contacts/route.ts"),
+  ]);
+  assert.match(users, /SUPERADMIN/);
+  assert.match(posts, /SUPERADMIN.*EDITOR/);
+  assert.match(contacts, /SUPERADMIN.*COMERCIAL/);
+});
+
+test("el blog admite imágenes y un asistente editorial opcional", async () => {
+  const [manager, repository, aiRoute] = await Promise.all([
+    read("../app/components/AdminUI.tsx"),
+    read("../db/repository.ts"),
+    read("../app/api/admin/ai/blog-draft/route.ts"),
+  ]);
+  assert.match(manager, /imageFile/);
+  assert.match(manager, /Generar borrador con OpenAI/);
+  assert.match(repository, /image = \?/);
+  assert.match(aiRoute, /OPENAI_API_KEY/);
+  assert.match(aiRoute, /store: false/);
+});
+
+test("las páginas internas usan un encabezado sólido y cabeceras de seguridad", async () => {
+  const [chrome, config] = await Promise.all([read("../app/components/SiteChrome.tsx"), read("../next.config.ts")]);
+  assert.match(chrome, /site-header--solid/);
+  assert.match(config, /Content-Security-Policy/);
+  assert.match(config, /frame-ancestors 'none'/);
+  assert.match(config, /X-Content-Type-Options/);
 });
 
 test("todos los enlaces públicos de WhatsApp usan el número oficial", async () => {
