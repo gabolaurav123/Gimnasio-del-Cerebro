@@ -99,7 +99,8 @@ class D1DatabaseAdapter implements AppDatabase {
 let postgresDatabase: Promise<AppDatabase> | null = null;
 
 async function connectPostgres(url: string) {
-  const postgres = (await import("postgres")).default;
+  const nodePostgresPackage = "postgres";
+  const postgres = (await import(/* @vite-ignore */ nodePostgresPackage)).default;
   const hostname = new URL(url).hostname;
   const useTls = !["localhost", "127.0.0.1", "::1"].includes(hostname);
   const client = postgres(url, {
