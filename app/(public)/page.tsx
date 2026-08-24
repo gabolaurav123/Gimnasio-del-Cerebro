@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ArrowRight, Compass, Globe2, MessageCircle, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Atom, BrainCircuit, Compass, Globe2, MessageCircle, Sparkles, Users } from "lucide-react";
 import type { Metadata } from "next";
 import { getPosts, getSettings, getTestimonials, getTrainings } from "../../db/repository";
 import { BlogCard, TrainingCard } from "../components/PublicUI";
@@ -35,6 +35,8 @@ export default async function Home() {
           <div className="stats-grid"><div><Compass /><strong>2014</strong><span>Año de inicio</span></div><div><Sparkles /><strong>+10</strong><span>Años de experiencia</span></div><div><Globe2 /><strong>+15</strong><span>Países alcanzados</span></div><div><Users /><strong>Miles</strong><span>De estudiantes</span></div></div>
         </div>
       </section>
+
+      <section className="science-band"><div className="shell"><div className="science-band__intro"><SectionEyebrow>Cómo trabajamos</SectionEyebrow><h2>Neurociencia para aprender. Práctica para transformar.</h2><p>Integramos herramientas de neurociencia y aprendizaje con una perspectiva conceptual inspirada en la física cuántica, siempre como propuesta educativa y no como sustituto de atención médica o psicológica.</p><a className="text-link" href="/nosotros">Conocer nuestro enfoque <ArrowRight size={16} /></a></div><div className="science-band__cards"><article><BrainCircuit /><strong>Neurociencia aplicada</strong><span>Comprender atención, hábitos y aprendizaje.</span></article><article><Atom /><strong>Perspectiva cuántica</strong><span>Una mirada conceptual sobre posibilidades e interconexión.</span></article></div></div></section>
 
       <section className="trainings-section" id="entrenamientos">
         <div className="shell"><div className="section-heading section-heading--split"><div><SectionEyebrow>Rutas de transformación</SectionEyebrow><h2>Nuestros entrenamientos</h2></div><div><p>Seis programas con enfoques distintos, conectados por una misma intención: comprender, entrenar y ampliar posibilidades.</p></div></div><div className="training-grid">{trainings.slice(0, 3).map((training, index) => <TrainingCard training={training} index={index} key={training.id} />)}</div><div className="section-more"><a className="button button--primary" href="/entrenamientos">Ver más entrenamientos <ArrowRight size={18} /></a></div></div>

@@ -1,0 +1,9 @@
+import { Atom, BrainCircuit, Compass, Users } from "lucide-react";
+import type { Metadata } from "next";
+import { SectionEyebrow } from "../../components/SiteChrome";
+
+export const metadata: Metadata = { title: "Nosotros | Gimnasio del Cerebro", description: "Conoce el enfoque educativo de Gimnasio del Cerebro." };
+
+export default function AboutPage() {
+  return <><section className="page-hero"><div className="shell"><SectionEyebrow>Gimnasio del Cerebro</SectionEyebrow><h1>Comprender cómo aprendemos<br /><em>para actuar con mayor consciencia.</em></h1><p>Desde 2014 creamos espacios de entrenamiento y aprendizaje para observar patrones, desarrollar capacidades y llevar el conocimiento a la experiencia cotidiana.</p></div></section><section className="about-approach"><div className="shell"><div className="section-heading section-heading--split"><div><SectionEyebrow>Nuestro enfoque</SectionEyebrow><h2>Una propuesta educativa, práctica y humana.</h2></div><p>Integramos herramientas de neurociencia y aprendizaje con una perspectiva conceptual inspirada en la física cuántica, presentada de manera responsable y sin sustituir atención médica o psicológica.</p></div><div className="approach-grid"><article><BrainCircuit /><h3>Neurociencia y aprendizaje</h3><p>Conceptos para comprender atención, hábitos, respuestas y procesos de aprendizaje.</p></article><article><Compass /><h3>Práctica consciente</h3><p>La información se convierte en observación, entrenamiento y acciones aplicables.</p></article><article><Atom /><h3>Perspectiva cuántica</h3><p>Una mirada conceptual sobre posibilidades e interconexión, sin presentarla como tratamiento clínico.</p></article><article><Users /><h3>Comunidad</h3><p>Personas, facilitadores y proyectos asociados que aprenden y evolucionan juntos.</p></article></div></div></section></>;
+}

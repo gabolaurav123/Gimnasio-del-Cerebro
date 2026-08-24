@@ -5,7 +5,7 @@ import { ArrowRight, Check, Edit3, Plus, Search, Sparkles, UploadCloud, UserPlus
 import { FormEvent, useMemo, useState } from "react";
 import type { AdminRole, AdminUser, BlogPost, Contact, Training } from "../../db/repository";
 
-const statusLabels: Record<string, string> = { NEW: "Nuevo", CONTACTED: "Contactado", INTERESTED: "Interesado", FOLLOW_UP: "Seguimiento", ENROLLED: "Inscrito", NOT_INTERESTED: "No interesado", CLOSED: "Cerrado", DRAFT: "Borrador", PUBLISHED: "Publicado", HIDDEN: "Oculto", ARCHIVED: "Archivado" };
+const statusLabels: Record<string, string> = { NEW: "Nuevo", CONTACTED: "Contactado", INTERESTED: "Interesado", FOLLOW_UP: "Seguimiento", ENROLLED: "Inscrito", NOT_INTERESTED: "No interesado", CLOSED: "Cerrado", DRAFT: "Borrador", PUBLISHED: "Publicado", HIDDEN: "Oculto", ARCHIVED: "Archivado", PENDING: "Pendiente", CONFIRMED: "Confirmada", COMPLETED: "Completada", CANCELLED: "Cancelada" };
 export function StatusBadge({ status }: { status: string }) { return <span className={`status-badge status-badge--${status.toLowerCase()}`}>{statusLabels[status] ?? status}</span>; }
 
 export function CrmTable({ contacts }: { contacts: Contact[] }) {

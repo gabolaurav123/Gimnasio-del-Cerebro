@@ -129,3 +129,55 @@ export const whatsappEvents = sqliteTable("whatsapp_events", {
   providerMessageId: text("provider_message_id").primaryKey(),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const appointments = sqliteTable("appointments", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  country: text("country").notNull(),
+  preferredDate: text("preferred_date").notNull(),
+  preferredTime: text("preferred_time").notNull(),
+  trainingInterest: text("training_interest"),
+  message: text("message").notNull().default(""),
+  status: text("status", { enum: ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"] }).notNull().default("PENDING"),
+  ...timestamps,
+}, (table) => [index("idx_appointments_status_date").on(table.status, table.preferredDate)]);
+
+export const products = sqliteTable("products", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description").notNull(),
+  image: text("image"),
+  priceLabel: text("price_label").notNull().default("Consultar"),
+  discountLabel: text("discount_label"),
+  status: text("status", { enum: ["DRAFT", "PUBLISHED", "HIDDEN"] }).notNull().default("DRAFT"),
+  displayOrder: integer("display_order").notNull().default(0),
+  ...timestamps,
+}, (table) => [index("idx_products_status_order").on(table.status, table.displayOrder)]);
+
+export const events = sqliteTable("events", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description").notNull(),
+  image: text("image"),
+  startsAt: text("starts_at").notNull(),
+  location: text("location").notNull(),
+  registrationUrl: text("registration_url"),
+  status: text("status", { enum: ["DRAFT", "PUBLISHED", "HIDDEN"] }).notNull().default("DRAFT"),
+  displayOrder: integer("display_order").notNull().default(0),
+  ...timestamps,
+}, (table) => [index("idx_events_status_date").on(table.status, table.startsAt)]);
+
+export const associates = sqliteTable("associates", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  url: text("url").notNull(),
+  description: text("description").notNull(),
+  image: text("image"),
+  status: text("status", { enum: ["DRAFT", "PUBLISHED", "HIDDEN"] }).notNull().default("DRAFT"),
+  displayOrder: integer("display_order").notNull().default(0),
+  ...timestamps,
+}, (table) => [index("idx_associates_status_order").on(table.status, table.displayOrder)]);

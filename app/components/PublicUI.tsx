@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check, MessageCircle, Search, Send } from "lucide-react";
+import { ArrowRight, CalendarCheck, Check, MessageCircle, Search, Send, ShoppingBag } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
 import type { BlogPost, Training } from "../../db/repository";
 import { whatsappUrl } from "../../lib/whatsapp";
@@ -13,7 +13,7 @@ export function TrainingCard({ training, index }: { training: Training; index: n
       <div className="training-card__top"><span>{String(index + 1).padStart(2, "0")}</span><strong>{training.acronym}</strong></div>
       <div className="training-card__logo"><img src={training.logo} alt={`Logo oficial de ${training.name}`} width={520} height={520} loading="lazy" /></div>
       <div className="training-card__body"><h3>{training.name}</h3><p>{training.shortDescription}</p></div>
-      <div className="training-card__links"><a href={`/entrenamientos/${training.slug}`}>Ver entrenamiento <ArrowRight size={17} /></a><a href={whatsappUrl(`Hola, quisiera recibir más información sobre ${training.name}.`, whatsapp)} target="_blank" rel="noreferrer" aria-label={`Consultar por ${training.name}`}><MessageCircle size={17} /></a></div>
+      <div className="training-card__links"><a href={`/entrenamientos/${training.slug}`}>Ver entrenamiento <ArrowRight size={17} /></a><a className="training-card__buy" href={whatsappUrl(`Hola, quiero adquirir el entrenamiento ${training.name}. ¿Podrían indicarme disponibilidad y forma de pago?`, whatsapp)} target="_blank" rel="noreferrer" aria-label={`Adquirir ${training.name}`}><ShoppingBag size={16} />Adquirir</a></div>
     </article>
   );
 }
@@ -70,4 +70,31 @@ export function ContactForm({ trainings }: { trainings: Training[] }) {
       <button className="button button--primary" type="submit" disabled={state === "loading"}>{state === "loading" ? "Enviando…" : <>Enviar consulta <Send size={17} /></>}</button>
     </form>
   );
+}
+
+export function AppointmentForm({ trainings }: { trainings: Training[] }) {
+  const whatsapp = useWhatsAppNumber();
+  const [state, setState] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [message, setMessage] = useState("");
+  const today = new Date();
+  const minDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setState("loading");
+    const response = await fetch("/api/appointments", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.fromEntries(new FormData(event.currentTarget))) });
+    const payload = await response.json() as { message?: string; error?: string };
+    if (!response.ok) { setState("error"); setMessage(payload.error ?? "No pudimos registrar la cita."); return; }
+    setState("success"); setMessage(payload.message ?? "Tu solicitud quedó registrada."); event.currentTarget.reset();
+  }
+  if (state === "success") return <div className="form-success"><span><CalendarCheck /></span><h2>Solicitud recibida</h2><p>{message}</p><a className="button button--primary" href={whatsappUrl("Hola, acabo de solicitar una cita desde la web de Gimnasio del Cerebro.", whatsapp)} target="_blank" rel="noreferrer"><MessageCircle size={17} />Continuar por WhatsApp</a></div>;
+  return <form className="contact-form appointment-form" onSubmit={submit}>
+    <div className="field-row"><label>Nombre completo<input name="name" autoComplete="name" minLength={2} required /></label><label>Email<input name="email" type="email" autoComplete="email" required /></label></div>
+    <div className="field-row"><label>WhatsApp / teléfono<input name="phone" autoComplete="tel" minLength={7} required /></label><label>País<input name="country" autoComplete="country-name" minLength={2} required /></label></div>
+    <div className="field-row"><label>Fecha preferida<input name="preferredDate" type="date" min={minDate} required /></label><label>Hora preferida<input name="preferredTime" type="time" required /></label></div>
+    <label>Entrenamiento de interés<select name="trainingInterest" defaultValue=""><option value="">Orientación general</option>{trainings.map((training) => <option value={training.name} key={training.id}>{training.name}</option>)}</select></label>
+    <label>Cuéntanos brevemente qué necesitas<textarea name="message" rows={4} maxLength={1200} /></label>
+    <label className="form-honeypot" aria-hidden="true">Sitio web<input name="website" tabIndex={-1} autoComplete="off" /></label>
+    <label className="consent"><input type="checkbox" required /><span>Acepto que Gimnasio del Cerebro utilice estos datos para coordinar la cita.</span></label>
+    {state === "error" && <p className="form-error" role="alert">{message}</p>}
+    <button className="button button--primary" type="submit" disabled={state === "loading"}>{state === "loading" ? "Registrando…" : <>Solicitar cita <CalendarCheck size={17} /></>}</button>
+  </form>;
 }

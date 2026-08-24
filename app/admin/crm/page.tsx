@@ -1,5 +1,6 @@
-import { getContacts } from "../../../db/repository";
+import { getAppointments, getContacts } from "../../../db/repository";
 import { requireAdminRole } from "../../../lib/admin-access";
 import { CrmTable } from "../../components/AdminUI";
+import { AppointmentTable } from "../../components/BusinessManager";
 
-export default async function CrmPage() { await requireAdminRole(["SUPERADMIN", "COMERCIAL"]); const contacts = await getContacts(); return <><div className="admin-page-heading"><div><span>Relaciones y seguimiento</span><h1>CRM</h1><p>Las consultas enviadas desde la web aparecen aquí automáticamente.</p></div></div><section className="admin-card admin-card--flush"><CrmTable contacts={contacts} /></section></>; }
+export default async function CrmPage() { await requireAdminRole(["SUPERADMIN", "COMERCIAL"]); const [contacts, appointments] = await Promise.all([getContacts(), getAppointments()]); return <><div className="admin-page-heading"><div><span>Relaciones y seguimiento</span><h1>Contactos y citas pendientes</h1><p>Todo lo enviado desde Contacto y Agenda tu cita aparece aquí automáticamente.</p></div></div><section className="admin-card admin-card--flush"><div className="admin-card__heading admin-card__heading--padded"><div><h2>Citas solicitadas</h2><p>Confirma, completa o cancela las solicitudes recibidas.</p></div></div><AppointmentTable appointments={appointments} /></section><section className="admin-card admin-card--flush"><div className="admin-card__heading admin-card__heading--padded"><div><h2>Consultas recibidas</h2><p>Mensajes enviados desde el formulario de contacto.</p></div></div><CrmTable contacts={contacts} /></section></>; }

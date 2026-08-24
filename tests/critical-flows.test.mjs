@@ -48,6 +48,37 @@ test("el formulario público guarda contactos en el CRM", async () => {
   assert.match(repository, /contact_activities/);
 });
 
+test("la agenda registra citas y las expone en la bandeja administrativa", async () => {
+  const [form, route, repository, crm] = await Promise.all([
+    read("../app/components/PublicUI.tsx"),
+    read("../app/api/appointments/route.ts"),
+    read("../db/repository.ts"),
+    read("../app/admin/crm/page.tsx"),
+  ]);
+  assert.match(form, /fetch\("\/api\/appointments"/);
+  assert.match(route, /requestIsSameOrigin/);
+  assert.match(route, /public-appointment/);
+  assert.match(repository, /CREATE TABLE IF NOT EXISTS appointments/);
+  assert.match(crm, /Contactos y citas pendientes/);
+  assert.match(crm, /AppointmentTable/);
+});
+
+test("productos, eventos y asociados son módulos administrables", async () => {
+  const [chrome, manager, repository, shell] = await Promise.all([
+    read("../app/components/SiteChrome.tsx"),
+    read("../app/components/BusinessManager.tsx"),
+    read("../db/repository.ts"),
+    read("../app/components/AdminShell.tsx"),
+  ]);
+  for (const label of ["Productos", "Eventos", "Asociados", "Agenda tu cita"]) assert.match(chrome, new RegExp(label));
+  assert.match(chrome, /notification-menu/);
+  assert.match(manager, /api\/admin\/catalog/);
+  assert.match(repository, /Comunidad Kiryus/);
+  assert.match(repository, /https:\/\/www\.comunidadkiryus\.org\//);
+  assert.match(shell, /Volver al sitio/);
+  assert.match(shell, /href="\/" title="Volver a Gimnasio del Cerebro"/);
+});
+
 test("la sesión administrativa usa cookie HttpOnly y contraseña bcrypt", async () => {
   const auth = await read("../lib/auth.ts");
   assert.match(auth, /bcrypt\.compare/);

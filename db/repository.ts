@@ -67,6 +67,74 @@ export type Contact = {
   updatedAt: string;
 };
 
+export type Appointment = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  country: string;
+  preferredDate: string;
+  preferredTime: string;
+  trainingInterest: string | null;
+  message: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Product = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image: string | null;
+  priceLabel: string;
+  discountLabel: string | null;
+  status: string;
+  displayOrder: number;
+};
+
+export type EventItem = {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  image: string | null;
+  startsAt: string;
+  location: string;
+  registrationUrl: string | null;
+  status: string;
+  displayOrder: number;
+};
+
+export type Associate = {
+  id: string;
+  name: string;
+  url: string;
+  description: string;
+  image: string | null;
+  status: string;
+  displayOrder: number;
+};
+
+export type PublicNotification = {
+  id: string;
+  title: string;
+  detail: string;
+  href: string;
+  kind: "event" | "discount";
+};
+
+export const associateSeeds: Associate[] = [{
+  id: "associate-kiryus",
+  name: "Comunidad Kiryus",
+  url: "https://www.comunidadkiryus.org/",
+  description: "Red de ecoaldeas autosustentables orientada a la permacultura, la regeneración ambiental, la sostenibilidad y la vida colaborativa.",
+  image: null,
+  status: "PUBLISHED",
+  displayOrder: 1,
+}];
+
 export const trainingSeeds: Training[] = [
   {
     id: "training-nfa",
@@ -248,11 +316,19 @@ const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS media_assets (id TEXT PRIMARY KEY, name TEXT NOT NULL, key TEXT NOT NULL UNIQUE, mime_type TEXT NOT NULL, size INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS whatsapp_events (provider_message_id TEXT PRIMARY KEY, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS appointments (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, country TEXT NOT NULL, preferred_date TEXT NOT NULL, preferred_time TEXT NOT NULL, training_interest TEXT, message TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'PENDING', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS products (id TEXT PRIMARY KEY, name TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT NOT NULL, image TEXT, price_label TEXT NOT NULL DEFAULT 'Consultar', discount_label TEXT, status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, title TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT NOT NULL, image TEXT, starts_at TEXT NOT NULL, location TEXT NOT NULL, registration_url TEXT, status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS associates (id TEXT PRIMARY KEY, name TEXT NOT NULL, url TEXT NOT NULL, description TEXT NOT NULL, image TEXT, status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE INDEX IF NOT EXISTS idx_contacts_status_created_at ON contacts(status, created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_contacts_training_interest ON contacts(training_interest)`,
   `CREATE INDEX IF NOT EXISTS idx_trainings_status_order ON trainings(status, display_order)`,
   `CREATE INDEX IF NOT EXISTS idx_blog_posts_status_published_at ON blog_posts(status, published_at)`,
   `CREATE INDEX IF NOT EXISTS idx_contact_activities_contact_id ON contact_activities(contact_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_appointments_status_date ON appointments(status, preferred_date)`,
+  `CREATE INDEX IF NOT EXISTS idx_products_status_order ON products(status, display_order)`,
+  `CREATE INDEX IF NOT EXISTS idx_events_status_date ON events(status, starts_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_associates_status_order ON associates(status, display_order)`,
 ];
 
 const postgresSchemaStatements = [
@@ -305,10 +381,14 @@ export function ensureDatabase() {
       db.prepare(`INSERT OR IGNORE INTO testimonials (id, name, program, quote, video_url, thumbnail, rating, visible, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
         .bind(item.id, item.name, item.program, item.quote, item.videoUrl, item.thumbnail, item.rating, item.visible ? 1 : 0, item.displayOrder),
     );
+    const associateBatch = associateSeeds.map((item) =>
+      db.prepare(`INSERT OR IGNORE INTO associates (id, name, url, description, image, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+        .bind(item.id, item.name, item.url, item.description, item.image, item.status, item.displayOrder),
+    );
     const trainingLogoSyncBatch = trainingSeeds.map((item) =>
       db.prepare(`UPDATE trainings SET logo = ? WHERE id = ?`).bind(item.logo, item.id),
     );
-    await db.batch([...trainingBatch, ...postBatch, ...testimonialBatch, ...trainingLogoSyncBatch]);
+    await db.batch([...trainingBatch, ...postBatch, ...testimonialBatch, ...associateBatch, ...trainingLogoSyncBatch]);
     return db;
   })().catch((error) => {
     ready = null;
@@ -393,6 +473,38 @@ function mapContact(row: Record<string, unknown>): Contact {
   };
 }
 
+function mapAppointment(row: Record<string, unknown>): Appointment {
+  return {
+    id: String(row.id), name: String(row.name), email: String(row.email), phone: String(row.phone), country: String(row.country),
+    preferredDate: String(row.preferred_date), preferredTime: String(row.preferred_time),
+    trainingInterest: row.training_interest ? String(row.training_interest) : null,
+    message: String(row.message ?? ""), status: String(row.status), createdAt: String(row.created_at), updatedAt: String(row.updated_at),
+  };
+}
+
+function mapProduct(row: Record<string, unknown>): Product {
+  return {
+    id: String(row.id), name: String(row.name), slug: String(row.slug), description: String(row.description),
+    image: row.image ? String(row.image) : null, priceLabel: String(row.price_label),
+    discountLabel: row.discount_label ? String(row.discount_label) : null, status: String(row.status), displayOrder: Number(row.display_order),
+  };
+}
+
+function mapEvent(row: Record<string, unknown>): EventItem {
+  return {
+    id: String(row.id), title: String(row.title), slug: String(row.slug), description: String(row.description),
+    image: row.image ? String(row.image) : null, startsAt: String(row.starts_at), location: String(row.location),
+    registrationUrl: row.registration_url ? String(row.registration_url) : null, status: String(row.status), displayOrder: Number(row.display_order),
+  };
+}
+
+function mapAssociate(row: Record<string, unknown>): Associate {
+  return {
+    id: String(row.id), name: String(row.name), url: String(row.url), description: String(row.description),
+    image: row.image ? String(row.image) : null, status: String(row.status), displayOrder: Number(row.display_order),
+  };
+}
+
 export async function getTrainings(includeHidden = false) {
   try {
     const db = await ensureDatabase();
@@ -463,6 +575,113 @@ export async function getTestimonials(includeHidden = false) {
   }
 }
 
+export async function getProducts(includeHidden = false) {
+  try {
+    const db = await ensureDatabase();
+    const result = await db.prepare(includeHidden ? `SELECT * FROM products ORDER BY display_order, name` : `SELECT * FROM products WHERE status = 'PUBLISHED' ORDER BY display_order, name`).all<Record<string, unknown>>();
+    return result.results.map(mapProduct);
+  } catch (error) {
+    if (isDatabaseUnavailable(error)) return [];
+    throw error;
+  }
+}
+
+export async function getEvents(includeHidden = false) {
+  try {
+    const db = await ensureDatabase();
+    const result = await db.prepare(includeHidden ? `SELECT * FROM events ORDER BY starts_at, display_order` : `SELECT * FROM events WHERE status = 'PUBLISHED' ORDER BY starts_at, display_order`).all<Record<string, unknown>>();
+    return result.results.map(mapEvent);
+  } catch (error) {
+    if (isDatabaseUnavailable(error)) return [];
+    throw error;
+  }
+}
+
+export async function getAssociates(includeHidden = false) {
+  try {
+    const db = await ensureDatabase();
+    const result = await db.prepare(includeHidden ? `SELECT * FROM associates ORDER BY display_order, name` : `SELECT * FROM associates WHERE status = 'PUBLISHED' ORDER BY display_order, name`).all<Record<string, unknown>>();
+    return result.results.map(mapAssociate);
+  } catch (error) {
+    if (isDatabaseUnavailable(error)) return associateSeeds.filter((item) => includeHidden || item.status === "PUBLISHED");
+    throw error;
+  }
+}
+
+export async function getPublicNotifications(): Promise<PublicNotification[]> {
+  const [events, products] = await Promise.all([getEvents(), getProducts()]);
+  const eventItems = events.slice(0, 4).map((item) => ({
+    id: `event-${item.id}`, title: item.title,
+    detail: `${new Intl.DateTimeFormat("es-BO", { day: "numeric", month: "short" }).format(new Date(item.startsAt))} · ${item.location}`,
+    href: "/eventos", kind: "event" as const,
+  }));
+  const discounts = products.filter((item) => item.discountLabel).slice(0, 3).map((item) => ({
+    id: `discount-${item.id}`, title: item.name, detail: item.discountLabel || "Novedad disponible", href: "/productos", kind: "discount" as const,
+  }));
+  return [...eventItems, ...discounts].slice(0, 6);
+}
+
+export async function getAppointments() {
+  const db = await ensureDatabase();
+  const result = await db.prepare(`SELECT * FROM appointments ORDER BY CASE status WHEN 'PENDING' THEN 0 WHEN 'CONFIRMED' THEN 1 ELSE 2 END, preferred_date, preferred_time`).all<Record<string, unknown>>();
+  return result.results.map(mapAppointment);
+}
+
+export async function createAppointment(input: Omit<Appointment, "id" | "status" | "createdAt" | "updatedAt">) {
+  const db = await ensureDatabase();
+  const id = crypto.randomUUID();
+  await db.prepare(`INSERT INTO appointments (id, name, email, phone, country, preferred_date, preferred_time, training_interest, message, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')`)
+    .bind(id, input.name, input.email, input.phone, input.country, input.preferredDate, input.preferredTime, input.trainingInterest, input.message).run();
+  return id;
+}
+
+export async function updateAppointmentStatus(id: string, status: string) {
+  const db = await ensureDatabase();
+  await db.prepare(`UPDATE appointments SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(status, id).run();
+}
+
+export type ProductInput = Omit<Product, "id" | "status">;
+export type EventInput = Omit<EventItem, "id" | "status">;
+export type AssociateInput = Omit<Associate, "id" | "status">;
+
+export async function createProduct(input: ProductInput) {
+  const db = await ensureDatabase(); const id = crypto.randomUUID();
+  await db.prepare(`INSERT INTO products (id, name, slug, description, image, price_label, discount_label, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?)`)
+    .bind(id, input.name, input.slug, input.description, input.image, input.priceLabel, input.discountLabel, input.displayOrder).run(); return id;
+}
+
+export async function updateProduct(id: string, input: ProductInput) {
+  const db = await ensureDatabase(); await db.prepare(`UPDATE products SET name = ?, slug = ?, description = ?, image = ?, price_label = ?, discount_label = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+    .bind(input.name, input.slug, input.description, input.image, input.priceLabel, input.discountLabel, input.displayOrder, id).run();
+}
+
+export async function createEvent(input: EventInput) {
+  const db = await ensureDatabase(); const id = crypto.randomUUID();
+  await db.prepare(`INSERT INTO events (id, title, slug, description, image, starts_at, location, registration_url, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?)`)
+    .bind(id, input.title, input.slug, input.description, input.image, input.startsAt, input.location, input.registrationUrl, input.displayOrder).run(); return id;
+}
+
+export async function updateEvent(id: string, input: EventInput) {
+  const db = await ensureDatabase(); await db.prepare(`UPDATE events SET title = ?, slug = ?, description = ?, image = ?, starts_at = ?, location = ?, registration_url = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+    .bind(input.title, input.slug, input.description, input.image, input.startsAt, input.location, input.registrationUrl, input.displayOrder, id).run();
+}
+
+export async function createAssociate(input: AssociateInput) {
+  const db = await ensureDatabase(); const id = crypto.randomUUID();
+  await db.prepare(`INSERT INTO associates (id, name, url, description, image, status, display_order) VALUES (?, ?, ?, ?, ?, 'DRAFT', ?)`)
+    .bind(id, input.name, input.url, input.description, input.image, input.displayOrder).run(); return id;
+}
+
+export async function updateAssociate(id: string, input: AssociateInput) {
+  const db = await ensureDatabase(); await db.prepare(`UPDATE associates SET name = ?, url = ?, description = ?, image = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+    .bind(input.name, input.url, input.description, input.image, input.displayOrder, id).run();
+}
+
+export async function setCatalogStatus(table: "products" | "events" | "associates", id: string, status: string) {
+  const db = await ensureDatabase();
+  await db.prepare(`UPDATE ${table} SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(status, id).run();
+}
+
 export async function createContact(input: Omit<Contact, "id" | "status" | "source" | "createdAt" | "updatedAt" | "nextFollowUp">) {
   const db = await ensureDatabase();
   const id = crypto.randomUUID();
@@ -516,16 +735,19 @@ export async function updateContact(id: string, status: string, nextFollowUp?: s
 
 export async function getDashboardData() {
   const db = await ensureDatabase();
-  const [contactsResult, newResult, trainingsResult, postsResult, recentResult, activityResult] = await Promise.all([
+  const [contactsResult, newResult, appointmentsResult, trainingsResult, postsResult, productsResult, eventsResult, recentResult, activityResult] = await Promise.all([
     db.prepare(`SELECT COUNT(*) AS count FROM contacts`).first<{ count: number }>(),
     db.prepare(`SELECT COUNT(*) AS count FROM contacts WHERE status = 'NEW'`).first<{ count: number }>(),
+    db.prepare(`SELECT COUNT(*) AS count FROM appointments WHERE status IN ('PENDING', 'CONFIRMED')`).first<{ count: number }>(),
     db.prepare(`SELECT COUNT(*) AS count FROM trainings WHERE status = 'PUBLISHED' AND deleted_at IS NULL`).first<{ count: number }>(),
     db.prepare(`SELECT COUNT(*) AS count FROM blog_posts WHERE status = 'PUBLISHED'`).first<{ count: number }>(),
+    db.prepare(`SELECT COUNT(*) AS count FROM products WHERE status = 'PUBLISHED'`).first<{ count: number }>(),
+    db.prepare(`SELECT COUNT(*) AS count FROM events WHERE status = 'PUBLISHED'`).first<{ count: number }>(),
     db.prepare(`SELECT * FROM contacts ORDER BY created_at DESC LIMIT 6`).all<Record<string, unknown>>(),
     db.prepare(`SELECT * FROM contact_activities ORDER BY created_at DESC LIMIT 6`).all<Record<string, unknown>>(),
   ]);
   return {
-    counts: { contacts: Number(contactsResult?.count ?? 0), newContacts: Number(newResult?.count ?? 0), trainings: Number(trainingsResult?.count ?? 0), posts: Number(postsResult?.count ?? 0) },
+    counts: { contacts: Number(contactsResult?.count ?? 0), newContacts: Number(newResult?.count ?? 0), appointments: Number(appointmentsResult?.count ?? 0), trainings: Number(trainingsResult?.count ?? 0), posts: Number(postsResult?.count ?? 0), products: Number(productsResult?.count ?? 0), events: Number(eventsResult?.count ?? 0) },
     recent: recentResult.results.map(mapContact),
     activity: activityResult.results,
   };

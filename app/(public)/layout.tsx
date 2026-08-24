@@ -1,7 +1,7 @@
 import { PublicShell } from "../components/PublicShell";
-import { getSettings } from "../../db/repository";
+import { getPublicNotifications, getSettings } from "../../db/repository";
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
-  const settings = await getSettings();
-  return <PublicShell whatsapp={settings.whatsapp}>{children}</PublicShell>;
+  const [settings, notifications] = await Promise.all([getSettings(), getPublicNotifications()]);
+  return <PublicShell whatsapp={settings.whatsapp} notifications={notifications}>{children}</PublicShell>;
 }
