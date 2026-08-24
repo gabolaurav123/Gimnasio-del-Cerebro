@@ -69,6 +69,22 @@ test("los permisos administrativos se validan en el servidor", async () => {
   assert.match(contacts, /SUPERADMIN.*COMERCIAL/);
 });
 
+test("la navegación administrativa funciona sin depender del router RSC", async () => {
+  const [shell, dashboard, manager, login] = await Promise.all([
+    read("../app/components/AdminShell.tsx"),
+    read("../app/admin/page.tsx"),
+    read("../app/components/AdminUI.tsx"),
+    read("../app/components/LoginForm.tsx"),
+  ]);
+  for (const source of [shell, dashboard, manager]) {
+    assert.doesNotMatch(source, /next\/link/);
+  }
+  assert.match(shell, /<a className=.*href=\{href\}/);
+  assert.match(dashboard, /<a href="\/admin\/crm"/);
+  assert.match(login, /window\.location\.assign\("\/admin"\)/);
+  assert.match(shell, /window\.location\.assign\("\/login"\)/);
+});
+
 test("el blog admite imágenes y un asistente editorial opcional", async () => {
   const [manager, repository, aiRoute] = await Promise.all([
     read("../app/components/AdminUI.tsx"),
