@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, BookOpen, BrainCircuit, CalendarDays, ChevronRight, ContactRound, FileText, Gauge, Handshake, ImageIcon, LogOut, Menu, MessageCircleMore, MessageSquareQuote, Search, Settings2, ShoppingBag, UsersRound, X } from "lucide-react";
+import { ArrowLeft, BookOpen, BrainCircuit, CalendarDays, ChevronRight, ContactRound, CreditCard, FileText, Gauge, Handshake, ImageIcon, LogOut, Menu, MessageCircleMore, MessageSquareQuote, Search, Settings2, ShoppingBag, UsersRound, X } from "lucide-react";
 import { FormEvent, useState } from "react";
 import type { AdminRole } from "../../db/repository";
 
@@ -12,6 +12,7 @@ const items = [
   { href: "/admin/entrenamientos", label: "Entrenamientos", icon: BrainCircuit, roles: ["SUPERADMIN", "EDITOR"] },
   { href: "/admin/eventos", label: "Eventos", icon: CalendarDays, roles: ["SUPERADMIN", "EDITOR"] },
   { href: "/admin/productos", label: "Productos", icon: ShoppingBag, roles: ["SUPERADMIN", "EDITOR"] },
+  { href: "/admin/pagos", label: "Pagos", icon: CreditCard, roles: ["SUPERADMIN", "COMERCIAL"] },
   { href: "/admin/blog", label: "Blog", icon: BookOpen, roles: ["SUPERADMIN", "EDITOR"] },
   { href: "/admin/testimonios", label: "Testimonios", icon: MessageSquareQuote, roles: ["SUPERADMIN", "EDITOR"] },
   { href: "/admin/asociados", label: "Asociados", icon: Handshake, roles: ["SUPERADMIN", "EDITOR"] },

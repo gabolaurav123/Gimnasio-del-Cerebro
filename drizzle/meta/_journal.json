@@ -29,6 +29,13 @@
       "when": 1787589528595,
       "tag": "0003_yielding_cyclops",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1787613679050,
+      "tag": "0004_easy_owl",
+      "breakpoints": true
     }
   ]
 }

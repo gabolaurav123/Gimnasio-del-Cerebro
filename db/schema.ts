@@ -157,6 +157,28 @@ export const products = sqliteTable("products", {
   ...timestamps,
 }, (table) => [index("idx_products_status_order").on(table.status, table.displayOrder)]);
 
+export const payments = sqliteTable("payments", {
+  id: text("id").primaryKey(),
+  reference: text("reference").notNull().unique(),
+  payerName: text("payer_name").notNull(),
+  payerEmail: text("payer_email"),
+  payerPhone: text("payer_phone"),
+  concept: text("concept").notNull(),
+  itemType: text("item_type", { enum: ["PRODUCT", "TRAINING", "EVENT", "OTHER"] }).notNull().default("OTHER"),
+  itemId: text("item_id"),
+  amountCents: integer("amount_cents").notNull(),
+  currency: text("currency").notNull().default("BOB"),
+  paymentMethod: text("payment_method", { enum: ["BANK_TRANSFER", "QR", "CASH", "CARD", "OTHER"] }).notNull().default("OTHER"),
+  providerReference: text("provider_reference"),
+  status: text("status", { enum: ["PENDING", "VERIFIED", "REJECTED", "REFUNDED"] }).notNull().default("PENDING"),
+  paidAt: text("paid_at"),
+  verifiedAt: text("verified_at"),
+  verifiedBy: text("verified_by"),
+  notes: text("notes"),
+  source: text("source").notNull().default("MANUAL"),
+  ...timestamps,
+}, (table) => [index("idx_payments_status_created_at").on(table.status, table.createdAt), index("idx_payments_payer_email").on(table.payerEmail)]);
+
 export const events = sqliteTable("events", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),

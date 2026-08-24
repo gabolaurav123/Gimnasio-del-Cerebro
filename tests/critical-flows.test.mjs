@@ -12,7 +12,43 @@ test("la Home conserva la propuesta central y usa contenido persistente", async 
   assert.match(page, /getTestimonials\(\)/);
   assert.match(page, /trainings\.slice\(0, 3\)/);
   assert.match(page, /Ver m.s entrenamientos/);
+  assert.match(page, /hero-neuroscience-quantum-desktop-v1/);
+  assert.match(page, /hero-neuroscience-quantum-mobile-v1/);
   assert.doesNotMatch(page, /codex-preview|SkeletonPreview/);
+});
+
+test("Nosotros presenta a la fundadora y su trayectoria profesional", async () => {
+  const about = await read("../app/(public)/nosotros/page.tsx");
+  assert.match(about, /Marisa Antonieta/);
+  assert.match(about, /Cardozo Arce/);
+  assert.match(about, /marisa-cardoso-portrait-v1/);
+  assert.match(about, /Neurofitness Active/);
+  assert.match(about, /Universidad Nacional de Tucum.n/);
+  assert.match(about, /Fundaci.n Nueva Humanidad/);
+});
+
+test("BioShield by Kirius aparece como producto inicial", async () => {
+  const repository = await read("../db/repository.ts");
+  assert.match(repository, /BioShield by Kirius/);
+  assert.match(repository, /bioshield-by-kirius/);
+  assert.match(repository, /productSeeds/);
+});
+
+test("el panel permite registrar y verificar pagos con control de acceso", async () => {
+  const [shell, manager, route, statusRoute, repository] = await Promise.all([
+    read("../app/components/AdminShell.tsx"),
+    read("../app/components/PaymentManager.tsx"),
+    read("../app/api/admin/payments/route.ts"),
+    read("../app/api/admin/payments/[id]/route.ts"),
+    read("../db/repository.ts"),
+  ]);
+  assert.match(shell, /\/admin\/pagos/);
+  assert.match(manager, /Registrar pago/);
+  assert.match(manager, /VERIFIED/);
+  assert.match(route, /SUPERADMIN.*COMERCIAL/);
+  assert.match(statusRoute, /updatePaymentStatus/);
+  assert.match(repository, /CREATE TABLE IF NOT EXISTS payments/);
+  assert.match(repository, /GDC-/);
 });
 
 test("el acceso administrativo no conserva la navegacion publica", async () => {

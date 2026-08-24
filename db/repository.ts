@@ -94,6 +94,29 @@ export type Product = {
   displayOrder: number;
 };
 
+export type Payment = {
+  id: string;
+  reference: string;
+  payerName: string;
+  payerEmail: string | null;
+  payerPhone: string | null;
+  concept: string;
+  itemType: string;
+  itemId: string | null;
+  amountCents: number;
+  currency: string;
+  paymentMethod: string;
+  providerReference: string | null;
+  status: string;
+  paidAt: string | null;
+  verifiedAt: string | null;
+  verifiedBy: string | null;
+  notes: string | null;
+  source: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type EventItem = {
   id: string;
   title: string;
@@ -131,6 +154,18 @@ export const associateSeeds: Associate[] = [{
   url: "https://www.comunidadkiryus.org/",
   description: "Red de ecoaldeas autosustentables orientada a la permacultura, la regeneración ambiental, la sostenibilidad y la vida colaborativa.",
   image: null,
+  status: "PUBLISHED",
+  displayOrder: 1,
+}];
+
+export const productSeeds: Product[] = [{
+  id: "product-bioshield-kirius",
+  name: "BioShield by Kirius",
+  slug: "bioshield-by-kirius",
+  description: "Una propuesta de Kirius que se incorpora al catálogo de Gimnasio del Cerebro. Próximamente publicaremos su presentación, beneficios, disponibilidad y forma de adquisición.",
+  image: null,
+  priceLabel: "Información próximamente",
+  discountLabel: "Nuevo",
   status: "PUBLISHED",
   displayOrder: 1,
 }];
@@ -318,6 +353,7 @@ const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS whatsapp_events (provider_message_id TEXT PRIMARY KEY, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS appointments (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, country TEXT NOT NULL, preferred_date TEXT NOT NULL, preferred_time TEXT NOT NULL, training_interest TEXT, message TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'PENDING', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS products (id TEXT PRIMARY KEY, name TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT NOT NULL, image TEXT, price_label TEXT NOT NULL DEFAULT 'Consultar', discount_label TEXT, status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS payments (id TEXT PRIMARY KEY, reference TEXT NOT NULL UNIQUE, payer_name TEXT NOT NULL, payer_email TEXT, payer_phone TEXT, concept TEXT NOT NULL, item_type TEXT NOT NULL DEFAULT 'OTHER', item_id TEXT, amount_cents INTEGER NOT NULL, currency TEXT NOT NULL DEFAULT 'BOB', payment_method TEXT NOT NULL DEFAULT 'OTHER', provider_reference TEXT, status TEXT NOT NULL DEFAULT 'PENDING', paid_at TEXT, verified_at TEXT, verified_by TEXT, notes TEXT, source TEXT NOT NULL DEFAULT 'MANUAL', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, title TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT NOT NULL, image TEXT, starts_at TEXT NOT NULL, location TEXT NOT NULL, registration_url TEXT, status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS associates (id TEXT PRIMARY KEY, name TEXT NOT NULL, url TEXT NOT NULL, description TEXT NOT NULL, image TEXT, status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE INDEX IF NOT EXISTS idx_contacts_status_created_at ON contacts(status, created_at)`,
@@ -327,6 +363,8 @@ const schemaStatements = [
   `CREATE INDEX IF NOT EXISTS idx_contact_activities_contact_id ON contact_activities(contact_id)`,
   `CREATE INDEX IF NOT EXISTS idx_appointments_status_date ON appointments(status, preferred_date)`,
   `CREATE INDEX IF NOT EXISTS idx_products_status_order ON products(status, display_order)`,
+  `CREATE INDEX IF NOT EXISTS idx_payments_status_created_at ON payments(status, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_payments_payer_email ON payments(payer_email)`,
   `CREATE INDEX IF NOT EXISTS idx_events_status_date ON events(status, starts_at)`,
   `CREATE INDEX IF NOT EXISTS idx_associates_status_order ON associates(status, display_order)`,
 ];
@@ -385,10 +423,14 @@ export function ensureDatabase() {
       db.prepare(`INSERT OR IGNORE INTO associates (id, name, url, description, image, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?)`)
         .bind(item.id, item.name, item.url, item.description, item.image, item.status, item.displayOrder),
     );
+    const productBatch = productSeeds.map((item) =>
+      db.prepare(`INSERT OR IGNORE INTO products (id, name, slug, description, image, price_label, discount_label, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        .bind(item.id, item.name, item.slug, item.description, item.image, item.priceLabel, item.discountLabel, item.status, item.displayOrder),
+    );
     const trainingLogoSyncBatch = trainingSeeds.map((item) =>
       db.prepare(`UPDATE trainings SET logo = ? WHERE id = ?`).bind(item.logo, item.id),
     );
-    await db.batch([...trainingBatch, ...postBatch, ...testimonialBatch, ...associateBatch, ...trainingLogoSyncBatch]);
+    await db.batch([...trainingBatch, ...postBatch, ...testimonialBatch, ...associateBatch, ...productBatch, ...trainingLogoSyncBatch]);
     return db;
   })().catch((error) => {
     ready = null;
@@ -490,6 +532,19 @@ function mapProduct(row: Record<string, unknown>): Product {
   };
 }
 
+function mapPayment(row: Record<string, unknown>): Payment {
+  return {
+    id: String(row.id), reference: String(row.reference), payerName: String(row.payer_name),
+    payerEmail: row.payer_email ? String(row.payer_email) : null, payerPhone: row.payer_phone ? String(row.payer_phone) : null,
+    concept: String(row.concept), itemType: String(row.item_type), itemId: row.item_id ? String(row.item_id) : null,
+    amountCents: Number(row.amount_cents), currency: String(row.currency), paymentMethod: String(row.payment_method),
+    providerReference: row.provider_reference ? String(row.provider_reference) : null, status: String(row.status),
+    paidAt: row.paid_at ? String(row.paid_at) : null, verifiedAt: row.verified_at ? String(row.verified_at) : null,
+    verifiedBy: row.verified_by ? String(row.verified_by) : null, notes: row.notes ? String(row.notes) : null,
+    source: String(row.source), createdAt: String(row.created_at), updatedAt: String(row.updated_at),
+  };
+}
+
 function mapEvent(row: Record<string, unknown>): EventItem {
   return {
     id: String(row.id), title: String(row.title), slug: String(row.slug), description: String(row.description),
@@ -581,9 +636,52 @@ export async function getProducts(includeHidden = false) {
     const result = await db.prepare(includeHidden ? `SELECT * FROM products ORDER BY display_order, name` : `SELECT * FROM products WHERE status = 'PUBLISHED' ORDER BY display_order, name`).all<Record<string, unknown>>();
     return result.results.map(mapProduct);
   } catch (error) {
-    if (isDatabaseUnavailable(error)) return [];
+    if (isDatabaseUnavailable(error)) return productSeeds.filter((item) => includeHidden || item.status === "PUBLISHED");
     throw error;
   }
+}
+
+export async function getPayments(query = "", status = "") {
+  const db = await ensureDatabase();
+  const conditions: string[] = [];
+  const bindings: string[] = [];
+  if (query) {
+    conditions.push(`(payer_name LIKE ? OR payer_email LIKE ? OR payer_phone LIKE ? OR concept LIKE ? OR reference LIKE ? OR provider_reference LIKE ?)`);
+    const value = `%${query}%`;
+    bindings.push(value, value, value, value, value, value);
+  }
+  if (status) { conditions.push(`status = ?`); bindings.push(status); }
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+  const result = await db.prepare(`SELECT * FROM payments ${where} ORDER BY created_at DESC LIMIT 250`).bind(...bindings).all<Record<string, unknown>>();
+  return result.results.map(mapPayment);
+}
+
+export type PaymentInput = Pick<Payment, "payerName" | "payerEmail" | "payerPhone" | "concept" | "itemType" | "itemId" | "amountCents" | "currency" | "paymentMethod" | "providerReference" | "paidAt" | "notes">;
+
+export async function createPayment(input: PaymentInput) {
+  const db = await ensureDatabase();
+  const id = crypto.randomUUID();
+  const reference = `GDC-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${id.slice(0, 8).toUpperCase()}`;
+  await db.prepare(`INSERT INTO payments (id, reference, payer_name, payer_email, payer_phone, concept, item_type, item_id, amount_cents, currency, payment_method, provider_reference, paid_at, notes, source, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'MANUAL', 'PENDING')`)
+    .bind(id, reference, input.payerName, input.payerEmail, input.payerPhone, input.concept, input.itemType, input.itemId, input.amountCents, input.currency, input.paymentMethod, input.providerReference, input.paidAt, input.notes).run();
+  return { id, reference };
+}
+
+export async function updatePaymentStatus(id: string, status: string, verifiedBy: string) {
+  const db = await ensureDatabase();
+  await db.prepare(`UPDATE payments SET status = ?, verified_at = CASE WHEN ? = 'VERIFIED' THEN CURRENT_TIMESTAMP ELSE verified_at END, verified_by = CASE WHEN ? = 'VERIFIED' THEN ? ELSE verified_by END, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+    .bind(status, status, status, verifiedBy, id).run();
+}
+
+export async function getPaymentSummary() {
+  const db = await ensureDatabase();
+  const [pending, verified, rejected, totals] = await Promise.all([
+    db.prepare(`SELECT COUNT(*) AS count FROM payments WHERE status = 'PENDING'`).first<{ count: number }>(),
+    db.prepare(`SELECT COUNT(*) AS count FROM payments WHERE status = 'VERIFIED'`).first<{ count: number }>(),
+    db.prepare(`SELECT COUNT(*) AS count FROM payments WHERE status IN ('REJECTED', 'REFUNDED')`).first<{ count: number }>(),
+    db.prepare(`SELECT currency, COALESCE(SUM(amount_cents), 0) AS amount_cents FROM payments WHERE status = 'VERIFIED' GROUP BY currency ORDER BY currency`).all<{ currency: string; amount_cents: number }>(),
+  ]);
+  return { pending: Number(pending?.count ?? 0), verified: Number(verified?.count ?? 0), exceptions: Number(rejected?.count ?? 0), totals: totals.results.map((row) => ({ currency: row.currency, amountCents: Number(row.amount_cents) })) };
 }
 
 export async function getEvents(includeHidden = false) {
@@ -735,10 +833,11 @@ export async function updateContact(id: string, status: string, nextFollowUp?: s
 
 export async function getDashboardData() {
   const db = await ensureDatabase();
-  const [contactsResult, newResult, appointmentsResult, trainingsResult, postsResult, productsResult, eventsResult, recentResult, activityResult] = await Promise.all([
+  const [contactsResult, newResult, appointmentsResult, paymentsResult, trainingsResult, postsResult, productsResult, eventsResult, recentResult, activityResult] = await Promise.all([
     db.prepare(`SELECT COUNT(*) AS count FROM contacts`).first<{ count: number }>(),
     db.prepare(`SELECT COUNT(*) AS count FROM contacts WHERE status = 'NEW'`).first<{ count: number }>(),
     db.prepare(`SELECT COUNT(*) AS count FROM appointments WHERE status IN ('PENDING', 'CONFIRMED')`).first<{ count: number }>(),
+    db.prepare(`SELECT COUNT(*) AS count FROM payments WHERE status = 'PENDING'`).first<{ count: number }>(),
     db.prepare(`SELECT COUNT(*) AS count FROM trainings WHERE status = 'PUBLISHED' AND deleted_at IS NULL`).first<{ count: number }>(),
     db.prepare(`SELECT COUNT(*) AS count FROM blog_posts WHERE status = 'PUBLISHED'`).first<{ count: number }>(),
     db.prepare(`SELECT COUNT(*) AS count FROM products WHERE status = 'PUBLISHED'`).first<{ count: number }>(),
@@ -747,7 +846,7 @@ export async function getDashboardData() {
     db.prepare(`SELECT * FROM contact_activities ORDER BY created_at DESC LIMIT 6`).all<Record<string, unknown>>(),
   ]);
   return {
-    counts: { contacts: Number(contactsResult?.count ?? 0), newContacts: Number(newResult?.count ?? 0), appointments: Number(appointmentsResult?.count ?? 0), trainings: Number(trainingsResult?.count ?? 0), posts: Number(postsResult?.count ?? 0), products: Number(productsResult?.count ?? 0), events: Number(eventsResult?.count ?? 0) },
+    counts: { contacts: Number(contactsResult?.count ?? 0), newContacts: Number(newResult?.count ?? 0), appointments: Number(appointmentsResult?.count ?? 0), pendingPayments: Number(paymentsResult?.count ?? 0), trainings: Number(trainingsResult?.count ?? 0), posts: Number(postsResult?.count ?? 0), products: Number(productsResult?.count ?? 0), events: Number(eventsResult?.count ?? 0) },
     recent: recentResult.results.map(mapContact),
     activity: activityResult.results,
   };
@@ -859,9 +958,9 @@ export const defaultSettings: Record<string, string> = {
   siteName: "Gimnasio del Cerebro",
   whatsapp: "543813004167",
   contactEmail: "",
-  heroEyebrow: "Conocimiento que se convierte en acción",
-  heroTitle: "Entrena tu cerebro. Transforma tu vida.",
-  heroDescription: "Más de una década acompañando a personas en el desarrollo de una vida más consciente.",
+  heroEyebrow: "Neurociencia aplicada · consciencia · transformación",
+  heroTitle: "Comprende tu mente. Amplía tus posibilidades.",
+  heroDescription: "Entrenamientos que integran neurociencia, aprendizaje consciente y una perspectiva conceptual inspirada en la física cuántica para convertir conocimiento en práctica.",
   ctaTitle: "El cambio comienza cuando comprendes cómo funciona tu mente.",
   ctaDescription: "Descubre el entrenamiento que mejor se adapta a tu momento actual.",
   instagram: "",
@@ -878,7 +977,12 @@ export async function getSettings() {
     const runtime = await getRuntimeValues(["WHATSAPP_NUMBER"]);
     const initialSettings = { ...defaultSettings, whatsapp: runtime.WHATSAPP_NUMBER?.trim() || defaultSettings.whatsapp };
     const inserts = Object.entries(initialSettings).map(([key, value]) => db.prepare(`INSERT OR IGNORE INTO site_settings (key, value) VALUES (?, ?)`).bind(key, value));
-    await db.batch(inserts);
+    const legacySettingMigrations = [
+      ["heroEyebrow", "Conocimiento que se convierte en acción", defaultSettings.heroEyebrow],
+      ["heroTitle", "Entrena tu cerebro. Transforma tu vida.", defaultSettings.heroTitle],
+      ["heroDescription", "Más de una década acompañando a personas en el desarrollo de una vida más consciente.", defaultSettings.heroDescription],
+    ].map(([key, oldValue, newValue]) => db.prepare(`UPDATE site_settings SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ? AND value = ?`).bind(newValue, key, oldValue));
+    await db.batch([...inserts, ...legacySettingMigrations]);
     const result = await db.prepare(`SELECT key, value FROM site_settings`).all<{ key: string; value: string }>();
     return Object.fromEntries(result.results.map((row) => [row.key, row.value]));
   } catch (error) {

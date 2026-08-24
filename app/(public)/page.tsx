@@ -16,7 +16,7 @@ export default async function Home() {
   return (
     <>
       <section className="hero">
-        <picture className="hero__image"><source media="(max-width: 700px)" srcSet="/images/hero-neurofitness-mobile.png" /><Image src="/images/hero-neurofitness-desktop.png" alt="Persona en un entorno azul con conexiones que representan aprendizaje y consciencia" fill priority sizes="100vw" /></picture>
+        <picture className="hero__image"><source media="(max-width: 700px)" srcSet="/images/hero-neuroscience-quantum-mobile-v1.png" /><Image src="/images/hero-neuroscience-quantum-desktop-v1.png" alt="Cerebro humano luminoso conectado por una red científica que representa neurociencia, aprendizaje y posibilidades" fill priority sizes="100vw" /></picture>
         <div className="hero__wash" />
         <div className="shell hero__content">
           <div className="hero__copy">
@@ -24,7 +24,7 @@ export default async function Home() {
             <h1>{heroParts[0]}.<br /><em>{heroParts.slice(1).join(".")}.</em></h1>
             <p>{settings.heroDescription}</p>
             <div className="button-row"><a className="button button--light" href="/entrenamientos">Explorar entrenamientos <ArrowRight size={18} /></a><a className="button button--ghost-light" href={whatsappUrl("Hola, quisiera recibir información sobre los entrenamientos de Gimnasio del Cerebro.", settings.whatsapp)} target="_blank" rel="noreferrer"><MessageCircle size={18} />Hablar por WhatsApp</a></div>
-            <div className="hero__trust"><span>Desde 2014</span><span>Presencia internacional</span><span>Metodologías propias</span></div>
+            <div className="hero__trust"><span>Neurociencia aplicada</span><span>Aprendizaje consciente</span><span>Perspectiva cuántica conceptual</span></div>
           </div>
         </div>
         <a className="hero__scroll" href="#experiencia"><span />Descubrir</a>
