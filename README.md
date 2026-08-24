@@ -148,7 +148,7 @@ El proyecto detecta automáticamente el entorno: usa D1/R2 en Cloudflare y Postg
 
 1. Crea una base de datos PostgreSQL y asígnala al Web Service.
 2. Copia su cadena de conexión completa en la variable `DATABASE_URL`.
-3. Configura el build como `npm install --include=dev --no-audit --no-fund && npm run build`.
+3. Configura el build como `npm install --include=dev --no-audit --no-fund && npm run build:seenode`. Este comando conserva solo las dependencias de producción y prepara un servidor ligero para reducir la imagen final.
 4. Configura el inicio como `npm run start -- --hostname 0.0.0.0 --port 3000` y el puerto como `3000`.
 5. Añade las variables administrativas de `.env.example` y vuelve a desplegar.
 

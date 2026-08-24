@@ -174,12 +174,14 @@ test("todos los enlaces públicos de WhatsApp usan el número oficial", async ()
 });
 
 test("el servidor Node de Seenode no carga cloudflare:workers al iniciar", async () => {
-  const [repository, auth, media, runtime, packageJson] = await Promise.all([
+  const [repository, auth, media, runtime, packageJson, startServer, prepareRuntime] = await Promise.all([
     read("../db/repository.ts"),
     read("../lib/auth.ts"),
     read("../app/api/admin/media/route.ts"),
     read("../lib/runtime-env.ts"),
     read("../package.json"),
+    read("../scripts/start-server.mjs"),
+    read("../scripts/prepare-runtime.mjs"),
   ]);
   assert.doesNotMatch(repository, /from ["']cloudflare:workers["']/);
   assert.doesNotMatch(auth, /from ["']cloudflare:workers["']/);
@@ -192,4 +194,8 @@ test("el servidor Node de Seenode no carga cloudflare:workers al iniciar", async
   assert.match(databaseRuntime, /@vite-ignore/);
   assert.match(databaseRuntime, /nodePostgresPackage/);
   assert.match(packageJson, /"postgres"/);
+  assert.match(packageJson, /node scripts\/start-server\.mjs/);
+  assert.match(startServer, /startProdServer/);
+  assert.match(prepareRuntime, /npmCommand.*prune/s);
+  assert.match(prepareRuntime, /--omit=dev/);
 });

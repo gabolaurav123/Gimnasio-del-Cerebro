@@ -1,0 +1,14 @@
+.git
+.github
+.next
+.vinext
+.wrangler
+build
+dist
+node_modules
+outputs
+work
+*.log
+.env
+.env.*
+!.env.example
