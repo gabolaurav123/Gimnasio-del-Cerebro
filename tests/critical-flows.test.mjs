@@ -98,6 +98,37 @@ test("el blog admite imágenes y un asistente editorial opcional", async () => {
   assert.match(aiRoute, /store: false/);
 });
 
+test("el panel administra entrenamientos, adjuntos y testimonios", async () => {
+  const [manager, trainingRoute, testimonialRoute, mediaRoute] = await Promise.all([
+    read("../app/components/AdminUI.tsx"),
+    read("../app/api/admin/trainings/[id]/route.ts"),
+    read("../app/api/admin/testimonials/route.ts"),
+    read("../app/api/admin/media/route.ts"),
+  ]);
+  assert.match(manager, /resourceFile/);
+  assert.match(manager, /attachmentFile/);
+  assert.match(trainingRoute, /updateTraining/);
+  assert.match(testimonialRoute, /createTestimonial/);
+  assert.match(mediaRoute, /application\/pdf/);
+});
+
+test("WhatsApp e IA usan proveedor, webhook firmado y secretos del servidor", async () => {
+  const [shell, provider, webhook, assistant] = await Promise.all([
+    read("../app/components/AdminShell.tsx"),
+    read("../lib/evolution-api.ts"),
+    read("../app/api/webhooks/whatsapp/route.ts"),
+    read("../app/api/admin/whatsapp/assistant/route.ts"),
+  ]);
+  assert.match(shell, /WhatsApp \+ IA/);
+  assert.match(provider, /EVOLUTION_API_KEY/);
+  assert.match(provider, /instance\/connect/);
+  assert.match(provider, /chat\/findChats/);
+  assert.match(webhook, /x-webhook-secret/);
+  assert.match(webhook, /store: false/);
+  assert.match(webhook, /claimWhatsAppEvent/);
+  assert.match(assistant, /whatsappAiInstructions/);
+});
+
 test("las páginas internas usan un encabezado sólido y cabeceras de seguridad", async () => {
   const [chrome, config] = await Promise.all([read("../app/components/SiteChrome.tsx"), read("../next.config.ts")]);
   assert.match(chrome, /site-header--solid/);

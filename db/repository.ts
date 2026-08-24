@@ -20,6 +20,8 @@ export type Training = {
   shortDescription: string;
   fullDescription: string;
   logo: string;
+  heroImage: string | null;
+  resourceUrl: string | null;
   status: string;
   displayOrder: number;
 };
@@ -31,6 +33,7 @@ export type BlogPost = {
   excerpt: string;
   content: string;
   image: string | null;
+  attachmentUrl: string | null;
   author: string | null;
   category: string;
   publishedAt: string | null;
@@ -73,6 +76,8 @@ export const trainingSeeds: Training[] = [
     shortDescription: "Entrenamiento base orientado a comprender el funcionamiento de la mente y desarrollar capacidades de autogestión.",
     fullDescription: "Un punto de partida para observar el funcionamiento de la mente, reconocer patrones y desarrollar herramientas de autogestión aplicables a la vida cotidiana.",
     logo: "/logos/nfa-full-v2.jpg",
+    heroImage: null,
+    resourceUrl: null,
     status: "PUBLISHED",
     displayOrder: 1,
   },
@@ -84,6 +89,8 @@ export const trainingSeeds: Training[] = [
     shortDescription: "Herramientas para detectar, comprender y trabajar bloqueos que condicionan las respuestas emocionales.",
     fullDescription: "Una propuesta para identificar bloqueos profundos y comprender cómo influyen en nuestras respuestas emocionales, utilizando el contenido actual del programa.",
     logo: "/logos/ntr-full-v2.jpg",
+    heroImage: null,
+    resourceUrl: null,
     status: "PUBLISHED",
     displayOrder: 2,
   },
@@ -95,6 +102,8 @@ export const trainingSeeds: Training[] = [
     shortDescription: "Recorrido integral por los principales entrenamientos para acelerar el proceso de transformación personal.",
     fullDescription: "Un recorrido integral por los principales entrenamientos de Gimnasio del Cerebro, organizado para profundizar el proceso de transformación personal.",
     logo: "/logos/bft-full-v2.jpg",
+    heroImage: null,
+    resourceUrl: null,
     status: "PUBLISHED",
     displayOrder: 3,
   },
@@ -106,6 +115,8 @@ export const trainingSeeds: Training[] = [
     shortDescription: "Formación avanzada para profundizar en el método y acompañar procesos de transformación.",
     fullDescription: "Formación avanzada dirigida a quienes desean profundizar en el método de Neurofitness Active y acompañar procesos de transformación.",
     logo: "/logos/ntm-full-v2.jpg",
+    heroImage: null,
+    resourceUrl: null,
     status: "PUBLISHED",
     displayOrder: 4,
   },
@@ -117,6 +128,8 @@ export const trainingSeeds: Training[] = [
     shortDescription: "Metodologías para comprender y optimizar procesos de aprendizaje desde una perspectiva neurocientífica y pedagógica.",
     fullDescription: "Metodologías orientadas a comprender y optimizar procesos de aprendizaje desde una perspectiva neurocientífica y pedagógica.",
     logo: "/logos/alp-full-v2.jpg",
+    heroImage: null,
+    resourceUrl: null,
     status: "PUBLISHED",
     displayOrder: 5,
   },
@@ -128,6 +141,8 @@ export const trainingSeeds: Training[] = [
     shortDescription: "Herramientas para identificar bloqueos profundos y ampliar nuevas posibilidades de desarrollo.",
     fullDescription: "Herramientas orientadas a identificar bloqueos profundos y ampliar nuevas posibilidades de desarrollo personal.",
     logo: "/logos/nco-full-v2.jpg",
+    heroImage: null,
+    resourceUrl: null,
     status: "PUBLISHED",
     displayOrder: 6,
   },
@@ -141,6 +156,7 @@ export const postSeeds: BlogPost[] = [
     excerpt: "Una invitación a observarnos con mayor claridad y reconocer los patrones que influyen en nuestra manera de vivir.",
     content: "Autodescubrirnos implica mirar con honestidad nuestras experiencias, decisiones y respuestas. Este espacio editorial conserva el tema original y queda preparado para incorporar el artículo completo desde el administrador.",
     image: null,
+    attachmentUrl: null,
     author: null,
     category: "Autoconocimiento",
     publishedAt: "2026-06-12",
@@ -153,6 +169,7 @@ export const postSeeds: BlogPost[] = [
     excerpt: "Una aproximación responsable al vínculo entre emociones, bienestar y la forma en que interpretamos nuestras experiencias.",
     content: "Este artículo plantea preguntas sobre emociones y bienestar sin reemplazar la evaluación ni la orientación de profesionales de la salud. Su contenido original puede completarse desde el editor del blog.",
     image: null,
+    attachmentUrl: null,
     author: null,
     category: "Bienestar",
     publishedAt: "2026-05-28",
@@ -165,6 +182,7 @@ export const postSeeds: BlogPost[] = [
     excerpt: "Exploramos los bloqueos, hábitos y perspectivas que pueden limitar la forma en que construimos una vida consciente.",
     content: "La felicidad no responde a una única fórmula. Este texto abre un espacio de reflexión sobre aquello que limita nuestras posibilidades y la forma en que podemos observarlo.",
     image: null,
+    attachmentUrl: null,
     author: null,
     category: "Desarrollo personal",
     publishedAt: "2026-05-08",
@@ -221,14 +239,15 @@ export const testimonialSeeds: Testimonial[] = [
 
 const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, role TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
-  `CREATE TABLE IF NOT EXISTS trainings (id TEXT PRIMARY KEY, name TEXT NOT NULL, acronym TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, short_description TEXT NOT NULL, full_description TEXT NOT NULL DEFAULT '', logo TEXT NOT NULL, hero_image TEXT, cta_label TEXT NOT NULL DEFAULT 'Consultar', status TEXT NOT NULL DEFAULT 'PUBLISHED', display_order INTEGER NOT NULL DEFAULT 0, seo_title TEXT, seo_description TEXT, deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
-  `CREATE TABLE IF NOT EXISTS blog_posts (id TEXT PRIMARY KEY, title TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, excerpt TEXT NOT NULL, content TEXT NOT NULL, image TEXT, author TEXT, category TEXT NOT NULL DEFAULT 'Consciencia', status TEXT NOT NULL DEFAULT 'PUBLISHED', published_at TEXT, seo_title TEXT, seo_description TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS trainings (id TEXT PRIMARY KEY, name TEXT NOT NULL, acronym TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, short_description TEXT NOT NULL, full_description TEXT NOT NULL DEFAULT '', logo TEXT NOT NULL, hero_image TEXT, resource_url TEXT, cta_label TEXT NOT NULL DEFAULT 'Consultar', status TEXT NOT NULL DEFAULT 'PUBLISHED', display_order INTEGER NOT NULL DEFAULT 0, seo_title TEXT, seo_description TEXT, deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS blog_posts (id TEXT PRIMARY KEY, title TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, excerpt TEXT NOT NULL, content TEXT NOT NULL, image TEXT, attachment_url TEXT, author TEXT, category TEXT NOT NULL DEFAULT 'Consciencia', status TEXT NOT NULL DEFAULT 'PUBLISHED', published_at TEXT, seo_title TEXT, seo_description TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS contacts (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, country TEXT NOT NULL, training_interest TEXT, message TEXT NOT NULL, source TEXT NOT NULL DEFAULT 'website_contact', status TEXT NOT NULL DEFAULT 'NEW', tags TEXT NOT NULL DEFAULT '[]', assignee TEXT, next_follow_up TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS contact_notes (id TEXT PRIMARY KEY, contact_id TEXT NOT NULL, user_id TEXT, body TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS contact_activities (id TEXT PRIMARY KEY, contact_id TEXT, action TEXT NOT NULL, metadata TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS testimonials (id TEXT PRIMARY KEY, name TEXT NOT NULL, program TEXT, quote TEXT, video_url TEXT, thumbnail TEXT, rating INTEGER, visible INTEGER NOT NULL DEFAULT 0, display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS media_assets (id TEXT PRIMARY KEY, name TEXT NOT NULL, key TEXT NOT NULL UNIQUE, mime_type TEXT NOT NULL, size INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS whatsapp_events (provider_message_id TEXT PRIMARY KEY, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE INDEX IF NOT EXISTS idx_contacts_status_created_at ON contacts(status, created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_contacts_training_interest ON contacts(training_interest)`,
   `CREATE INDEX IF NOT EXISTS idx_trainings_status_order ON trainings(status, display_order)`,
@@ -240,6 +259,16 @@ const postgresSchemaStatements = [
   `CREATE TABLE IF NOT EXISTS media_blobs (media_id TEXT PRIMARY KEY, body BYTEA NOT NULL)`,
 ];
 
+const additiveMigrations = [
+  `ALTER TABLE trainings ADD COLUMN resource_url TEXT`,
+  `ALTER TABLE blog_posts ADD COLUMN attachment_url TEXT`,
+];
+
+function isExistingColumnError(error: unknown) {
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  return message.includes("duplicate column") || message.includes("already exists");
+}
+
 let ready: Promise<AppDatabase> | null = null;
 
 export function ensureDatabase() {
@@ -248,6 +277,13 @@ export function ensureDatabase() {
     const db = await getRuntimeDatabase();
     const statements = db.dialect === "postgres" ? [...schemaStatements, ...postgresSchemaStatements] : schemaStatements;
     await db.batch(statements.map((statement) => db.prepare(statement)));
+    for (const statement of additiveMigrations) {
+      try {
+        await db.prepare(statement).run();
+      } catch (error) {
+        if (!isExistingColumnError(error)) throw error;
+      }
+    }
     const adminConfig = await getRuntimeValues(["ADMIN_EMAIL", "ADMIN_PASSWORD_HASH"]);
     if (adminConfig.ADMIN_EMAIL?.trim() && adminConfig.ADMIN_PASSWORD_HASH?.trim()) {
       await db.batch([
@@ -292,6 +328,8 @@ function mapTraining(row: Record<string, unknown>): Training {
     shortDescription: String(row.short_description),
     fullDescription: String(row.full_description),
     logo: String(row.logo),
+    heroImage: row.hero_image ? String(row.hero_image) : null,
+    resourceUrl: row.resource_url ? String(row.resource_url) : null,
     status: String(row.status),
     displayOrder: Number(row.display_order),
   };
@@ -305,6 +343,7 @@ function mapPost(row: Record<string, unknown>): BlogPost {
     excerpt: String(row.excerpt),
     content: String(row.content),
     image: row.image ? String(row.image) : null,
+    attachmentUrl: row.attachment_url ? String(row.attachment_url) : null,
     author: row.author ? String(row.author) : null,
     category: String(row.category),
     publishedAt: row.published_at ? String(row.published_at) : null,
@@ -329,8 +368,8 @@ function mapTestimonial(row: Record<string, unknown>): Testimonial {
     name: String(row.name),
     program: row.program ? String(row.program) : null,
     quote: String(row.quote ?? ""),
-    videoUrl: String(row.video_url),
-    thumbnail: String(row.thumbnail),
+    videoUrl: row.video_url ? String(row.video_url) : "",
+    thumbnail: row.thumbnail ? String(row.thumbnail) : "",
     rating: row.rating === null || row.rating === undefined ? null : Number(row.rating),
     visible: Boolean(Number(row.visible)),
     displayOrder: Number(row.display_order),
@@ -492,13 +531,21 @@ export async function getDashboardData() {
   };
 }
 
-export async function createTraining(input: { name: string; acronym: string; slug: string; shortDescription: string }) {
+export type TrainingInput = { name: string; acronym: string; slug: string; shortDescription: string; fullDescription: string; logo: string; heroImage?: string | null; resourceUrl?: string | null; displayOrder: number };
+
+export async function createTraining(input: TrainingInput) {
   const db = await ensureDatabase();
   const id = crypto.randomUUID();
   const result = await db.prepare(`SELECT COALESCE(MAX(display_order), 0) + 1 AS next_order FROM trainings`).first<{ next_order: number }>();
-  await db.prepare(`INSERT INTO trainings (id, name, acronym, slug, short_description, full_description, logo, status, display_order) VALUES (?, ?, ?, ?, ?, ?, '/logos/gdc-full-v2.jpg', 'DRAFT', ?)`)
-    .bind(id, input.name, input.acronym, input.slug, input.shortDescription, input.shortDescription, result?.next_order ?? 1).run();
+  await db.prepare(`INSERT INTO trainings (id, name, acronym, slug, short_description, full_description, logo, hero_image, resource_url, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?)`)
+    .bind(id, input.name, input.acronym, input.slug, input.shortDescription, input.fullDescription, input.logo, input.heroImage ?? null, input.resourceUrl ?? null, input.displayOrder || result?.next_order || 1).run();
   return id;
+}
+
+export async function updateTraining(id: string, input: TrainingInput) {
+  const db = await ensureDatabase();
+  await db.prepare(`UPDATE trainings SET name = ?, acronym = ?, slug = ?, short_description = ?, full_description = ?, logo = ?, hero_image = ?, resource_url = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+    .bind(input.name, input.acronym, input.slug, input.shortDescription, input.fullDescription, input.logo, input.heroImage ?? null, input.resourceUrl ?? null, input.displayOrder, id).run();
 }
 
 export async function setTrainingStatus(id: string, status: string) {
@@ -506,20 +553,36 @@ export async function setTrainingStatus(id: string, status: string) {
   await db.prepare(`UPDATE trainings SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(status, id).run();
 }
 
-export type PostInput = { title: string; slug: string; excerpt: string; content: string; category: string; image?: string | null; author?: string | null };
+export type PostInput = { title: string; slug: string; excerpt: string; content: string; category: string; image?: string | null; attachmentUrl?: string | null; author?: string | null };
 
 export async function createPost(input: PostInput) {
   const db = await ensureDatabase();
   const id = crypto.randomUUID();
-  await db.prepare(`INSERT INTO blog_posts (id, title, slug, excerpt, content, image, author, category, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT')`)
-    .bind(id, input.title, input.slug, input.excerpt, input.content, input.image ?? null, input.author ?? null, input.category).run();
+  await db.prepare(`INSERT INTO blog_posts (id, title, slug, excerpt, content, image, attachment_url, author, category, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT')`)
+    .bind(id, input.title, input.slug, input.excerpt, input.content, input.image ?? null, input.attachmentUrl ?? null, input.author ?? null, input.category).run();
   return id;
 }
 
 export async function updatePost(id: string, input: PostInput) {
   const db = await ensureDatabase();
-  await db.prepare(`UPDATE blog_posts SET title = ?, slug = ?, excerpt = ?, content = ?, image = ?, author = ?, category = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-    .bind(input.title, input.slug, input.excerpt, input.content, input.image ?? null, input.author ?? null, input.category, id).run();
+  await db.prepare(`UPDATE blog_posts SET title = ?, slug = ?, excerpt = ?, content = ?, image = ?, attachment_url = ?, author = ?, category = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+    .bind(input.title, input.slug, input.excerpt, input.content, input.image ?? null, input.attachmentUrl ?? null, input.author ?? null, input.category, id).run();
+}
+
+export type TestimonialInput = { name: string; program?: string | null; quote?: string | null; videoUrl?: string | null; thumbnail?: string | null; rating?: number | null; visible: boolean; displayOrder: number };
+
+export async function createTestimonial(input: TestimonialInput) {
+  const db = await ensureDatabase();
+  const id = crypto.randomUUID();
+  await db.prepare(`INSERT INTO testimonials (id, name, program, quote, video_url, thumbnail, rating, visible, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .bind(id, input.name, input.program ?? null, input.quote ?? null, input.videoUrl ?? null, input.thumbnail ?? null, input.rating ?? null, input.visible ? 1 : 0, input.displayOrder).run();
+  return id;
+}
+
+export async function updateTestimonial(id: string, input: TestimonialInput) {
+  const db = await ensureDatabase();
+  await db.prepare(`UPDATE testimonials SET name = ?, program = ?, quote = ?, video_url = ?, thumbnail = ?, rating = ?, visible = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+    .bind(input.name, input.program ?? null, input.quote ?? null, input.videoUrl ?? null, input.thumbnail ?? null, input.rating ?? null, input.visible ? 1 : 0, input.displayOrder, id).run();
 }
 
 export async function setPostStatus(id: string, status: string) {
@@ -582,6 +645,9 @@ export const defaultSettings: Record<string, string> = {
   instagram: "",
   facebook: "",
   youtube: "",
+  whatsappAiEnabled: "false",
+  whatsappAiModel: "gpt-5-mini",
+  whatsappAiInstructions: "Responde en español de forma clara, cercana y breve como asistente de Gimnasio del Cerebro. Orienta sobre los entrenamientos sin inventar precios, certificaciones, resultados ni afirmaciones médicas. Si la consulta requiere decisión humana, pide los datos de contacto y avisa que un asesor continuará.",
 };
 
 export async function getSettings() {
@@ -627,4 +693,21 @@ export async function getMedia(id: string) {
     return db.prepare(`SELECT a.id, a.key, a.mime_type, a.size, b.body FROM media_assets a JOIN media_blobs b ON b.media_id = a.id WHERE a.id = ? LIMIT 1`).bind(id).first<Record<string, unknown>>();
   }
   return db.prepare(`SELECT id, key, mime_type, size FROM media_assets WHERE id = ? LIMIT 1`).bind(id).first<Record<string, unknown>>();
+}
+
+export async function claimWhatsAppEvent(providerMessageId: string) {
+  const db = await ensureDatabase();
+  try {
+    await db.prepare(`INSERT INTO whatsapp_events (provider_message_id) VALUES (?)`).bind(providerMessageId).run();
+    return true;
+  } catch (error) {
+    const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+    if (message.includes("unique") || message.includes("duplicate")) return false;
+    throw error;
+  }
+}
+
+export async function releaseWhatsAppEvent(providerMessageId: string) {
+  const db = await ensureDatabase();
+  await db.prepare(`DELETE FROM whatsapp_events WHERE provider_message_id = ?`).bind(providerMessageId).run();
 }

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { BookOpen, BrainCircuit, ChevronRight, ContactRound, FileText, Gauge, ImageIcon, LogOut, Menu, MessageSquareQuote, Search, Settings2, UsersRound, X } from "lucide-react";
+import { BookOpen, BrainCircuit, ChevronRight, ContactRound, FileText, Gauge, ImageIcon, LogOut, Menu, MessageCircleMore, MessageSquareQuote, Search, Settings2, UsersRound, X } from "lucide-react";
 import { FormEvent, useState } from "react";
 import type { AdminRole } from "../../db/repository";
 
@@ -12,6 +12,7 @@ const items = [
   { href: "/admin/entrenamientos", label: "Entrenamientos", icon: BrainCircuit, roles: ["SUPERADMIN", "EDITOR"] },
   { href: "/admin/blog", label: "Blog", icon: BookOpen, roles: ["SUPERADMIN", "EDITOR"] },
   { href: "/admin/testimonios", label: "Testimonios", icon: MessageSquareQuote, roles: ["SUPERADMIN", "EDITOR"] },
+  { href: "/admin/whatsapp", label: "WhatsApp + IA", icon: MessageCircleMore, roles: ["SUPERADMIN"] },
   { href: "/admin/contenido", label: "Contenido web", icon: FileText, roles: ["SUPERADMIN", "EDITOR"] },
   { href: "/admin/media", label: "Biblioteca multimedia", icon: ImageIcon, roles: ["SUPERADMIN", "EDITOR"] },
   { href: "/admin/usuarios", label: "Usuarios", icon: UsersRound, roles: ["SUPERADMIN"] },

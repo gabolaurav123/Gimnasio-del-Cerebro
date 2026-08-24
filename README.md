@@ -103,6 +103,10 @@ SITE_URL=
 DATABASE_URL=
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-5-mini
+EVOLUTION_API_URL=https://tu-evolution-api.example.com
+EVOLUTION_API_KEY=
+EVOLUTION_INSTANCE_NAME=gimnasio-del-cerebro
+WHATSAPP_WEBHOOK_SECRET=
 ```
 
 La contraseña nunca se guarda en texto plano. Genera un hash bcrypt así:
@@ -121,13 +125,14 @@ El formulario público valida la información en frontend y backend, crea un `Co
 
 ## CMS
 
-- Entrenamientos: creación de borradores y estados publicado/oculto.
-- Blog: creación y edición de borradores, imagen principal, autor, contenido y estados publicado/archivado.
+- Entrenamientos: creación y edición completa, imagen/logo, portada, PDF descargable, orden y estados publicado/oculto.
+- Blog: creación y edición, imagen principal, PDF adjunto, autor, contenido y estados publicado/archivado.
 - Home: mensajes del hero y CTA final administrables.
 - Configuración: datos generales y redes.
 - Media: subida validada a R2 en Cloudflare o PostgreSQL en Seenode.
-- Testimonios: cuatro videos reales incorporados desde el material oficial anterior.
+- Testimonios: alta y edición de testimonios, miniatura, enlace de YouTube, orden y visibilidad.
 - OpenAI: asistente editorial opcional para generar un primer borrador. Requiere `OPENAI_API_KEY`; siempre se debe revisar el texto antes de publicarlo.
+- WhatsApp + IA: QR de vinculación, estado de conexión, listado de chats, respuesta manual y asistente automático. Requiere una instalación compatible de Evolution API y las variables `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE_NAME` y `WHATSAPP_WEBHOOK_SECRET`.
 
 ## Contenido inicial
 
@@ -147,7 +152,18 @@ El proyecto detecta automáticamente el entorno: usa D1/R2 en Cloudflare y Postg
 4. Configura el inicio como `npm run start -- --hostname 0.0.0.0 --port 3000` y el puerto como `3000`.
 5. Añade las variables administrativas de `.env.example` y vuelve a desplegar.
 
-Variables obligatorias en Seenode: `DATABASE_URL`, `SITE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` y `WHATSAPP_NUMBER`. `OPENAI_API_KEY` y `OPENAI_MODEL` solo son necesarias para el asistente editorial.
+Variables base obligatorias en Seenode: `DATABASE_URL`, `SITE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` y `WHATSAPP_NUMBER`.
+
+Para activar **WhatsApp + IA**, configura además:
+
+- `EVOLUTION_API_URL`: URL HTTPS de tu servidor Evolution API, sin barra final.
+- `EVOLUTION_API_KEY`: clave secreta del servidor Evolution API.
+- `EVOLUTION_INSTANCE_NAME`: por ejemplo `gimnasio-del-cerebro`.
+- `WHATSAPP_WEBHOOK_SECRET`: cadena aleatoria larga; el panel la envía como cabecera privada al webhook.
+- `OPENAI_API_KEY`: clave secreta de OpenAI.
+- `OPENAI_MODEL`: por defecto `gpt-5-mini`.
+
+No coloques `EVOLUTION_API_KEY`, `WHATSAPP_WEBHOOK_SECRET` ni `OPENAI_API_KEY` en campos del panel o código cliente. Todas se leen exclusivamente desde el servidor.
 
 Medidas activas: hash bcrypt, sesiones HMAC HttpOnly/Secure/SameSite Strict, verificación de usuario activo y rol en servidor, protección de origen/CSRF, límites de intentos de acceso y formularios, validación Zod, subida restringida por tipo y tamaño, consultas parametrizadas y cabeceras CSP/HSTS/anti-iframe.
 

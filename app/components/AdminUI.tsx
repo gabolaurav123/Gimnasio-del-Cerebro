@@ -22,35 +22,47 @@ export function ContactEditor({ contact }: { contact: Contact }) {
 
 export function ContentManager({ kind, trainings = [], posts = [] }: { kind: "trainings" | "posts"; trainings?: Training[]; posts?: BlogPost[] }) {
   const [creating, setCreating] = useState(false);
-  const [editing, setEditing] = useState<BlogPost | null>(null);
+  const [editing, setEditing] = useState<Training | BlogPost | null>(null);
   const [notice, setNotice] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const items = kind === "trainings"
-    ? trainings.map((item) => ({ id: item.id, title: item.name, meta: item.acronym, status: item.status, image: item.logo, source: item }))
-    : posts.map((item) => ({ id: item.id, title: item.title, meta: item.category, status: item.status, image: item.image ?? "", source: item }));
+    ? trainings.map((item) => ({ id: item.id, title: item.name, meta: item.acronym, status: item.status, image: item.logo, resource: item.resourceUrl, source: item }))
+    : posts.map((item) => ({ id: item.id, title: item.title, meta: item.category, status: item.status, image: item.image ?? "", resource: item.attachmentUrl, source: item }));
+  const trainingEdit = kind === "trainings" ? editing as Training | null : null;
+  const postEdit = kind === "posts" ? editing as BlogPost | null : null;
   async function changeStatus(id: string, status: string) { const response = await fetch(`/api/admin/${kind}/${id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ status }) }); setNotice(response.ok ? "Estado actualizado correctamente." : "No se pudo actualizar."); }
+  async function uploadFile(value: FormDataEntryValue | null) {
+    if (!(value instanceof File) || !value.size) return "";
+    const upload = new FormData(); upload.set("file", value);
+    const response = await fetch("/api/admin/media", { method: "POST", body: upload });
+    const payload = await response.json() as { url?: string; error?: string };
+    if (!response.ok || !payload.url) throw new Error(payload.error || "No se pudo subir el archivo.");
+    return payload.url;
+  }
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    if (kind === "trainings") {
-      const response = await fetch("/api/admin/trainings", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.fromEntries(data)) });
-      if (response.ok) { setNotice("Entrenamiento creado como borrador."); form.reset(); setCreating(false); window.location.reload(); } else setNotice("Revisa los datos ingresados.");
-      return;
-    }
-    let image = String(data.get("existingImage") ?? "");
-    const file = data.get("imageFile");
-    if (file instanceof File && file.size) {
-      const upload = new FormData(); upload.set("file", file);
-      const uploadResponse = await fetch("/api/admin/media", { method: "POST", body: upload });
-      const uploaded = await uploadResponse.json() as { url?: string; error?: string };
-      if (!uploadResponse.ok || !uploaded.url) { setNotice(uploaded.error ?? "No se pudo subir la imagen."); return; }
-      image = uploaded.url;
-    }
-    const payload = { title: String(data.get("title") ?? ""), category: String(data.get("category") ?? ""), slug: String(data.get("slug") ?? ""), excerpt: String(data.get("excerpt") ?? ""), content: String(data.get("content") ?? ""), author: String(data.get("author") ?? ""), image };
-    const response = await fetch(editing ? `/api/admin/posts/${editing.id}` : "/api/admin/posts", { method: editing ? "PATCH" : "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-    const responsePayload = await response.json() as { error?: string };
-    if (response.ok) { setNotice(editing ? "Artículo actualizado." : "Artículo creado como borrador."); setCreating(false); setEditing(null); window.location.reload(); } else setNotice(responsePayload.error ?? "Revisa los datos ingresados.");
+    const data = new FormData(event.currentTarget);
+    try {
+      if (kind === "trainings") {
+        const uploadedLogo = await uploadFile(data.get("imageFile"));
+        const uploadedHero = await uploadFile(data.get("heroImageFile"));
+        const uploadedResource = await uploadFile(data.get("resourceFile"));
+        const payload = { name: data.get("name"), acronym: data.get("acronym"), slug: data.get("slug"), shortDescription: data.get("shortDescription"), fullDescription: data.get("fullDescription"), displayOrder: data.get("displayOrder"), logo: uploadedLogo || data.get("existingLogo") || "/logos/gdc-full-v2.jpg", heroImage: uploadedHero || data.get("existingHeroImage") || "", resourceUrl: uploadedResource || data.get("existingResourceUrl") || "" };
+        const response = await fetch(trainingEdit ? `/api/admin/trainings/${trainingEdit.id}` : "/api/admin/trainings", { method: trainingEdit ? "PATCH" : "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+        const responsePayload = await response.json() as { error?: string };
+        if (!response.ok) throw new Error(responsePayload.error || "Revisa los datos ingresados.");
+        setNotice(trainingEdit ? "Entrenamiento actualizado." : "Entrenamiento creado como borrador.");
+      } else {
+        const uploadedImage = await uploadFile(data.get("imageFile"));
+        const uploadedAttachment = await uploadFile(data.get("attachmentFile"));
+        const payload = { title: data.get("title"), category: data.get("category"), slug: data.get("slug"), excerpt: data.get("excerpt"), content: data.get("content"), author: data.get("author"), image: uploadedImage || data.get("existingImage") || "", attachmentUrl: uploadedAttachment || data.get("existingAttachmentUrl") || "" };
+        const response = await fetch(postEdit ? `/api/admin/posts/${postEdit.id}` : "/api/admin/posts", { method: postEdit ? "PATCH" : "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+        const responsePayload = await response.json() as { error?: string };
+        if (!response.ok) throw new Error(responsePayload.error || "Revisa los datos ingresados.");
+        setNotice(postEdit ? "Artículo actualizado." : "Artículo creado como borrador.");
+      }
+      setCreating(false); setEditing(null); window.location.reload();
+    } catch (error) { setNotice(error instanceof Error ? error.message : "No se pudo guardar."); }
   }
   async function generateDraft(form: HTMLFormElement) {
     const data = new FormData(form);
@@ -62,8 +74,26 @@ export function ContentManager({ kind, trainings = [], posts = [] }: { kind: "tr
     if (response.ok && payload.draft) { content.value = payload.draft; setNotice("Borrador generado. Revísalo antes de publicar."); } else setNotice(payload.error ?? "No se pudo generar el borrador.");
   }
   function openNew() { setEditing(null); setCreating(true); setNotice(""); }
-  function openEdit(post: BlogPost) { setEditing(post); setCreating(true); setNotice(""); window.scrollTo({ top: 0, behavior: "smooth" }); }
-  return <><div className="manager-actions"><button className="button button--primary" type="button" onClick={openNew}><Plus size={17} />{kind === "trainings" ? "Nuevo entrenamiento" : "Nuevo artículo"}</button>{notice && <span role="status">{notice}</span>}</div>{creating && <form className="manager-form" onSubmit={save} key={editing?.id ?? "new"}><div className="admin-card__heading"><div><h2>{editing ? "Editar artículo" : kind === "posts" ? "Nuevo artículo" : "Nuevo entrenamiento"}</h2><p>{kind === "posts" ? "Puedes guardar el borrador y publicarlo cuando esté revisado." : "Se creará como borrador."}</p></div></div><div className="field-row"><label>{kind === "trainings" ? "Nombre" : "Título"}<input name={kind === "trainings" ? "name" : "title"} defaultValue={editing?.title} required /></label><label>{kind === "trainings" ? "Acrónimo" : "Categoría"}<input name={kind === "trainings" ? "acronym" : "category"} defaultValue={editing?.category} required /></label></div><label>Slug<input name="slug" pattern="[a-z0-9-]+" defaultValue={editing?.slug} required /></label><label>{kind === "trainings" ? "Descripción corta" : "Extracto"}<textarea name={kind === "trainings" ? "shortDescription" : "excerpt"} rows={3} defaultValue={editing?.excerpt} required /></label>{kind === "posts" && <><div className="field-row"><label>Autor<input name="author" defaultValue={editing?.author ?? "Gimnasio del Cerebro"} /></label><label>Imagen principal<input name="imageFile" type="file" accept="image/png,image/jpeg,image/webp,image/avif" /></label></div><input type="hidden" name="existingImage" value={editing?.image ?? ""} />{editing?.image && <div className="post-image-preview"><Image src={editing.image} alt="Imagen actual del artículo" width={220} height={130} /></div>}<label>Guía para el asistente de OpenAI<textarea name="aiBrief" rows={3} placeholder="Indica el enfoque, las ideas principales y el tono. No se publica." /></label><button className="button button--ai" type="button" disabled={aiLoading} onClick={(event) => generateDraft(event.currentTarget.form!)}><Sparkles size={17} />{aiLoading ? "Generando…" : "Generar borrador con OpenAI"}</button><label>Contenido<textarea name="content" rows={12} defaultValue={editing?.content} required /></label></>}<div className="button-row"><button className="button button--primary">{editing ? "Guardar cambios" : "Guardar borrador"}</button><button className="button button--outline" type="button" onClick={() => { setCreating(false); setEditing(null); }}>Cancelar</button></div></form>}<div className="admin-table-wrap"><table className="admin-table content-table"><thead><tr><th>Contenido</th><th>Identificador</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>{items.map((item) => <tr key={item.id}><td><div className="content-cell">{item.image ? <Image src={item.image} alt="" width={54} height={54} /> : <span className="content-placeholder"><Edit3 /></span>}<strong>{item.title}</strong></div></td><td>{item.meta}</td><td><select defaultValue={item.status} onChange={(event) => changeStatus(item.id, event.target.value)}>{(kind === "trainings" ? ["DRAFT", "PUBLISHED", "HIDDEN"] : ["DRAFT", "PUBLISHED", "ARCHIVED"]).map((status) => <option value={status} key={status}>{statusLabels[status]}</option>)}</select></td><td>{kind === "posts" ? <button className="icon-action" type="button" aria-label={`Editar ${item.title}`} onClick={() => openEdit(item.source as BlogPost)}><Edit3 size={17} /></button> : <span>—</span>}</td></tr>)}</tbody></table></div></>;
+  function openEdit(item: Training | BlogPost) { setEditing(item); setCreating(true); setNotice(""); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  return <><div className="manager-actions"><button className="button button--primary" type="button" onClick={openNew}><Plus size={17} />{kind === "trainings" ? "Nuevo entrenamiento" : "Nuevo artículo"}</button>{notice && <span role="status">{notice}</span>}</div>
+    {creating && <form className="manager-form" onSubmit={save} key={editing?.id ?? "new"}><div className="admin-card__heading"><div><h2>{editing ? `Editar ${kind === "trainings" ? "entrenamiento" : "artículo"}` : kind === "posts" ? "Nuevo artículo" : "Nuevo entrenamiento"}</h2><p>Guarda cambios, adjunta recursos y controla la publicación desde la tabla.</p></div></div>
+      {kind === "trainings" ? <>
+        <div className="field-row"><label>Nombre<input name="name" defaultValue={trainingEdit?.name} required /></label><label>Acrónimo<input name="acronym" defaultValue={trainingEdit?.acronym} required /></label></div>
+        <div className="field-row"><label>Slug<input name="slug" pattern="[a-z0-9-]+" defaultValue={trainingEdit?.slug} required /></label><label>Orden<input name="displayOrder" type="number" min={0} max={999} defaultValue={trainingEdit?.displayOrder ?? trainings.length + 1} required /></label></div>
+        <label>Descripción corta<textarea name="shortDescription" rows={3} defaultValue={trainingEdit?.shortDescription} required /></label><label>Descripción completa<textarea name="fullDescription" rows={9} defaultValue={trainingEdit?.fullDescription} required /></label>
+        <div className="field-row"><label>Imagen o logo<input name="imageFile" type="file" accept="image/png,image/jpeg,image/webp,image/avif" /></label><label>Imagen de portada<input name="heroImageFile" type="file" accept="image/png,image/jpeg,image/webp,image/avif" /></label></div>
+        <label>PDF o material descargable<input name="resourceFile" type="file" accept="application/pdf" /></label>
+        <input type="hidden" name="existingLogo" value={trainingEdit?.logo || ""} /><input type="hidden" name="existingHeroImage" value={trainingEdit?.heroImage || ""} /><input type="hidden" name="existingResourceUrl" value={trainingEdit?.resourceUrl || ""} />
+        {trainingEdit && <div className="resource-preview">{trainingEdit.logo && <Image src={trainingEdit.logo} alt="Imagen actual" width={160} height={100} />}{trainingEdit.resourceUrl && <a href={trainingEdit.resourceUrl} target="_blank" rel="noreferrer">Ver PDF actual</a>}</div>}
+      </> : <>
+        <div className="field-row"><label>Título<input name="title" defaultValue={postEdit?.title} required /></label><label>Categoría<input name="category" defaultValue={postEdit?.category} required /></label></div><label>Slug<input name="slug" pattern="[a-z0-9-]+" defaultValue={postEdit?.slug} required /></label><label>Extracto<textarea name="excerpt" rows={3} defaultValue={postEdit?.excerpt} required /></label>
+        <div className="field-row"><label>Autor<input name="author" defaultValue={postEdit?.author ?? "Gimnasio del Cerebro"} /></label><label>Imagen principal<input name="imageFile" type="file" accept="image/png,image/jpeg,image/webp,image/avif" /></label></div><label>PDF adjunto<input name="attachmentFile" type="file" accept="application/pdf" /></label>
+        <input type="hidden" name="existingImage" value={postEdit?.image ?? ""} /><input type="hidden" name="existingAttachmentUrl" value={postEdit?.attachmentUrl ?? ""} />
+        {(postEdit?.image || postEdit?.attachmentUrl) && <div className="resource-preview">{postEdit.image && <Image src={postEdit.image} alt="Imagen actual del artículo" width={220} height={130} />}{postEdit.attachmentUrl && <a href={postEdit.attachmentUrl} target="_blank" rel="noreferrer">Ver PDF actual</a>}</div>}
+        <label>Guía para el asistente de OpenAI<textarea name="aiBrief" rows={3} placeholder="Indica el enfoque, las ideas principales y el tono. No se publica." /></label><button className="button button--ai" type="button" disabled={aiLoading} onClick={(event) => generateDraft(event.currentTarget.form!)}><Sparkles size={17} />{aiLoading ? "Generando…" : "Generar borrador con OpenAI"}</button><label>Contenido<textarea name="content" rows={12} defaultValue={postEdit?.content} required /></label>
+      </>}
+      <div className="button-row"><button className="button button--primary">{editing ? "Guardar cambios" : "Guardar borrador"}</button><button className="button button--outline" type="button" onClick={() => { setCreating(false); setEditing(null); }}>Cancelar</button></div></form>}
+    <div className="admin-table-wrap"><table className="admin-table content-table"><thead><tr><th>Contenido</th><th>Identificador</th><th>Recurso</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>{items.map((item) => <tr key={item.id}><td><div className="content-cell">{item.image ? <Image src={item.image} alt="" width={54} height={54} /> : <span className="content-placeholder"><Edit3 /></span>}<strong>{item.title}</strong></div></td><td>{item.meta}</td><td>{item.resource ? <a href={item.resource} target="_blank" rel="noreferrer">PDF</a> : "—"}</td><td><select defaultValue={item.status} onChange={(event) => changeStatus(item.id, event.target.value)}>{(kind === "trainings" ? ["DRAFT", "PUBLISHED", "HIDDEN"] : ["DRAFT", "PUBLISHED", "ARCHIVED"]).map((status) => <option value={status} key={status}>{statusLabels[status]}</option>)}</select></td><td><button className="icon-action" type="button" aria-label={`Editar ${item.title}`} onClick={() => openEdit(item.source)}><Edit3 size={17} /></button></td></tr>)}</tbody></table></div></>;
 }
 
 type SafeAdminUser = Omit<AdminUser, "passwordHash">;
@@ -98,5 +128,5 @@ export function UserManager({ users }: { users: SafeAdminUser[] }) {
 
 export function MediaUpload() {
   const [message, setMessage] = useState(""); async function upload(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const response = await fetch("/api/admin/media", { method: "POST", body: new FormData(event.currentTarget) }); const payload = await response.json() as { error?: string; name?: string }; setMessage(response.ok ? `${payload.name} se subió correctamente.` : payload.error ?? "No se pudo subir el archivo."); }
-  return <form className="media-upload" onSubmit={upload}><UploadCloud /><h3>Subir recurso visual</h3><p>PNG, JPEG, WebP o AVIF. Máximo 8 MB.</p><input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/avif" required /><button className="button button--primary">Subir archivo</button>{message && <span>{message}</span>}</form>;
+  return <form className="media-upload" onSubmit={upload}><UploadCloud /><h3>Subir recurso</h3><p>Imágenes de hasta 8 MB o PDF de hasta 20 MB.</p><input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/avif,application/pdf" required /><button className="button button--primary">Subir archivo</button>{message && <span>{message}</span>}</form>;
 }

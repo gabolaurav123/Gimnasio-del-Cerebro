@@ -15,6 +15,13 @@
       "when": 1786746064564,
       "tag": "0001_talented_toad",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1787586164060,
+      "tag": "0002_bizarre_jane_foster",
+      "breakpoints": true
     }
   ]
 }

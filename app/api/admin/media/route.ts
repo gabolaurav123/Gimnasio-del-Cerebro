@@ -3,14 +3,16 @@ import { getRuntimeDatabase } from "../../../../db/runtime";
 import { requestIsAdmin } from "../../../../lib/auth";
 import { getCloudflareBindings } from "../../../../lib/runtime-env";
 
-const allowed = new Set(["image/png", "image/jpeg", "image/webp", "image/avif"]);
+const imageTypes = new Set(["image/png", "image/jpeg", "image/webp", "image/avif"]);
+const allowed = new Set([...imageTypes, "application/pdf"]);
 
 export async function POST(request: Request) {
   if (!(await requestIsAdmin(request, ["SUPERADMIN", "EDITOR"]))) return Response.json({ error: "No autorizado" }, { status: 401 });
   const form = await request.formData();
   const file = form.get("file");
-  if (!(file instanceof File) || !allowed.has(file.type) || file.size > 8 * 1024 * 1024) {
-    return Response.json({ error: "Usa una imagen PNG, JPEG, WebP o AVIF de hasta 8 MB." }, { status: 400 });
+  const maxSize = file instanceof File && file.type === "application/pdf" ? 20 * 1024 * 1024 : 8 * 1024 * 1024;
+  if (!(file instanceof File) || !allowed.has(file.type) || file.size > maxSize) {
+    return Response.json({ error: "Usa una imagen PNG, JPEG, WebP o AVIF de hasta 8 MB, o un PDF de hasta 20 MB." }, { status: 400 });
   }
 
   const id = crypto.randomUUID();

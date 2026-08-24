@@ -24,6 +24,7 @@ export const trainings = sqliteTable("trainings", {
   fullDescription: text("full_description").notNull().default(""),
   logo: text("logo").notNull(),
   heroImage: text("hero_image"),
+  resourceUrl: text("resource_url"),
   ctaLabel: text("cta_label").notNull().default("Consultar"),
   status: text("status", { enum: ["DRAFT", "PUBLISHED", "HIDDEN"] }).notNull().default("PUBLISHED"),
   displayOrder: integer("display_order").notNull().default(0),
@@ -54,6 +55,7 @@ export const blogPosts = sqliteTable("blog_posts", {
   excerpt: text("excerpt").notNull(),
   content: text("content").notNull(),
   image: text("image"),
+  attachmentUrl: text("attachment_url"),
   author: text("author"),
   category: text("category").notNull().default("Consciencia"),
   status: text("status", { enum: ["DRAFT", "PUBLISHED", "ARCHIVED"] }).notNull().default("PUBLISHED"),
@@ -121,4 +123,9 @@ export const siteSettings = sqliteTable("site_settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const whatsappEvents = sqliteTable("whatsapp_events", {
+  providerMessageId: text("provider_message_id").primaryKey(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });

@@ -15,7 +15,7 @@ const localBindingConfig = {
   main: "./worker/index.ts",
   compatibility_flags: ["nodejs_compat"],
   vars: Object.fromEntries(
-    ["ADMIN_EMAIL", "ADMIN_PASSWORD_HASH", "SESSION_SECRET", "WHATSAPP_NUMBER", "SITE_URL", "OPENAI_API_KEY", "OPENAI_MODEL"]
+    ["ADMIN_EMAIL", "ADMIN_PASSWORD_HASH", "SESSION_SECRET", "WHATSAPP_NUMBER", "SITE_URL", "OPENAI_API_KEY", "OPENAI_MODEL", "EVOLUTION_API_URL", "EVOLUTION_API_KEY", "EVOLUTION_INSTANCE_NAME", "WHATSAPP_WEBHOOK_SECRET"]
       .filter((key) => process.env[key])
       .map((key) => [key, process.env[key] as string]),
   ) as Record<string, string>,
