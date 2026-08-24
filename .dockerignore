@@ -3,6 +3,7 @@
 .next
 .vinext
 .wrangler
+.seenode-npm-cache
 build
 dist
 node_modules
