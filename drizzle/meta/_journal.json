@@ -36,6 +36,20 @@
       "when": 1787613679050,
       "tag": "0004_easy_owl",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1788210416080,
+      "tag": "0005_natural_vulcan",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1788210440927,
+      "tag": "0006_thin_pestilence",
+      "breakpoints": true
     }
   ]
 }

@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     method: "POST",
     headers: { authorization: `Bearer ${env.OPENAI_API_KEY}`, "content-type": "application/json" },
     body: JSON.stringify({
-      model: env.OPENAI_MODEL || "gpt-5-mini",
+      model: env.OPENAI_MODEL || "gpt-5.6-luna",
       store: false,
       max_output_tokens: 2200,
       instructions: "Eres el asistente editorial de Gimnasio del Cerebro. Redacta en español claro, responsable y cercano. No inventes certificaciones, cifras, testimonios ni afirmaciones médicas. Devuelve únicamente párrafos de texto plano, sin Markdown ni título, y termina con una invitación prudente a reflexionar o conocer los entrenamientos.",

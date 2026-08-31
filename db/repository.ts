@@ -22,6 +22,11 @@ export type Training = {
   logo: string;
   heroImage: string | null;
   resourceUrl: string | null;
+  dashboardContent: string | null;
+  checkoutProvider: "STRIPE" | "HOTMART" | "MANUAL";
+  checkoutUrl: string | null;
+  priceCents: number;
+  currency: string;
   status: string;
   displayOrder: number;
 };
@@ -76,6 +81,8 @@ export type Appointment = {
   preferredDate: string;
   preferredTime: string;
   trainingInterest: string | null;
+  appointmentType: "CONSULTATION" | "TRAINING";
+  disclaimerAcceptedAt: string | null;
   message: string;
   status: string;
   createdAt: string;
@@ -90,6 +97,12 @@ export type Product = {
   image: string | null;
   priceLabel: string;
   discountLabel: string | null;
+  resourceUrl: string | null;
+  dashboardContent: string | null;
+  checkoutProvider: "STRIPE" | "HOTMART" | "MANUAL";
+  checkoutUrl: string | null;
+  priceCents: number;
+  currency: string;
   status: string;
   displayOrder: number;
 };
@@ -100,6 +113,7 @@ export type Payment = {
   payerName: string;
   payerEmail: string | null;
   payerPhone: string | null;
+  customerId: string | null;
   concept: string;
   itemType: string;
   itemId: string | null;
@@ -166,6 +180,12 @@ export const productSeeds: Product[] = [{
   image: null,
   priceLabel: "Información próximamente",
   discountLabel: "Nuevo",
+  resourceUrl: null,
+  dashboardContent: "Aquí encontrarás la información y los recursos habilitados para BioShield by Kirius.",
+  checkoutProvider: "MANUAL",
+  checkoutUrl: null,
+  priceCents: 0,
+  currency: "BOB",
   status: "PUBLISHED",
   displayOrder: 1,
 }];
@@ -181,6 +201,11 @@ export const trainingSeeds: Training[] = [
     logo: "/logos/nfa-full-v2.jpg",
     heroImage: null,
     resourceUrl: null,
+    dashboardContent: null,
+    checkoutProvider: "MANUAL",
+    checkoutUrl: null,
+    priceCents: 0,
+    currency: "BOB",
     status: "PUBLISHED",
     displayOrder: 1,
   },
@@ -194,6 +219,11 @@ export const trainingSeeds: Training[] = [
     logo: "/logos/ntr-full-v2.jpg",
     heroImage: null,
     resourceUrl: null,
+    dashboardContent: null,
+    checkoutProvider: "MANUAL",
+    checkoutUrl: null,
+    priceCents: 0,
+    currency: "BOB",
     status: "PUBLISHED",
     displayOrder: 2,
   },
@@ -207,6 +237,11 @@ export const trainingSeeds: Training[] = [
     logo: "/logos/bft-full-v2.jpg",
     heroImage: null,
     resourceUrl: null,
+    dashboardContent: null,
+    checkoutProvider: "MANUAL",
+    checkoutUrl: null,
+    priceCents: 0,
+    currency: "BOB",
     status: "PUBLISHED",
     displayOrder: 3,
   },
@@ -220,6 +255,11 @@ export const trainingSeeds: Training[] = [
     logo: "/logos/ntm-full-v2.jpg",
     heroImage: null,
     resourceUrl: null,
+    dashboardContent: null,
+    checkoutProvider: "MANUAL",
+    checkoutUrl: null,
+    priceCents: 0,
+    currency: "BOB",
     status: "PUBLISHED",
     displayOrder: 4,
   },
@@ -233,6 +273,11 @@ export const trainingSeeds: Training[] = [
     logo: "/logos/alp-full-v2.jpg",
     heroImage: null,
     resourceUrl: null,
+    dashboardContent: null,
+    checkoutProvider: "MANUAL",
+    checkoutUrl: null,
+    priceCents: 0,
+    currency: "BOB",
     status: "PUBLISHED",
     displayOrder: 5,
   },
@@ -246,6 +291,11 @@ export const trainingSeeds: Training[] = [
     logo: "/logos/nco-full-v2.jpg",
     heroImage: null,
     resourceUrl: null,
+    dashboardContent: null,
+    checkoutProvider: "MANUAL",
+    checkoutUrl: null,
+    priceCents: 0,
+    currency: "BOB",
     status: "PUBLISHED",
     displayOrder: 6,
   },
@@ -342,7 +392,7 @@ export const testimonialSeeds: Testimonial[] = [
 
 const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, role TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
-  `CREATE TABLE IF NOT EXISTS trainings (id TEXT PRIMARY KEY, name TEXT NOT NULL, acronym TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, short_description TEXT NOT NULL, full_description TEXT NOT NULL DEFAULT '', logo TEXT NOT NULL, hero_image TEXT, resource_url TEXT, cta_label TEXT NOT NULL DEFAULT 'Consultar', status TEXT NOT NULL DEFAULT 'PUBLISHED', display_order INTEGER NOT NULL DEFAULT 0, seo_title TEXT, seo_description TEXT, deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS trainings (id TEXT PRIMARY KEY, name TEXT NOT NULL, acronym TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, short_description TEXT NOT NULL, full_description TEXT NOT NULL DEFAULT '', logo TEXT NOT NULL, hero_image TEXT, resource_url TEXT, dashboard_content TEXT, checkout_provider TEXT NOT NULL DEFAULT 'MANUAL', checkout_url TEXT, price_cents INTEGER NOT NULL DEFAULT 0, currency TEXT NOT NULL DEFAULT 'BOB', cta_label TEXT NOT NULL DEFAULT 'Consultar', status TEXT NOT NULL DEFAULT 'PUBLISHED', display_order INTEGER NOT NULL DEFAULT 0, seo_title TEXT, seo_description TEXT, deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS blog_posts (id TEXT PRIMARY KEY, title TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, excerpt TEXT NOT NULL, content TEXT NOT NULL, image TEXT, attachment_url TEXT, author TEXT, category TEXT NOT NULL DEFAULT 'Consciencia', status TEXT NOT NULL DEFAULT 'PUBLISHED', published_at TEXT, seo_title TEXT, seo_description TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS contacts (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, country TEXT NOT NULL, training_interest TEXT, message TEXT NOT NULL, source TEXT NOT NULL DEFAULT 'website_contact', status TEXT NOT NULL DEFAULT 'NEW', tags TEXT NOT NULL DEFAULT '[]', assignee TEXT, next_follow_up TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS contact_notes (id TEXT PRIMARY KEY, contact_id TEXT NOT NULL, user_id TEXT, body TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
@@ -351,9 +401,15 @@ const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS media_assets (id TEXT PRIMARY KEY, name TEXT NOT NULL, key TEXT NOT NULL UNIQUE, mime_type TEXT NOT NULL, size INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS whatsapp_events (provider_message_id TEXT PRIMARY KEY, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
-  `CREATE TABLE IF NOT EXISTS appointments (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, country TEXT NOT NULL, preferred_date TEXT NOT NULL, preferred_time TEXT NOT NULL, training_interest TEXT, message TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'PENDING', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
-  `CREATE TABLE IF NOT EXISTS products (id TEXT PRIMARY KEY, name TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT NOT NULL, image TEXT, price_label TEXT NOT NULL DEFAULT 'Consultar', discount_label TEXT, status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
-  `CREATE TABLE IF NOT EXISTS payments (id TEXT PRIMARY KEY, reference TEXT NOT NULL UNIQUE, payer_name TEXT NOT NULL, payer_email TEXT, payer_phone TEXT, concept TEXT NOT NULL, item_type TEXT NOT NULL DEFAULT 'OTHER', item_id TEXT, amount_cents INTEGER NOT NULL, currency TEXT NOT NULL DEFAULT 'BOB', payment_method TEXT NOT NULL DEFAULT 'OTHER', provider_reference TEXT, status TEXT NOT NULL DEFAULT 'PENDING', paid_at TEXT, verified_at TEXT, verified_by TEXT, notes TEXT, source TEXT NOT NULL DEFAULT 'MANUAL', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS appointments (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, country TEXT NOT NULL, preferred_date TEXT NOT NULL, preferred_time TEXT NOT NULL, training_interest TEXT, appointment_type TEXT NOT NULL DEFAULT 'CONSULTATION', disclaimer_accepted_at TEXT, message TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'PENDING', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS appointment_blocks (id TEXT PRIMARY KEY, date TEXT NOT NULL, start_time TEXT NOT NULL, end_time TEXT NOT NULL, appointment_type TEXT NOT NULL DEFAULT 'ALL', reason TEXT NOT NULL DEFAULT 'Horario no disponible', active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS products (id TEXT PRIMARY KEY, name TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT NOT NULL, image TEXT, price_label TEXT NOT NULL DEFAULT 'Consultar', discount_label TEXT, resource_url TEXT, dashboard_content TEXT, checkout_provider TEXT NOT NULL DEFAULT 'MANUAL', checkout_url TEXT, price_cents INTEGER NOT NULL DEFAULT 0, currency TEXT NOT NULL DEFAULT 'BOB', status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS customer_users (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, phone TEXT, country TEXT, active INTEGER NOT NULL DEFAULT 1, terms_version TEXT NOT NULL, terms_accepted_at TEXT NOT NULL, privacy_accepted_at TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS payments (id TEXT PRIMARY KEY, reference TEXT NOT NULL UNIQUE, payer_name TEXT NOT NULL, payer_email TEXT, payer_phone TEXT, customer_id TEXT, concept TEXT NOT NULL, item_type TEXT NOT NULL DEFAULT 'OTHER', item_id TEXT, amount_cents INTEGER NOT NULL, currency TEXT NOT NULL DEFAULT 'BOB', payment_method TEXT NOT NULL DEFAULT 'OTHER', provider_reference TEXT, status TEXT NOT NULL DEFAULT 'PENDING', paid_at TEXT, verified_at TEXT, verified_by TEXT, notes TEXT, source TEXT NOT NULL DEFAULT 'MANUAL', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS customer_entitlements (id TEXT PRIMARY KEY, customer_id TEXT NOT NULL, item_type TEXT NOT NULL, item_id TEXT NOT NULL, payment_id TEXT, status TEXT NOT NULL DEFAULT 'ACTIVE', granted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, expires_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS assistant_profiles (id TEXT PRIMARY KEY, item_type TEXT NOT NULL, item_id TEXT NOT NULL, name TEXT NOT NULL, instructions TEXT NOT NULL, model TEXT NOT NULL DEFAULT 'gpt-5.6-luna', enabled INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS assistant_messages (id TEXT PRIMARY KEY, customer_id TEXT NOT NULL, assistant_profile_id TEXT NOT NULL, role TEXT NOT NULL, content TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS accounting_entries (id TEXT PRIMARY KEY, payment_id TEXT, entry_type TEXT NOT NULL, category TEXT NOT NULL, item_type TEXT NOT NULL DEFAULT 'GENERAL', item_id TEXT, description TEXT NOT NULL, amount_cents INTEGER NOT NULL, currency TEXT NOT NULL DEFAULT 'BOB', occurred_at TEXT NOT NULL, created_by TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, title TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT NOT NULL, image TEXT, starts_at TEXT NOT NULL, location TEXT NOT NULL, registration_url TEXT, status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS associates (id TEXT PRIMARY KEY, name TEXT NOT NULL, url TEXT NOT NULL, description TEXT NOT NULL, image TEXT, status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE INDEX IF NOT EXISTS idx_contacts_status_created_at ON contacts(status, created_at)`,
@@ -362,9 +418,20 @@ const schemaStatements = [
   `CREATE INDEX IF NOT EXISTS idx_blog_posts_status_published_at ON blog_posts(status, published_at)`,
   `CREATE INDEX IF NOT EXISTS idx_contact_activities_contact_id ON contact_activities(contact_id)`,
   `CREATE INDEX IF NOT EXISTS idx_appointments_status_date ON appointments(status, preferred_date)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_appointments_active_slot ON appointments(preferred_date, preferred_time) WHERE status IN ('PENDING', 'CONFIRMED')`,
+  `CREATE INDEX IF NOT EXISTS idx_appointment_blocks_date_active ON appointment_blocks(date, active)`,
   `CREATE INDEX IF NOT EXISTS idx_products_status_order ON products(status, display_order)`,
   `CREATE INDEX IF NOT EXISTS idx_payments_status_created_at ON payments(status, created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_payments_payer_email ON payments(payer_email)`,
+  `CREATE INDEX IF NOT EXISTS idx_customer_users_email_active ON customer_users(email, active)`,
+  `CREATE INDEX IF NOT EXISTS idx_customer_entitlements_customer_status ON customer_entitlements(customer_id, status)`,
+  `CREATE INDEX IF NOT EXISTS idx_customer_entitlements_item ON customer_entitlements(item_type, item_id)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_customer_entitlements_unique ON customer_entitlements(customer_id, item_type, item_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_assistant_profiles_item ON assistant_profiles(item_type, item_id)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_assistant_profiles_item_unique ON assistant_profiles(item_type, item_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_assistant_messages_customer_profile ON assistant_messages(customer_id, assistant_profile_id, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_accounting_entries_date_type ON accounting_entries(occurred_at, entry_type)`,
+  `CREATE INDEX IF NOT EXISTS idx_accounting_entries_item ON accounting_entries(item_type, item_id)`,
   `CREATE INDEX IF NOT EXISTS idx_events_status_date ON events(status, starts_at)`,
   `CREATE INDEX IF NOT EXISTS idx_associates_status_order ON associates(status, display_order)`,
 ];
@@ -375,7 +442,21 @@ const postgresSchemaStatements = [
 
 const additiveMigrations = [
   `ALTER TABLE trainings ADD COLUMN resource_url TEXT`,
+  `ALTER TABLE trainings ADD COLUMN dashboard_content TEXT`,
+  `ALTER TABLE trainings ADD COLUMN checkout_provider TEXT NOT NULL DEFAULT 'MANUAL'`,
+  `ALTER TABLE trainings ADD COLUMN checkout_url TEXT`,
+  `ALTER TABLE trainings ADD COLUMN price_cents INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE trainings ADD COLUMN currency TEXT NOT NULL DEFAULT 'BOB'`,
   `ALTER TABLE blog_posts ADD COLUMN attachment_url TEXT`,
+  `ALTER TABLE appointments ADD COLUMN appointment_type TEXT NOT NULL DEFAULT 'CONSULTATION'`,
+  `ALTER TABLE appointments ADD COLUMN disclaimer_accepted_at TEXT`,
+  `ALTER TABLE products ADD COLUMN resource_url TEXT`,
+  `ALTER TABLE products ADD COLUMN dashboard_content TEXT`,
+  `ALTER TABLE products ADD COLUMN checkout_provider TEXT NOT NULL DEFAULT 'MANUAL'`,
+  `ALTER TABLE products ADD COLUMN checkout_url TEXT`,
+  `ALTER TABLE products ADD COLUMN price_cents INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE products ADD COLUMN currency TEXT NOT NULL DEFAULT 'BOB'`,
+  `ALTER TABLE payments ADD COLUMN customer_id TEXT`,
 ];
 
 function isExistingColumnError(error: unknown) {
@@ -452,6 +533,11 @@ function mapTraining(row: Record<string, unknown>): Training {
     logo: String(row.logo),
     heroImage: row.hero_image ? String(row.hero_image) : null,
     resourceUrl: row.resource_url ? String(row.resource_url) : null,
+    dashboardContent: row.dashboard_content ? String(row.dashboard_content) : null,
+    checkoutProvider: String(row.checkout_provider || "MANUAL") as Training["checkoutProvider"],
+    checkoutUrl: row.checkout_url ? String(row.checkout_url) : null,
+    priceCents: Number(row.price_cents || 0),
+    currency: String(row.currency || "BOB"),
     status: String(row.status),
     displayOrder: Number(row.display_order),
   };
@@ -520,6 +606,8 @@ function mapAppointment(row: Record<string, unknown>): Appointment {
     id: String(row.id), name: String(row.name), email: String(row.email), phone: String(row.phone), country: String(row.country),
     preferredDate: String(row.preferred_date), preferredTime: String(row.preferred_time),
     trainingInterest: row.training_interest ? String(row.training_interest) : null,
+    appointmentType: String(row.appointment_type || "CONSULTATION") as Appointment["appointmentType"],
+    disclaimerAcceptedAt: row.disclaimer_accepted_at ? String(row.disclaimer_accepted_at) : null,
     message: String(row.message ?? ""), status: String(row.status), createdAt: String(row.created_at), updatedAt: String(row.updated_at),
   };
 }
@@ -528,7 +616,14 @@ function mapProduct(row: Record<string, unknown>): Product {
   return {
     id: String(row.id), name: String(row.name), slug: String(row.slug), description: String(row.description),
     image: row.image ? String(row.image) : null, priceLabel: String(row.price_label),
-    discountLabel: row.discount_label ? String(row.discount_label) : null, status: String(row.status), displayOrder: Number(row.display_order),
+    discountLabel: row.discount_label ? String(row.discount_label) : null,
+    resourceUrl: row.resource_url ? String(row.resource_url) : null,
+    dashboardContent: row.dashboard_content ? String(row.dashboard_content) : null,
+    checkoutProvider: String(row.checkout_provider || "MANUAL") as Product["checkoutProvider"],
+    checkoutUrl: row.checkout_url ? String(row.checkout_url) : null,
+    priceCents: Number(row.price_cents || 0),
+    currency: String(row.currency || "BOB"),
+    status: String(row.status), displayOrder: Number(row.display_order),
   };
 }
 
@@ -536,6 +631,7 @@ function mapPayment(row: Record<string, unknown>): Payment {
   return {
     id: String(row.id), reference: String(row.reference), payerName: String(row.payer_name),
     payerEmail: row.payer_email ? String(row.payer_email) : null, payerPhone: row.payer_phone ? String(row.payer_phone) : null,
+    customerId: row.customer_id ? String(row.customer_id) : null,
     concept: String(row.concept), itemType: String(row.item_type), itemId: row.item_id ? String(row.item_id) : null,
     amountCents: Number(row.amount_cents), currency: String(row.currency), paymentMethod: String(row.payment_method),
     providerReference: row.provider_reference ? String(row.provider_reference) : null, status: String(row.status),
@@ -641,6 +737,12 @@ export async function getProducts(includeHidden = false) {
   }
 }
 
+export async function getProduct(slug: string) {
+  const db = await ensureDatabase();
+  const row = await db.prepare(`SELECT * FROM products WHERE slug = ? LIMIT 1`).bind(slug).first<Record<string, unknown>>();
+  return row ? mapProduct(row) : null;
+}
+
 export async function getPayments(query = "", status = "") {
   const db = await ensureDatabase();
   const conditions: string[] = [];
@@ -656,21 +758,53 @@ export async function getPayments(query = "", status = "") {
   return result.results.map(mapPayment);
 }
 
-export type PaymentInput = Pick<Payment, "payerName" | "payerEmail" | "payerPhone" | "concept" | "itemType" | "itemId" | "amountCents" | "currency" | "paymentMethod" | "providerReference" | "paidAt" | "notes">;
+export type PaymentInput = Pick<Payment, "payerName" | "payerEmail" | "payerPhone" | "concept" | "itemType" | "itemId" | "amountCents" | "currency" | "paymentMethod" | "providerReference" | "paidAt" | "notes"> & { customerId?: string | null; source?: string };
 
 export async function createPayment(input: PaymentInput) {
   const db = await ensureDatabase();
   const id = crypto.randomUUID();
   const reference = `GDC-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${id.slice(0, 8).toUpperCase()}`;
-  await db.prepare(`INSERT INTO payments (id, reference, payer_name, payer_email, payer_phone, concept, item_type, item_id, amount_cents, currency, payment_method, provider_reference, paid_at, notes, source, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'MANUAL', 'PENDING')`)
-    .bind(id, reference, input.payerName, input.payerEmail, input.payerPhone, input.concept, input.itemType, input.itemId, input.amountCents, input.currency, input.paymentMethod, input.providerReference, input.paidAt, input.notes).run();
+  let customerId = input.customerId ?? null;
+  if (!customerId && input.payerEmail) {
+    const customer = await db.prepare(`SELECT id FROM customer_users WHERE email = ? AND active = 1 LIMIT 1`).bind(input.payerEmail.trim().toLowerCase()).first<{ id: string }>();
+    customerId = customer?.id ?? null;
+  }
+  await db.prepare(`INSERT INTO payments (id, reference, payer_name, payer_email, payer_phone, customer_id, concept, item_type, item_id, amount_cents, currency, payment_method, provider_reference, paid_at, notes, source, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')`)
+    .bind(id, reference, input.payerName, input.payerEmail, input.payerPhone, customerId, input.concept, input.itemType, input.itemId, input.amountCents, input.currency, input.paymentMethod, input.providerReference, input.paidAt, input.notes, input.source || "MANUAL").run();
   return { id, reference };
 }
 
 export async function updatePaymentStatus(id: string, status: string, verifiedBy: string) {
   const db = await ensureDatabase();
-  await db.prepare(`UPDATE payments SET status = ?, verified_at = CASE WHEN ? = 'VERIFIED' THEN CURRENT_TIMESTAMP ELSE verified_at END, verified_by = CASE WHEN ? = 'VERIFIED' THEN ? ELSE verified_by END, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-    .bind(status, status, status, verifiedBy, id).run();
+  const row = await db.prepare(`SELECT * FROM payments WHERE id = ? LIMIT 1`).bind(id).first<Record<string, unknown>>();
+  if (!row) throw new Error("Pago no encontrado");
+  const payment = mapPayment(row);
+  const statements = [db.prepare(`UPDATE payments SET status = ?, verified_at = CASE WHEN ? = 'VERIFIED' THEN CURRENT_TIMESTAMP ELSE verified_at END, verified_by = CASE WHEN ? = 'VERIFIED' THEN ? ELSE verified_by END, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+    .bind(status, status, status, verifiedBy, id)];
+  if (["VERIFIED", "REFUNDED"].includes(status)) {
+    statements.push(db.prepare(`INSERT OR IGNORE INTO accounting_entries (id, payment_id, entry_type, category, item_type, item_id, description, amount_cents, currency, occurred_at, created_by) VALUES (?, ?, 'INCOME', 'Venta verificada', ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(`income-${id}`, id, ["PRODUCT", "TRAINING", "EVENT"].includes(payment.itemType) ? payment.itemType : "GENERAL", payment.itemId, payment.concept, payment.amountCents, payment.currency, payment.paidAt || new Date().toISOString(), verifiedBy));
+  } else {
+    statements.push(db.prepare(`DELETE FROM accounting_entries WHERE id = ?`).bind(`income-${id}`));
+  }
+  if (status === "VERIFIED") {
+    if (payment.customerId && payment.itemId && ["PRODUCT", "TRAINING"].includes(payment.itemType)) {
+      statements.push(db.prepare(`UPDATE customer_entitlements SET status = 'ACTIVE', payment_id = ?, granted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE customer_id = ? AND item_type = ? AND item_id = ?`)
+        .bind(id, payment.customerId, payment.itemType, payment.itemId));
+      statements.push(db.prepare(`INSERT OR IGNORE INTO customer_entitlements (id, customer_id, item_type, item_id, payment_id, status) VALUES (?, ?, ?, ?, ?, 'ACTIVE')`)
+        .bind(crypto.randomUUID(), payment.customerId, payment.itemType, payment.itemId, id));
+    }
+  }
+  if (status === "REFUNDED") {
+    statements.push(db.prepare(`INSERT OR IGNORE INTO accounting_entries (id, payment_id, entry_type, category, item_type, item_id, description, amount_cents, currency, occurred_at, created_by) VALUES (?, ?, 'REFUND', 'Reembolso', ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(`refund-${id}`, id, ["PRODUCT", "TRAINING", "EVENT"].includes(payment.itemType) ? payment.itemType : "GENERAL", payment.itemId, `Reembolso · ${payment.concept}`, -Math.abs(payment.amountCents), payment.currency, new Date().toISOString(), verifiedBy));
+  } else {
+    statements.push(db.prepare(`DELETE FROM accounting_entries WHERE id = ?`).bind(`refund-${id}`));
+  }
+  if (status !== "VERIFIED") {
+    statements.push(db.prepare(`UPDATE customer_entitlements SET status = 'SUSPENDED', updated_at = CURRENT_TIMESTAMP WHERE payment_id = ?`).bind(id));
+  }
+  await db.batch(statements);
 }
 
 export async function getPaymentSummary() {
@@ -725,11 +859,22 @@ export async function getAppointments() {
   return result.results.map(mapAppointment);
 }
 
+export class AppointmentUnavailableError extends Error {}
+
 export async function createAppointment(input: Omit<Appointment, "id" | "status" | "createdAt" | "updatedAt">) {
   const db = await ensureDatabase();
   const id = crypto.randomUUID();
-  await db.prepare(`INSERT INTO appointments (id, name, email, phone, country, preferred_date, preferred_time, training_interest, message, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')`)
-    .bind(id, input.name, input.email, input.phone, input.country, input.preferredDate, input.preferredTime, input.trainingInterest, input.message).run();
+  const blocked = await db.prepare(`SELECT id FROM appointment_blocks WHERE date = ? AND active = 1 AND (appointment_type = 'ALL' OR appointment_type = ?) AND start_time <= ? AND end_time > ? LIMIT 1`)
+    .bind(input.preferredDate, input.appointmentType, input.preferredTime, input.preferredTime).first<{ id: string }>();
+  if (blocked) throw new AppointmentUnavailableError("Horario no disponible");
+  try {
+    await db.prepare(`INSERT INTO appointments (id, name, email, phone, country, preferred_date, preferred_time, training_interest, appointment_type, disclaimer_accepted_at, message, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')`)
+      .bind(id, input.name, input.email, input.phone, input.country, input.preferredDate, input.preferredTime, input.trainingInterest, input.appointmentType, input.disclaimerAcceptedAt, input.message).run();
+  } catch (error) {
+    const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+    if (message.includes("unique") || message.includes("constraint")) throw new AppointmentUnavailableError("Horario no disponible");
+    throw error;
+  }
   return id;
 }
 
@@ -744,13 +889,13 @@ export type AssociateInput = Omit<Associate, "id" | "status">;
 
 export async function createProduct(input: ProductInput) {
   const db = await ensureDatabase(); const id = crypto.randomUUID();
-  await db.prepare(`INSERT INTO products (id, name, slug, description, image, price_label, discount_label, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?)`)
-    .bind(id, input.name, input.slug, input.description, input.image, input.priceLabel, input.discountLabel, input.displayOrder).run(); return id;
+  await db.prepare(`INSERT INTO products (id, name, slug, description, image, price_label, discount_label, resource_url, dashboard_content, checkout_provider, checkout_url, price_cents, currency, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?)`)
+    .bind(id, input.name, input.slug, input.description, input.image, input.priceLabel, input.discountLabel, input.resourceUrl, input.dashboardContent, input.checkoutProvider, input.checkoutUrl, input.priceCents, input.currency, input.displayOrder).run(); return id;
 }
 
 export async function updateProduct(id: string, input: ProductInput) {
-  const db = await ensureDatabase(); await db.prepare(`UPDATE products SET name = ?, slug = ?, description = ?, image = ?, price_label = ?, discount_label = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-    .bind(input.name, input.slug, input.description, input.image, input.priceLabel, input.discountLabel, input.displayOrder, id).run();
+  const db = await ensureDatabase(); await db.prepare(`UPDATE products SET name = ?, slug = ?, description = ?, image = ?, price_label = ?, discount_label = ?, resource_url = ?, dashboard_content = ?, checkout_provider = ?, checkout_url = ?, price_cents = ?, currency = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+    .bind(input.name, input.slug, input.description, input.image, input.priceLabel, input.discountLabel, input.resourceUrl, input.dashboardContent, input.checkoutProvider, input.checkoutUrl, input.priceCents, input.currency, input.displayOrder, id).run();
 }
 
 export async function createEvent(input: EventInput) {
@@ -852,21 +997,21 @@ export async function getDashboardData() {
   };
 }
 
-export type TrainingInput = { name: string; acronym: string; slug: string; shortDescription: string; fullDescription: string; logo: string; heroImage?: string | null; resourceUrl?: string | null; displayOrder: number };
+export type TrainingInput = { name: string; acronym: string; slug: string; shortDescription: string; fullDescription: string; logo: string; heroImage?: string | null; resourceUrl?: string | null; dashboardContent?: string | null; checkoutProvider: "STRIPE" | "HOTMART" | "MANUAL"; checkoutUrl?: string | null; priceCents: number; currency: string; displayOrder: number };
 
 export async function createTraining(input: TrainingInput) {
   const db = await ensureDatabase();
   const id = crypto.randomUUID();
   const result = await db.prepare(`SELECT COALESCE(MAX(display_order), 0) + 1 AS next_order FROM trainings`).first<{ next_order: number }>();
-  await db.prepare(`INSERT INTO trainings (id, name, acronym, slug, short_description, full_description, logo, hero_image, resource_url, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?)`)
-    .bind(id, input.name, input.acronym, input.slug, input.shortDescription, input.fullDescription, input.logo, input.heroImage ?? null, input.resourceUrl ?? null, input.displayOrder || result?.next_order || 1).run();
+  await db.prepare(`INSERT INTO trainings (id, name, acronym, slug, short_description, full_description, logo, hero_image, resource_url, dashboard_content, checkout_provider, checkout_url, price_cents, currency, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?)`)
+    .bind(id, input.name, input.acronym, input.slug, input.shortDescription, input.fullDescription, input.logo, input.heroImage ?? null, input.resourceUrl ?? null, input.dashboardContent ?? null, input.checkoutProvider, input.checkoutUrl ?? null, input.priceCents, input.currency, input.displayOrder || result?.next_order || 1).run();
   return id;
 }
 
 export async function updateTraining(id: string, input: TrainingInput) {
   const db = await ensureDatabase();
-  await db.prepare(`UPDATE trainings SET name = ?, acronym = ?, slug = ?, short_description = ?, full_description = ?, logo = ?, hero_image = ?, resource_url = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-    .bind(input.name, input.acronym, input.slug, input.shortDescription, input.fullDescription, input.logo, input.heroImage ?? null, input.resourceUrl ?? null, input.displayOrder, id).run();
+  await db.prepare(`UPDATE trainings SET name = ?, acronym = ?, slug = ?, short_description = ?, full_description = ?, logo = ?, hero_image = ?, resource_url = ?, dashboard_content = ?, checkout_provider = ?, checkout_url = ?, price_cents = ?, currency = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+    .bind(input.name, input.acronym, input.slug, input.shortDescription, input.fullDescription, input.logo, input.heroImage ?? null, input.resourceUrl ?? null, input.dashboardContent ?? null, input.checkoutProvider, input.checkoutUrl ?? null, input.priceCents, input.currency, input.displayOrder, id).run();
 }
 
 export async function setTrainingStatus(id: string, status: string) {
@@ -967,7 +1112,7 @@ export const defaultSettings: Record<string, string> = {
   facebook: "",
   youtube: "",
   whatsappAiEnabled: "false",
-  whatsappAiModel: "gpt-5-mini",
+  whatsappAiModel: "gpt-5.6-luna",
   whatsappAiInstructions: "Responde en español de forma clara, cercana y breve como asistente de Gimnasio del Cerebro. Orienta sobre los entrenamientos sin inventar precios, certificaciones, resultados ni afirmaciones médicas. Si la consulta requiere decisión humana, pide los datos de contacto y avisa que un asesor continuará.",
 };
 

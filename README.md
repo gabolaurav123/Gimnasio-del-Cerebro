@@ -102,7 +102,8 @@ WHATSAPP_NUMBER=543813004167
 SITE_URL=
 DATABASE_URL=
 OPENAI_API_KEY=
-OPENAI_MODEL=gpt-5-mini
+OPENAI_MODEL=gpt-5.6-luna
+TERMS_VERSION=2026-08-31
 EVOLUTION_API_URL=https://tu-evolution-api.example.com
 EVOLUTION_API_KEY=
 EVOLUTION_INSTANCE_NAME=gimnasio-del-cerebro
@@ -132,6 +133,9 @@ El formulario público valida la información en frontend y backend, crea un `Co
 - Media: subida validada a R2 en Cloudflare o PostgreSQL en Seenode.
 - Testimonios: alta y edición de testimonios, miniatura, enlace de YouTube, orden y visibilidad.
 - OpenAI: asistente editorial opcional para generar un primer borrador. Requiere `OPENAI_API_KEY`; siempre se debe revisar el texto antes de publicarlo.
+- Portal de clientes: registro, inicio de sesión, programas adquiridos y asistentes de IA separados por producto.
+- Agenda: horarios sin doble reserva, citas de consulta o entrenamiento y bloqueos manuales desde el CRM.
+- Pagos y contabilidad: enlaces de Stripe o Hotmart por producto, verificación, acceso automático, movimientos por producto/moneda y exportación compatible con Excel.
 - WhatsApp + IA: QR de vinculación, estado de conexión, listado de chats, respuesta manual y asistente automático. Requiere una instalación compatible de Evolution API y las variables `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE_NAME` y `WHATSAPP_WEBHOOK_SECRET`.
 
 ## Contenido inicial
@@ -161,10 +165,11 @@ Para activar **WhatsApp + IA**, configura además:
 - `EVOLUTION_INSTANCE_NAME`: por ejemplo `gimnasio-del-cerebro`.
 - `WHATSAPP_WEBHOOK_SECRET`: cadena aleatoria larga; el panel la envía como cabecera privada al webhook.
 - `OPENAI_API_KEY`: clave secreta de OpenAI.
-- `OPENAI_MODEL`: por defecto `gpt-5-mini`.
+- `OPENAI_MODEL`: modelo configurable, por defecto `gpt-5.6-luna`.
+- `TERMS_VERSION`: versión legal aceptada al registrar una cuenta, por ejemplo `2026-08-31`.
 
 No coloques `EVOLUTION_API_KEY`, `WHATSAPP_WEBHOOK_SECRET` ni `OPENAI_API_KEY` en campos del panel o código cliente. Todas se leen exclusivamente desde el servidor.
 
-Medidas activas: hash bcrypt, sesiones HMAC HttpOnly/Secure/SameSite Strict, verificación de usuario activo y rol en servidor, protección de origen/CSRF, límites de intentos de acceso y formularios, validación Zod, subida restringida por tipo y tamaño, consultas parametrizadas y cabeceras CSP/HSTS/anti-iframe.
+Medidas activas: hash bcrypt, sesiones HMAC HttpOnly/Secure/SameSite, verificación de usuario activo y rol en servidor, protección de origen/CSRF, límites de intentos de acceso y formularios, validación Zod, subida restringida por tipo y tamaño, consultas parametrizadas y cabeceras CSP/HSTS/anti-iframe.
 
 Las tablas y los datos iniciales se crean automáticamente en la primera solicitud. En PostgreSQL, los archivos multimedia se guardan junto con sus metadatos para evitar depender de R2.

@@ -13,6 +13,7 @@ interface Env {
   SITE_URL?: string;
   OPENAI_API_KEY?: string;
   OPENAI_MODEL?: string;
+  TERMS_VERSION?: string;
   IMAGES: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {

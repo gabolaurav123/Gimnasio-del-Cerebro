@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       const response = await fetch("https://api.openai.com/v1/responses", {
         method: "POST",
         headers: { authorization: `Bearer ${env.OPENAI_API_KEY}`, "content-type": "application/json" },
-        body: JSON.stringify({ model: settings.whatsappAiModel || "gpt-5-mini", store: false, max_output_tokens: 500, instructions: settings.whatsappAiInstructions, input: `Nombre del contacto: ${String(data.pushName || "No indicado")}\nMensaje recibido por WhatsApp:\n${text}` }),
+        body: JSON.stringify({ model: settings.whatsappAiModel || "gpt-5.6-luna", store: false, max_output_tokens: 500, instructions: settings.whatsappAiInstructions, input: `Nombre del contacto: ${String(data.pushName || "No indicado")}\nMensaje recibido por WhatsApp:\n${text}` }),
         signal: AbortSignal.timeout(30000),
       });
       const openAiPayload = record(await response.json().catch(() => null));

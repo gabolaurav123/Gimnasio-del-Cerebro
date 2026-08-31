@@ -16,7 +16,7 @@ export default async function Home() {
   return (
     <>
       <section className="hero">
-        <picture className="hero__image"><source media="(max-width: 700px)" srcSet="/images/hero-neuroscience-quantum-mobile-v1.png" /><Image src="/images/hero-neuroscience-quantum-desktop-v1.png" alt="Cerebro humano luminoso conectado por una red científica que representa neurociencia, aprendizaje y posibilidades" fill priority sizes="100vw" /></picture>
+        <picture className="hero__image"><source media="(max-width: 700px)" srcSet="/images/hero-neuroscience-human-mobile-v2.png" /><Image src="/images/hero-neuroscience-human-desktop-v2.png" alt="Persona en un entorno de aprendizaje con conexiones neuronales sutiles que representan neurociencia aplicada" fill priority sizes="100vw" /></picture>
         <div className="hero__wash" />
         <div className="shell hero__content">
           <div className="hero__copy">

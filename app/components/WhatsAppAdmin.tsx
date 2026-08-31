@@ -85,7 +85,7 @@ export function WhatsAppAdmin({ settings, initialConnection }: { settings: Recor
       <div className="admin-card__heading"><div><h2><Bot size={19} /> Asistente automático con IA</h2><p>Las instrucciones quedan en la base de datos; la clave de OpenAI permanece únicamente en el servidor.</p></div></div>
       <form className="manager-form whatsapp-assistant-form" onSubmit={saveAssistant}>
         <div className="assistant-toggle"><input id="whatsapp-ai-enabled" name="enabled" type="checkbox" defaultChecked={settings.whatsappAiEnabled === "true"} /><label htmlFor="whatsapp-ai-enabled"><strong>Responder automáticamente</strong><small>Solo mensajes de chats individuales; ignora grupos y mensajes enviados por la cuenta.</small></label></div>
-        <label>Modelo de OpenAI<input name="model" pattern="[A-Za-z0-9._-]+" defaultValue={settings.whatsappAiModel || "gpt-5-mini"} required /></label>
+        <label>Modelo de OpenAI<input name="model" pattern="[A-Za-z0-9._-]+" defaultValue={settings.whatsappAiModel || "gpt-5.6-luna"} required /></label>
         <label>Instrucciones del asistente<textarea name="instructions" rows={8} minLength={30} maxLength={6000} defaultValue={settings.whatsappAiInstructions} required /></label>
         <button className="button button--primary"><Bot size={17} />Guardar asistente</button>
         {assistantSaved && <span className="inline-success"><Check size={16} />Configuración guardada</span>}

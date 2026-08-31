@@ -12,8 +12,8 @@ test("la Home conserva la propuesta central y usa contenido persistente", async 
   assert.match(page, /getTestimonials\(\)/);
   assert.match(page, /trainings\.slice\(0, 3\)/);
   assert.match(page, /Ver m.s entrenamientos/);
-  assert.match(page, /hero-neuroscience-quantum-desktop-v1/);
-  assert.match(page, /hero-neuroscience-quantum-mobile-v1/);
+  assert.match(page, /hero-neuroscience-human-desktop-v2/);
+  assert.match(page, /hero-neuroscience-human-mobile-v2/);
   assert.doesNotMatch(page, /codex-preview|SkeletonPreview/);
 });
 
@@ -148,8 +148,64 @@ test("la navegación administrativa funciona sin depender del router RSC", async
   }
   assert.match(shell, /<a className=.*href=\{href\}/);
   assert.match(dashboard, /<a href="\/admin\/crm"/);
-  assert.match(login, /window\.location\.assign\("\/admin"\)/);
+  assert.match(login, /audience === "admin" \? "\/admin" : safeNext/);
   assert.match(shell, /window\.location\.assign\("\/login"\)/);
+});
+
+test("los clientes pueden registrarse e ingresar con una sesión separada", async () => {
+  const [form, register, login, auth, repository] = await Promise.all([
+    read("../app/components/LoginForm.tsx"),
+    read("../app/api/customer/auth/register/route.ts"),
+    read("../app/api/customer/auth/login/route.ts"),
+    read("../lib/customer-auth.ts"),
+    read("../db/customer-repository.ts"),
+  ]);
+  assert.match(form, /Crear una cuenta nueva/);
+  assert.match(form, /acceptedTerms/);
+  assert.match(register, /bcrypt\.hash/);
+  assert.match(login, /customerSessionCookie/);
+  assert.match(auth, /gdc_customer_session/);
+  assert.match(auth, /HttpOnly/);
+  assert.match(repository, /customer_users/);
+});
+
+test("la agenda evita cruces y permite bloquear turnos", async () => {
+  const [route, scheduling, repository, manager] = await Promise.all([
+    read("../app/api/appointments/route.ts"),
+    read("../db/scheduling.ts"),
+    read("../db/repository.ts"),
+    read("../app/components/BusinessManager.tsx"),
+  ]);
+  assert.match(route, /getAppointmentAvailability/);
+  assert.match(route, /AppointmentUnavailableError/);
+  assert.match(repository, /idx_appointments_active_slot/);
+  assert.match(scheduling, /appointment_blocks/);
+  assert.match(manager, /Bloquear turno/);
+});
+
+test("pagos verificados habilitan contenido y contabilidad por producto", async () => {
+  const [repository, checkout, accounting, exportRoute, dashboard] = await Promise.all([
+    read("../db/repository.ts"),
+    read("../app/api/customer/checkout/route.ts"),
+    read("../db/accounting.ts"),
+    read("../app/api/admin/accounting/export/route.ts"),
+    read("../app/components/CustomerDashboard.tsx"),
+  ]);
+  assert.match(repository, /customer_entitlements/);
+  assert.match(repository, /accounting_entries/);
+  assert.match(checkout, /STRIPE.*HOTMART/);
+  assert.match(accounting, /Resumen por moneda/);
+  assert.match(exportRoute, /application\/vnd\.ms-excel/);
+  assert.match(dashboard, /Asistentes personalizados/);
+});
+
+test("los asistentes personalizados requieren acceso, servidor y store false", async () => {
+  const [route, manager] = await Promise.all([read("../app/api/customer/assistant/route.ts"), read("../app/components/AssistantManager.tsx")]);
+  assert.match(route, /getCustomerAssistant/);
+  assert.match(route, /OPENAI_API_KEY/);
+  assert.match(route, /safety_identifier/);
+  assert.match(route, /store: false/);
+  assert.match(manager, /La clave API nunca|Falta OPENAI_API_KEY|clave API/i);
 });
 
 test("el blog admite imágenes y un asistente editorial opcional", async () => {

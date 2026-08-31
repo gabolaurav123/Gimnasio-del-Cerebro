@@ -62,7 +62,7 @@ export function SiteHeader({ notifications = [] }: { notifications?: PublicNotif
       <div id="mobile-menu" className={`mobile-menu ${open ? "mobile-menu--open" : ""}`}>
         <nav className="shell" aria-label="Navegación móvil">
           {nav.map((item) => <div className="mobile-nav-group" key={item.href}><a href={item.href} onClick={() => setOpen(false)}>{item.label}<ArrowUpRight size={17} /></a>{item.children?.filter((child) => child.href !== item.href).map((child) => <a className="mobile-nav-child" href={child.href} key={child.href} onClick={() => setOpen(false)}>{child.label}<ArrowUpRight size={15} /></a>)}</div>)}
-          <a href="/login" onClick={() => setOpen(false)}>Acceso administrativo<ArrowUpRight size={17} /></a>
+          <a href="/login" onClick={() => setOpen(false)}>Ingresar o crear cuenta<ArrowUpRight size={17} /></a>
         </nav>
       </div>
     </header>
@@ -81,9 +81,9 @@ export function SiteFooter() {
         </div>
         <div><h3>Navegación</h3>{nav.filter((item) => ["/", "/nosotros", "/productos", "/asociados"].includes(item.href)).map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}</div>
         <div><h3>Entrenamientos</h3><a href="/entrenamientos/neurofitness-active">Neurofitness Active</a><a href="/entrenamientos/neurotraumas">Neurotraumas</a><a href="/entrenamientos/brain-full-training">Brain Full Training</a></div>
-        <div><h3>Contacto</h3><a href={whatsappUrl("Hola, quisiera recibir información sobre los entrenamientos de Gimnasio del Cerebro.", whatsapp)} target="_blank" rel="noreferrer">{formatWhatsAppNumber(whatsapp)}</a><a href="/contacto">Enviar una consulta</a><a href="/agenda">Agendar una cita</a></div>
+        <div><h3>Contacto</h3><a href={whatsappUrl("Hola, quisiera recibir información sobre los entrenamientos de Gimnasio del Cerebro.", whatsapp)} target="_blank" rel="noreferrer">{formatWhatsAppNumber(whatsapp)}</a><a href="/contacto">Enviar una consulta</a><a href="/agenda">Agendar una cita</a><a href="/privacidad">Privacidad</a><a href="/terminos">Términos</a><a href="/cookies">Cookies</a></div>
       </div>
-      <div className="shell footer-bottom"><span>© {year} Gimnasio del Cerebro</span><span>Conocimiento · Desarrollo humano · Tecnología</span><a href="/login">Administración</a></div>
+      <div className="shell footer-bottom"><span>© {year} Gimnasio del Cerebro</span><span>Conocimiento · Desarrollo humano · Tecnología</span><a href="/login">Ingresar</a></div>
     </footer>
   );
 }

@@ -7,13 +7,12 @@ import { whatsappUrl } from "../../lib/whatsapp";
 import { useWhatsAppNumber } from "./WhatsAppContext";
 
 export function TrainingCard({ training, index }: { training: Training; index: number }) {
-  const whatsapp = useWhatsAppNumber();
   return (
     <article className="training-card" style={{ "--order": index } as React.CSSProperties}>
       <div className="training-card__top"><span>{String(index + 1).padStart(2, "0")}</span><strong>{training.acronym}</strong></div>
       <div className="training-card__logo"><img src={training.logo} alt={`Logo oficial de ${training.name}`} width={520} height={520} loading="lazy" /></div>
       <div className="training-card__body"><h3>{training.name}</h3><p>{training.shortDescription}</p></div>
-      <div className="training-card__links"><a href={`/entrenamientos/${training.slug}`}>Ver entrenamiento <ArrowRight size={17} /></a><a className="training-card__buy" href={whatsappUrl(`Hola, quiero adquirir el entrenamiento ${training.name}. ¿Podrían indicarme disponibilidad y forma de pago?`, whatsapp)} target="_blank" rel="noreferrer" aria-label={`Adquirir ${training.name}`}><ShoppingBag size={16} />Adquirir</a></div>
+      <div className="training-card__links"><a href={`/entrenamientos/${training.slug}`}>Ver entrenamiento <ArrowRight size={17} /></a><a className="training-card__buy" href={`/checkout/entrenamiento/${training.slug}`} aria-label={`Adquirir ${training.name}`}><ShoppingBag size={16} />Adquirir</a></div>
     </article>
   );
 }
@@ -76,8 +75,19 @@ export function AppointmentForm({ trainings }: { trainings: Training[] }) {
   const whatsapp = useWhatsAppNumber();
   const [state, setState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [appointmentType, setAppointmentType] = useState<"CONSULTATION" | "TRAINING">("CONSULTATION");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [slots, setSlots] = useState<{ time: string; available: boolean }[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
   const today = new Date();
   const minDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  async function loadSlots(date: string, type: "CONSULTATION" | "TRAINING") {
+    setSelectedDate(date); setLoadingSlots(Boolean(date)); setSlots([]);
+    if (!date) return;
+    const response = await fetch(`/api/appointments/availability?date=${encodeURIComponent(date)}&type=${type}`, { cache: "no-store" });
+    const payload = await response.json() as { slots?: { time: string; available: boolean }[] };
+    setSlots(payload.slots || []); setLoadingSlots(false);
+  }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setState("loading");
     const response = await fetch("/api/appointments", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.fromEntries(new FormData(event.currentTarget))) });
@@ -89,11 +99,13 @@ export function AppointmentForm({ trainings }: { trainings: Training[] }) {
   return <form className="contact-form appointment-form" onSubmit={submit}>
     <div className="field-row"><label>Nombre completo<input name="name" autoComplete="name" minLength={2} required /></label><label>Email<input name="email" type="email" autoComplete="email" required /></label></div>
     <div className="field-row"><label>WhatsApp / teléfono<input name="phone" autoComplete="tel" minLength={7} required /></label><label>País<input name="country" autoComplete="country-name" minLength={2} required /></label></div>
-    <div className="field-row"><label>Fecha preferida<input name="preferredDate" type="date" min={minDate} required /></label><label>Hora preferida<input name="preferredTime" type="time" required /></label></div>
-    <label>Entrenamiento de interés<select name="trainingInterest" defaultValue=""><option value="">Orientación general</option>{trainings.map((training) => <option value={training.name} key={training.id}>{training.name}</option>)}</select></label>
+    <div className="field-row"><label>Tipo de cita<select name="appointmentType" value={appointmentType} onChange={(event) => { const type = event.target.value as "CONSULTATION" | "TRAINING"; setAppointmentType(type); if (selectedDate) void loadSlots(selectedDate, type); }}><option value="CONSULTATION">Sesión personalizada de consulta</option><option value="TRAINING">Cita de entrenamiento</option></select></label><label>Fecha disponible<input name="preferredDate" type="date" min={minDate} value={selectedDate} onChange={(event) => void loadSlots(event.target.value, appointmentType)} required /></label></div>
+    <label>Horario disponible<select name="preferredTime" defaultValue="" required disabled={!selectedDate || loadingSlots}><option value="">{loadingSlots ? "Consultando horarios…" : "Selecciona un horario"}</option>{slots.filter((slot) => slot.available).map((slot) => <option value={slot.time} key={slot.time}>{slot.time}</option>)}</select><small>{selectedDate && !loadingSlots && !slots.some((slot) => slot.available) ? "No quedan horarios disponibles para esta fecha." : "Los horarios ocupados o bloqueados no se muestran."}</small></label>
+    <label>Entrenamiento de interés<select name="trainingInterest" defaultValue=""><option value="">Sesión personalizada / aún no lo sé</option>{trainings.map((training) => <option value={training.name} key={training.id}>{training.name}</option>)}</select></label>
     <label>Cuéntanos brevemente qué necesitas<textarea name="message" rows={4} maxLength={1200} /></label>
     <label className="form-honeypot" aria-hidden="true">Sitio web<input name="website" tabIndex={-1} autoComplete="off" /></label>
-    <label className="consent"><input type="checkbox" required /><span>Acepto que Gimnasio del Cerebro utilice estos datos para coordinar la cita.</span></label>
+    <label className="consent"><input name="acceptedDisclaimer" type="checkbox" required /><span>Comprendo que esta cita es educativa y de orientación. No constituye psicoterapia, diagnóstico, tratamiento médico ni atención de emergencia, y no sustituye la consulta con profesionales sanitarios habilitados.</span></label>
+    <label className="consent"><input type="checkbox" required /><span>Acepto el tratamiento de mis datos conforme al <a href="/privacidad" target="_blank">aviso de privacidad</a> para coordinar la cita.</span></label>
     {state === "error" && <p className="form-error" role="alert">{message}</p>}
     <button className="button button--primary" type="submit" disabled={state === "loading"}>{state === "loading" ? "Registrando…" : <>Solicitar cita <CalendarCheck size={17} /></>}</button>
   </form>;

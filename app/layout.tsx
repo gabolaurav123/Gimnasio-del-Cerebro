@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(origin),
     title: { default: "Gimnasio del Cerebro", template: "%s · Gimnasio del Cerebro" },
     description: "Entrena tu cerebro. Transforma tu vida. Desarrollo humano, mente y aprendizaje consciente desde 2014.",
-    icons: { icon: "/logos/gdc-full-v2.jpg", shortcut: "/logos/gdc-full-v2.jpg", apple: "/logos/gdc-full-v2.jpg" },
+    icons: { icon: "/icon.jpg", shortcut: "/icon.jpg", apple: "/icon.jpg" },
     openGraph: { title: "Gimnasio del Cerebro", description: "Entrena tu cerebro. Transforma tu vida.", type: "website", url: origin, images: [{ url: `${origin}/og.png`, width: 1736, height: 909, alt: "Gimnasio del Cerebro — Entrena tu cerebro. Transforma tu vida." }] },
     twitter: { card: "summary_large_image", title: "Gimnasio del Cerebro", description: "Entrena tu cerebro. Transforma tu vida.", images: [`${origin}/og.png`] },
   };

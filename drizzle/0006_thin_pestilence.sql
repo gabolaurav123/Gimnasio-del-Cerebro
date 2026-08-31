@@ -1,0 +1,3 @@
+CREATE UNIQUE INDEX `idx_appointments_active_slot` ON `appointments` (`preferred_date`,`preferred_time`) WHERE "appointments"."status" IN ('PENDING', 'CONFIRMED');--> statement-breakpoint
+CREATE UNIQUE INDEX `idx_assistant_profiles_item_unique` ON `assistant_profiles` (`item_type`,`item_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `idx_customer_entitlements_unique` ON `customer_entitlements` (`customer_id`,`item_type`,`item_id`);
