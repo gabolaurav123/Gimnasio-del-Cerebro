@@ -464,6 +464,12 @@ function isExistingColumnError(error: unknown) {
   return message.includes("duplicate column") || message.includes("already exists");
 }
 
+function isNonFatalUniqueIndexError(error: unknown, statement: string) {
+  if (!/^\s*CREATE\s+UNIQUE\s+INDEX\b/i.test(statement)) return false;
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  return message.includes("duplicate") || message.includes("unique constraint failed") || message.includes("could not create unique index");
+}
+
 let ready: Promise<AppDatabase> | null = null;
 
 export function ensureDatabase() {
@@ -471,7 +477,16 @@ export function ensureDatabase() {
   ready = (async () => {
     const db = await getRuntimeDatabase();
     const statements = db.dialect === "postgres" ? [...schemaStatements, ...postgresSchemaStatements] : schemaStatements;
-    await db.batch(statements.map((statement) => db.prepare(statement)));
+    for (const statement of statements) {
+      try {
+        await db.prepare(statement).run();
+      } catch (error) {
+        // Existing production data can temporarily prevent a new unique index
+        // from being built. That index must not take the whole website down.
+        if (!isNonFatalUniqueIndexError(error, statement)) throw error;
+        console.error("Deferred unique index migration because existing rows conflict.", error);
+      }
+    }
     for (const statement of additiveMigrations) {
       try {
         await db.prepare(statement).run();
@@ -879,7 +894,9 @@ export async function createAppointment(input: Omit<Appointment, "id" | "status"
   const id = crypto.randomUUID();
   const blocked = await db.prepare(`SELECT id FROM appointment_blocks WHERE date = ? AND active = 1 AND (appointment_type = 'ALL' OR appointment_type = ?) AND start_time <= ? AND end_time > ? LIMIT 1`)
     .bind(input.preferredDate, input.appointmentType, input.preferredTime, input.preferredTime).first<{ id: string }>();
-  if (blocked) throw new AppointmentUnavailableError("Horario no disponible");
+  const occupied = await db.prepare(`SELECT id FROM appointments WHERE preferred_date = ? AND preferred_time = ? AND status IN ('PENDING', 'CONFIRMED') LIMIT 1`)
+    .bind(input.preferredDate, input.preferredTime).first<{ id: string }>();
+  if (blocked || occupied) throw new AppointmentUnavailableError("Horario no disponible");
   try {
     await db.prepare(`INSERT INTO appointments (id, name, email, phone, country, preferred_date, preferred_time, training_interest, appointment_type, disclaimer_accepted_at, message, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')`)
       .bind(id, input.name, input.email, input.phone, input.country, input.preferredDate, input.preferredTime, input.trainingInterest, input.appointmentType, input.disclaimerAcceptedAt, input.message).run();
