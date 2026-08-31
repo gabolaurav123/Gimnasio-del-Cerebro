@@ -656,6 +656,14 @@ function mapAssociate(row: Record<string, unknown>): Associate {
   };
 }
 
+function canUsePublicFallback(error: unknown, includeHidden = false) {
+  if (!includeHidden) {
+    console.error("Public catalog database read failed; serving the bundled fallback.", error);
+    return true;
+  }
+  return isDatabaseUnavailable(error);
+}
+
 export async function getTrainings(includeHidden = false) {
   try {
     const db = await ensureDatabase();
@@ -665,7 +673,7 @@ export async function getTrainings(includeHidden = false) {
     const result = await statement.all<Record<string, unknown>>();
     return result.results.map(mapTraining);
   } catch (error) {
-    if (isDatabaseUnavailable(error)) return trainingSeeds.filter((item) => includeHidden || item.status === "PUBLISHED");
+    if (canUsePublicFallback(error, includeHidden)) return trainingSeeds.filter((item) => includeHidden || item.status === "PUBLISHED");
     throw error;
   }
 }
@@ -676,7 +684,7 @@ export async function getTraining(slug: string) {
     const row = await db.prepare(`SELECT * FROM trainings WHERE slug = ? AND deleted_at IS NULL LIMIT 1`).bind(slug).first<Record<string, unknown>>();
     return row ? mapTraining(row) : null;
   } catch (error) {
-    if (isDatabaseUnavailable(error)) return trainingSeeds.find((item) => item.slug === slug) ?? null;
+    if (canUsePublicFallback(error)) return trainingSeeds.find((item) => item.slug === slug) ?? null;
     throw error;
   }
 }
@@ -690,7 +698,7 @@ export async function getPosts(includeDrafts = false) {
     const result = await statement.all<Record<string, unknown>>();
     return result.results.map(mapPost);
   } catch (error) {
-    if (isDatabaseUnavailable(error)) return postSeeds.filter((item) => includeDrafts || item.status === "PUBLISHED");
+    if (canUsePublicFallback(error, includeDrafts)) return postSeeds.filter((item) => includeDrafts || item.status === "PUBLISHED");
     throw error;
   }
 }
@@ -701,7 +709,7 @@ export async function getPost(slug: string) {
     const row = await db.prepare(`SELECT * FROM blog_posts WHERE slug = ? AND status = 'PUBLISHED' LIMIT 1`).bind(slug).first<Record<string, unknown>>();
     return row ? mapPost(row) : null;
   } catch (error) {
-    if (isDatabaseUnavailable(error)) return postSeeds.find((item) => item.slug === slug && item.status === "PUBLISHED") ?? null;
+    if (canUsePublicFallback(error)) return postSeeds.find((item) => item.slug === slug && item.status === "PUBLISHED") ?? null;
     throw error;
   }
 }
@@ -721,7 +729,7 @@ export async function getTestimonials(includeHidden = false) {
     const result = await statement.all<Record<string, unknown>>();
     return result.results.map(mapTestimonial);
   } catch (error) {
-    if (isDatabaseUnavailable(error)) return testimonialSeeds.filter((item) => includeHidden || item.visible);
+    if (canUsePublicFallback(error, includeHidden)) return testimonialSeeds.filter((item) => includeHidden || item.visible);
     throw error;
   }
 }
@@ -732,15 +740,20 @@ export async function getProducts(includeHidden = false) {
     const result = await db.prepare(includeHidden ? `SELECT * FROM products ORDER BY display_order, name` : `SELECT * FROM products WHERE status = 'PUBLISHED' ORDER BY display_order, name`).all<Record<string, unknown>>();
     return result.results.map(mapProduct);
   } catch (error) {
-    if (isDatabaseUnavailable(error)) return productSeeds.filter((item) => includeHidden || item.status === "PUBLISHED");
+    if (canUsePublicFallback(error, includeHidden)) return productSeeds.filter((item) => includeHidden || item.status === "PUBLISHED");
     throw error;
   }
 }
 
 export async function getProduct(slug: string) {
-  const db = await ensureDatabase();
-  const row = await db.prepare(`SELECT * FROM products WHERE slug = ? LIMIT 1`).bind(slug).first<Record<string, unknown>>();
-  return row ? mapProduct(row) : null;
+  try {
+    const db = await ensureDatabase();
+    const row = await db.prepare(`SELECT * FROM products WHERE slug = ? LIMIT 1`).bind(slug).first<Record<string, unknown>>();
+    return row ? mapProduct(row) : null;
+  } catch (error) {
+    if (canUsePublicFallback(error)) return productSeeds.find((item) => item.slug === slug) ?? null;
+    throw error;
+  }
 }
 
 export async function getPayments(query = "", status = "") {
@@ -824,7 +837,7 @@ export async function getEvents(includeHidden = false) {
     const result = await db.prepare(includeHidden ? `SELECT * FROM events ORDER BY starts_at, display_order` : `SELECT * FROM events WHERE status = 'PUBLISHED' ORDER BY starts_at, display_order`).all<Record<string, unknown>>();
     return result.results.map(mapEvent);
   } catch (error) {
-    if (isDatabaseUnavailable(error)) return [];
+    if (canUsePublicFallback(error, includeHidden)) return [];
     throw error;
   }
 }
@@ -835,7 +848,7 @@ export async function getAssociates(includeHidden = false) {
     const result = await db.prepare(includeHidden ? `SELECT * FROM associates ORDER BY display_order, name` : `SELECT * FROM associates WHERE status = 'PUBLISHED' ORDER BY display_order, name`).all<Record<string, unknown>>();
     return result.results.map(mapAssociate);
   } catch (error) {
-    if (isDatabaseUnavailable(error)) return associateSeeds.filter((item) => includeHidden || item.status === "PUBLISHED");
+    if (canUsePublicFallback(error, includeHidden)) return associateSeeds.filter((item) => includeHidden || item.status === "PUBLISHED");
     throw error;
   }
 }
@@ -1131,7 +1144,7 @@ export async function getSettings() {
     const result = await db.prepare(`SELECT key, value FROM site_settings`).all<{ key: string; value: string }>();
     return Object.fromEntries(result.results.map((row) => [row.key, row.value]));
   } catch (error) {
-    if (isDatabaseUnavailable(error)) {
+    if (canUsePublicFallback(error)) {
       const runtime = await getRuntimeValues(["WHATSAPP_NUMBER"]);
       return { ...defaultSettings, whatsapp: runtime.WHATSAPP_NUMBER?.trim() || defaultSettings.whatsapp };
     }
