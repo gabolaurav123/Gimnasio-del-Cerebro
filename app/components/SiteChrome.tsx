@@ -78,6 +78,7 @@ export function SiteFooter() {
         <div className="footer-intro">
           <Brand compact />
           <p>Entrenamos nuevas formas de comprender la mente para impulsar procesos de desarrollo humano y aprendizaje consciente.</p>
+          <div className="footer-partners"><small>Organizaciones vinculadas</small><div><span>Fundación Nueva Humanidad</span><a href="https://www.comunidadkiryus.org/" target="_blank" rel="noreferrer">Comunidad Kiryus <ArrowUpRight size={13} /></a></div></div>
         </div>
         <div><h3>Navegación</h3>{nav.filter((item) => ["/", "/nosotros", "/productos", "/asociados"].includes(item.href)).map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}</div>
         <div><h3>Entrenamientos</h3><a href="/entrenamientos/neurofitness-active">Neurofitness Active</a><a href="/entrenamientos/neurotraumas">Neurotraumas</a><a href="/entrenamientos/brain-full-training">Brain Full Training</a></div>

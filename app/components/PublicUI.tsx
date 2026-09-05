@@ -6,11 +6,14 @@ import type { BlogPost, Training } from "../../db/repository";
 import { whatsappUrl } from "../../lib/whatsapp";
 import { useWhatsAppNumber } from "./WhatsAppContext";
 
+const internationalConsultationPaymentUrl = "https://buy.stripe.com/aFa5kD6No1as7OK5l997H01";
+
 export function TrainingCard({ training, index }: { training: Training; index: number }) {
+  const image = training.heroImage || training.logo;
   return (
     <article className="training-card" style={{ "--order": index } as React.CSSProperties}>
       <div className="training-card__top"><span>{String(index + 1).padStart(2, "0")}</span><strong>{training.acronym}</strong></div>
-      <div className="training-card__logo"><img src={training.logo} alt={`Logo oficial de ${training.name}`} width={520} height={520} loading="lazy" /></div>
+      <div className={`training-card__logo ${training.heroImage ? "training-card__logo--cover" : ""}`}><img src={image} alt={training.heroImage ? `Portada de ${training.name}` : `Logo oficial de ${training.name}`} width={720} height={480} loading="lazy" />{training.heroImage && <span className="training-card__brand"><img src="/logos/gdc-full-v2.jpg" alt="" width={34} height={34} />Gimnasio del Cerebro</span>}</div>
       <div className="training-card__body"><h3>{training.name}</h3><p>{training.shortDescription}</p></div>
       <div className="training-card__links"><a href={`/entrenamientos/${training.slug}`}>Ver entrenamiento <ArrowRight size={17} /></a><a className="training-card__buy" href={`/checkout/entrenamiento/${training.slug}`} aria-label={`Adquirir ${training.name}`}><ShoppingBag size={16} />Adquirir</a></div>
     </article>
@@ -95,7 +98,7 @@ export function AppointmentForm({ trainings }: { trainings: Training[] }) {
     if (!response.ok) { setState("error"); setMessage(payload.error ?? "No pudimos registrar la cita."); return; }
     setState("success"); setMessage(payload.message ?? "Tu solicitud quedó registrada."); event.currentTarget.reset();
   }
-  if (state === "success") return <div className="form-success"><span><CalendarCheck /></span><h2>Solicitud recibida</h2><p>{message}</p><a className="button button--primary" href={whatsappUrl("Hola, acabo de solicitar una cita desde la web de Gimnasio del Cerebro.", whatsapp)} target="_blank" rel="noreferrer"><MessageCircle size={17} />Continuar por WhatsApp</a></div>;
+  if (state === "success") return <div className="form-success"><span><CalendarCheck /></span><h2>Solicitud recibida</h2><p>{message}</p><div className="button-row"><a className="button button--primary" href={whatsappUrl("Hola, acabo de solicitar una cita desde la web de Gimnasio del Cerebro.", whatsapp)} target="_blank" rel="noreferrer"><MessageCircle size={17} />Continuar por WhatsApp</a>{appointmentType === "CONSULTATION" && <a className="button button--outline" href={internationalConsultationPaymentUrl} target="_blank" rel="noreferrer"><ShoppingBag size={17} />Pagar consulta internacional</a>}</div><small>El pago en Stripe se realiza fuera de la web y no almacena datos de tarjeta en Gimnasio del Cerebro.</small></div>;
   return <form className="contact-form appointment-form" onSubmit={submit}>
     <div className="field-row"><label>Nombre completo<input name="name" autoComplete="name" minLength={2} required /></label><label>Email<input name="email" type="email" autoComplete="email" required /></label></div>
     <div className="field-row"><label>WhatsApp / teléfono<input name="phone" autoComplete="tel" minLength={7} required /></label><label>País<input name="country" autoComplete="country-name" minLength={2} required /></label></div>

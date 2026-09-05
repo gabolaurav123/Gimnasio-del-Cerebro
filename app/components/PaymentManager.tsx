@@ -11,6 +11,7 @@ const methodLabels: Record<string, string> = { BANK_TRANSFER: "Transferencia", Q
 const statusLabels: Record<string, string> = { PENDING: "Pendiente", VERIFIED: "Verificado", REJECTED: "Rechazado", REFUNDED: "Reembolsado" };
 
 function amount(value: number, currency: string) {
+  if (value <= 0) return "Por confirmar";
   return new Intl.NumberFormat("es-BO", { style: "currency", currency, minimumFractionDigits: 2 }).format(value / 100);
 }
 

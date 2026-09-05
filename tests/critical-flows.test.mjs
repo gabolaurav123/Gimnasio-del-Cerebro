@@ -12,8 +12,7 @@ test("la Home conserva la propuesta central y usa contenido persistente", async 
   assert.match(page, /getTestimonials\(\)/);
   assert.match(page, /trainings\.slice\(0, 3\)/);
   assert.match(page, /Ver m.s entrenamientos/);
-  assert.match(page, /hero-neuroscience-human-desktop-v2/);
-  assert.match(page, /hero-neuroscience-human-mobile-v2/);
+  assert.match(page, /hero-neuroscience-person-brain-desktop-v3/);
   assert.doesNotMatch(page, /codex-preview|SkeletonPreview/);
 });
 
@@ -32,6 +31,28 @@ test("BioShield by Kirius aparece como producto inicial", async () => {
   assert.match(repository, /BioShield by Kirius/);
   assert.match(repository, /bioshield-by-kirius/);
   assert.match(repository, /productSeeds/);
+});
+
+test("el catálogo separa programas, cursos, neuroretos y talleres con pagos públicos", async () => {
+  const [repository, trainings, products, checkout, footer] = await Promise.all([
+    read("../db/repository.ts"),
+    read("../app/(public)/entrenamientos/page.tsx"),
+    read("../app/(public)/productos/page.tsx"),
+    read("../app/api/customer/checkout/route.ts"),
+    read("../app/components/SiteChrome.tsx"),
+  ]);
+  assert.match(repository, /Cartas Neurofitness Active/);
+  assert.match(repository, /Neurofitness Active Express/);
+  assert.match(repository, /Neuroreto: 21 d.as de merecimiento/);
+  assert.match(repository, /Taller Autohipnosis/);
+  assert.match(repository, /https:\/\/pay\.hotmart\.com\/V96727899W/);
+  assert.match(repository, /https:\/\/buy\.stripe\.com\/6oU3cvb3E9GYglgcNB97H03/);
+  assert.doesNotMatch(repository, /app\.hotmart\.com\/products\/manage/);
+  assert.match(trainings, /Programas.*Cursos.*Neuroretos.*Talleres/s);
+  assert.match(products, /Comprar de forma segura/);
+  assert.doesNotMatch(checkout, /Number\(row\.price_cents\) <= 0/);
+  assert.match(footer, /Fundaci.n Nueva Humanidad/);
+  assert.match(footer, /Comunidad Kiryus/);
 });
 
 test("el panel permite registrar y verificar pagos con control de acceso", async () => {
