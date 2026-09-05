@@ -7,6 +7,7 @@ interface Env {
   DB: D1Database;
   MEDIA: R2Bucket;
   ADMIN_EMAIL?: string;
+  ADMIN_PASSWORD?: string;
   ADMIN_PASSWORD_HASH?: string;
   SESSION_SECRET?: string;
   WHATSAPP_NUMBER?: string;

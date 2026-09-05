@@ -96,6 +96,7 @@ Copiar `.env.example` y configurar las variables en el entorno local o en Sites:
 
 ```env
 ADMIN_EMAIL=
+ADMIN_PASSWORD=
 ADMIN_PASSWORD_HASH=
 SESSION_SECRET=
 WHATSAPP_NUMBER=543813004167
@@ -110,15 +111,15 @@ EVOLUTION_INSTANCE_NAME=gimnasio-del-cerebro
 WHATSAPP_WEBHOOK_SECRET=
 ```
 
-La contraseña nunca se guarda en texto plano. Genera un hash bcrypt así:
+En producción puedes guardar una contraseña de al menos 8 caracteres como secreto en `ADMIN_PASSWORD`. Si prefieres administrar únicamente el hash, genéralo así:
 
 ```bash
 npm run admin:hash -- "una-contraseña-segura"
 ```
 
-Usa el resultado como `ADMIN_PASSWORD_HASH`. `SESSION_SECRET` debe ser un valor aleatorio largo.
+Usa el resultado como `ADMIN_PASSWORD_HASH`. Si existen ambas variables, `ADMIN_PASSWORD` tiene prioridad. `SESSION_SECRET` debe ser un valor aleatorio largo.
 
-El usuario definido por `ADMIN_EMAIL` y `ADMIN_PASSWORD_HASH` se crea o sincroniza automáticamente como `SUPERADMIN`. Desde **Administración → Usuarios** puede crear usuarios adicionales con rol Editor o Comercial, cambiar contraseñas y desactivar accesos. Las sesiones se invalidan si el usuario queda inactivo.
+El usuario definido por `ADMIN_EMAIL` y `ADMIN_PASSWORD` (o `ADMIN_PASSWORD_HASH`) se crea o sincroniza automáticamente como `SUPERADMIN`, incluso si ya existía con otro identificador interno. Desde **Administración → Usuarios** puede crear usuarios adicionales con rol Editor o Comercial, cambiar contraseñas y desactivar accesos. Las sesiones se invalidan si el usuario queda inactivo.
 
 ## CRM
 
@@ -156,7 +157,7 @@ El proyecto detecta automáticamente el entorno: usa D1/R2 en Cloudflare y Postg
 4. Configura el inicio como `npm run start -- --hostname 0.0.0.0 --port 3000` y el puerto como `3000`.
 5. Añade las variables administrativas de `.env.example` y vuelve a desplegar.
 
-Variables base obligatorias en Seenode: `DATABASE_URL`, `SITE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` y `WHATSAPP_NUMBER`.
+Variables base obligatorias en Seenode: `DATABASE_URL`, `SITE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` (o `ADMIN_PASSWORD_HASH`), `SESSION_SECRET` y `WHATSAPP_NUMBER`.
 
 Para activar **WhatsApp + IA**, configura además:
 

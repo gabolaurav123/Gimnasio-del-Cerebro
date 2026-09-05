@@ -116,13 +116,16 @@ test("productos, eventos y asociados son módulos administrables", async () => {
 });
 
 test("la sesión administrativa usa cookie HttpOnly y contraseña bcrypt", async () => {
-  const auth = await read("../lib/auth.ts");
+  const [auth, repository] = await Promise.all([read("../lib/auth.ts"), read("../db/repository.ts")]);
   assert.match(auth, /bcrypt\.compare/);
   assert.match(auth, /HttpOnly/);
   assert.match(auth, /SameSite=Strict/);
   assert.match(auth, /constantTimeEqual/);
   assert.match(auth, /getAdminUserById/);
   assert.match(auth, /SESSION_SECRET/);
+  assert.match(repository, /ADMIN_PASSWORD/);
+  assert.match(repository, /LOWER\(email\) = \?/);
+  assert.match(repository, /bcrypt\.hash/);
 });
 
 test("los permisos administrativos se validan en el servidor", async () => {

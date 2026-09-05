@@ -18,12 +18,14 @@ function safeError(error: unknown) {
 export async function GET() {
   const checks: Record<string, unknown> = {};
   try {
-    const runtime = await getRuntimeValues(["DATABASE_URL", "SITE_URL", "ADMIN_EMAIL", "ADMIN_PASSWORD_HASH", "SESSION_SECRET"]);
+    const runtime = await getRuntimeValues(["DATABASE_URL", "SITE_URL", "ADMIN_EMAIL", "ADMIN_PASSWORD", "ADMIN_PASSWORD_HASH", "SESSION_SECRET"]);
     checks.environment = {
       database: Boolean(runtime.DATABASE_URL || runtime.POSTGRES_URL),
       siteUrl: Boolean(runtime.SITE_URL),
       adminEmail: Boolean(runtime.ADMIN_EMAIL),
       adminHashValid: /^\$2[aby]\$\d{2}\$/.test(runtime.ADMIN_PASSWORD_HASH ?? ""),
+      adminPasswordConfigured: (runtime.ADMIN_PASSWORD?.trim().length ?? 0) >= 8,
+      adminCredentialConfigured: /^\$2[aby]\$\d{2}\$/.test(runtime.ADMIN_PASSWORD_HASH ?? "") || (runtime.ADMIN_PASSWORD?.trim().length ?? 0) >= 8 || (runtime.ADMIN_PASSWORD_HASH?.trim().length ?? 0) >= 8,
       sessionSecretValid: (runtime.SESSION_SECRET?.length ?? 0) >= 32,
     };
   } catch (error) {

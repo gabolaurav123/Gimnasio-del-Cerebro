@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import { getRuntimeDatabase, isDatabaseUnavailable, type AppDatabase } from "./runtime";
 import { getRuntimeValues } from "../lib/runtime-env";
 
@@ -494,13 +495,26 @@ export function ensureDatabase() {
         if (!isExistingColumnError(error)) throw error;
       }
     }
-    const adminConfig = await getRuntimeValues(["ADMIN_EMAIL", "ADMIN_PASSWORD_HASH"]);
-    if (adminConfig.ADMIN_EMAIL?.trim() && adminConfig.ADMIN_PASSWORD_HASH?.trim()) {
+    const adminConfig = await getRuntimeValues(["ADMIN_EMAIL", "ADMIN_PASSWORD", "ADMIN_PASSWORD_HASH"]);
+    const adminEmail = adminConfig.ADMIN_EMAIL?.trim().toLowerCase() ?? "";
+    const configuredHash = adminConfig.ADMIN_PASSWORD_HASH?.trim() ?? "";
+    const configuredPassword = adminConfig.ADMIN_PASSWORD?.trim() ?? "";
+    const validHash = /^\$2[aby]\$\d{2}\$/.test(configuredHash);
+    const passwordHash = configuredPassword
+      ? await bcrypt.hash(configuredPassword, 12)
+      : validHash
+        ? configuredHash
+        : configuredHash.length >= 8
+          ? await bcrypt.hash(configuredHash, 12)
+          : "";
+    if (adminEmail && passwordHash) {
       await db.batch([
-        db.prepare(`UPDATE users SET email = ?, password_hash = ?, role = 'SUPERADMIN', active = 1, updated_at = CURRENT_TIMESTAMP WHERE id = 'bootstrap-superadmin'`)
-          .bind(adminConfig.ADMIN_EMAIL.trim().toLowerCase(), adminConfig.ADMIN_PASSWORD_HASH.trim()),
+        db.prepare(`UPDATE users SET password_hash = ?, role = 'SUPERADMIN', active = 1, updated_at = CURRENT_TIMESTAMP WHERE LOWER(email) = ?`)
+          .bind(passwordHash, adminEmail),
+        db.prepare(`UPDATE users SET email = ?, password_hash = ?, role = 'SUPERADMIN', active = 1, updated_at = CURRENT_TIMESTAMP WHERE id = 'bootstrap-superadmin' AND NOT EXISTS (SELECT 1 FROM users WHERE LOWER(email) = ? AND id <> 'bootstrap-superadmin')`)
+          .bind(adminEmail, passwordHash, adminEmail),
         db.prepare(`INSERT OR IGNORE INTO users (id, email, password_hash, role, active) VALUES ('bootstrap-superadmin', ?, ?, 'SUPERADMIN', 1)`)
-          .bind(adminConfig.ADMIN_EMAIL.trim().toLowerCase(), adminConfig.ADMIN_PASSWORD_HASH.trim()),
+          .bind(adminEmail, passwordHash),
       ]);
     }
     const trainingBatch = trainingSeeds.map((item) =>
