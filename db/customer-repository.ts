@@ -92,6 +92,27 @@ export async function getCustomerEntitlements(customerId: string): Promise<Custo
   }));
 }
 
+export type CustomerEntitlementAssignment = { id: string; customerId: string; itemType: "PRODUCT" | "TRAINING"; itemId: string };
+
+export async function getAllCustomerEntitlementAssignments(): Promise<CustomerEntitlementAssignment[]> {
+  const db = await getDatabase();
+  const result = await db.prepare(`SELECT id, customer_id, item_type, item_id FROM customer_entitlements WHERE status = 'ACTIVE' ORDER BY granted_at DESC`).all<Record<string, unknown>>();
+  return result.results.map((row) => ({ id: String(row.id), customerId: String(row.customer_id), itemType: String(row.item_type) as CustomerEntitlementAssignment["itemType"], itemId: String(row.item_id) }));
+}
+
+export async function setCustomerEntitlement(input: { customerId: string; itemType: "PRODUCT" | "TRAINING"; itemId: string; active: boolean }) {
+  const db = await getDatabase();
+  const existing = await db.prepare(`SELECT id FROM customer_entitlements WHERE customer_id = ? AND item_type = ? AND item_id = ? LIMIT 1`).bind(input.customerId, input.itemType, input.itemId).first<{ id: string }>();
+  if (existing) {
+    await db.prepare(`UPDATE customer_entitlements SET status = ?, granted_at = CASE WHEN ? = 1 THEN CURRENT_TIMESTAMP ELSE granted_at END, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(input.active ? "ACTIVE" : "SUSPENDED", input.active ? 1 : 0, existing.id).run();
+    return existing.id;
+  }
+  if (!input.active) return null;
+  const id = crypto.randomUUID();
+  await db.prepare(`INSERT INTO customer_entitlements (id, customer_id, item_type, item_id, status) VALUES (?, ?, ?, ?, 'ACTIVE')`).bind(id, input.customerId, input.itemType, input.itemId).run();
+  return id;
+}
+
 function mapAssistant(row: Record<string, unknown>): AssistantProfile {
   return {
     id: String(row.id), itemType: String(row.item_type) as AssistantProfile["itemType"], itemId: String(row.item_id),

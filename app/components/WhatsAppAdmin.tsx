@@ -17,19 +17,23 @@ export function WhatsAppAdmin({ settings, initialConnection }: { settings: Recor
   const [assistantSaved, setAssistantSaved] = useState(false);
 
   async function refreshStatus() {
-    const response = await fetch("/api/admin/whatsapp/status", { cache: "no-store" });
-    const payload = await response.json() as Connection & { error?: string };
-    if (response.ok) setConnection(payload); else setNotice(payload.error || "No se pudo consultar la conexión.");
+    const controller = new AbortController(); const timer = window.setTimeout(() => controller.abort(), 12000);
+    try { const response = await fetch("/api/admin/whatsapp/status", { cache: "no-store", signal: controller.signal }); const payload = await response.json() as Connection & { error?: string }; if (response.ok) setConnection(payload); else setNotice(payload.error || "No se pudo consultar la conexión."); }
+    catch { setNotice("La verificación tardó demasiado. Confirma que Evolution API esté activa."); }
+    finally { window.clearTimeout(timer); }
   }
 
   async function generateQr() {
     setLoading(true); setNotice("");
-    const response = await fetch("/api/admin/whatsapp/qr", { method: "POST" });
-    const payload = await response.json() as { qr?: string; pairingCode?: string; error?: string; webhookConfigured?: boolean };
-    setLoading(false);
-    if (!response.ok) { setNotice(payload.error || "No se pudo generar el QR."); return; }
-    setQr(payload.qr || ""); setPairingCode(payload.pairingCode || "");
-    setNotice(payload.webhookConfigured ? "QR generado y webhook seguro configurado." : "QR generado. Falta configurar SITE_URL o WHATSAPP_WEBHOOK_SECRET para respuestas automáticas.");
+    const controller = new AbortController(); const timer = window.setTimeout(() => controller.abort(), 28000);
+    try {
+      const response = await fetch("/api/admin/whatsapp/qr", { method: "POST", signal: controller.signal });
+      const payload = await response.json() as { qr?: string; pairingCode?: string; error?: string; webhookConfigured?: boolean };
+      if (!response.ok) { setNotice(payload.error || "No se pudo generar el QR."); return; }
+      setQr(payload.qr || ""); setPairingCode(payload.pairingCode || "");
+      setNotice(payload.webhookConfigured ? "QR generado y webhook seguro configurado." : "QR generado. Falta configurar SITE_URL o WHATSAPP_WEBHOOK_SECRET para respuestas automáticas.");
+    } catch { setNotice("Evolution API no respondió a tiempo. El botón ya está disponible para reintentar; revisa el servicio y sus variables."); }
+    finally { window.clearTimeout(timer); setLoading(false); }
   }
 
   async function loadChats() {

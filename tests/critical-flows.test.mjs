@@ -11,7 +11,8 @@ test("la Home conserva la propuesta central y usa contenido persistente", async 
   assert.match(page, /getPosts\(\)/);
   assert.match(page, /getTestimonials\(\)/);
   assert.match(page, /trainings\.slice\(0, 3\)/);
-  assert.match(page, /Ver m.s entrenamientos/);
+  assert.match(page, /Ver todas las categor.as/);
+  assert.match(page, /home-training-categories/);
   assert.match(page, /hero-neuroscience-person-brain-desktop-v3/);
   assert.doesNotMatch(page, /codex-preview|SkeletonPreview/);
 });
@@ -34,9 +35,11 @@ test("BioShield by Kirius aparece como producto inicial", async () => {
 });
 
 test("el catálogo separa programas, cursos, neuroretos y talleres con pagos públicos", async () => {
-  const [repository, trainings, products, checkout, footer] = await Promise.all([
+  const [repository, trainings, categories, catalogPage, products, checkout, footer] = await Promise.all([
     read("../db/repository.ts"),
     read("../app/(public)/entrenamientos/page.tsx"),
+    read("../lib/training-categories.ts"),
+    read("../app/components/TrainingCatalogPage.tsx"),
     read("../app/(public)/productos/page.tsx"),
     read("../app/api/customer/checkout/route.ts"),
     read("../app/components/SiteChrome.tsx"),
@@ -48,11 +51,14 @@ test("el catálogo separa programas, cursos, neuroretos y talleres con pagos pú
   assert.match(repository, /https:\/\/pay\.hotmart\.com\/V96727899W/);
   assert.match(repository, /https:\/\/buy\.stripe\.com\/6oU3cvb3E9GYglgcNB97H03/);
   assert.doesNotMatch(repository, /app\.hotmart\.com\/products\/manage/);
-  assert.match(trainings, /Programas.*Cursos.*Neuroretos.*Talleres/s);
+  assert.match(trainings, /training-category-hub/);
+  assert.match(categories, /Programas.*Cursos.*Neuroretos.*Talleres/s);
+  assert.match(catalogPage, /entrenamientos\/\$\{item\.key\}/);
+  for (const route of ["programas", "cursos", "neuroretos", "talleres"]) await read(`../app/(public)/entrenamientos/${route}/page.tsx`);
   assert.match(products, /Comprar de forma segura/);
   assert.doesNotMatch(checkout, /Number\(row\.price_cents\) <= 0/);
-  assert.match(footer, /Fundaci.n Nueva Humanidad/);
-  assert.match(footer, /Comunidad Kiryus/);
+  assert.match(footer, /Fundaci.n.*Nueva Humanidad/s);
+  assert.match(footer, /Comunidad.*Kiryus/s);
 });
 
 test("el panel permite registrar y verificar pagos con control de acceso", async () => {
@@ -172,15 +178,17 @@ test("la navegación administrativa funciona sin depender del router RSC", async
   }
   assert.match(shell, /<a className=.*href=\{href\}/);
   assert.match(dashboard, /<a href="\/admin\/crm"/);
-  assert.match(login, /audience === "admin" \? "\/admin" : safeNext/);
+  assert.match(login, /payload\.destination === "\/admin" \? "\/admin" : safeNext/);
+  assert.doesNotMatch(login, /Administraci.n/);
   assert.match(shell, /window\.location\.assign\("\/login"\)/);
 });
 
 test("los clientes pueden registrarse e ingresar con una sesión separada", async () => {
-  const [form, register, login, auth, repository] = await Promise.all([
+  const [form, register, login, unifiedAccess, auth, repository] = await Promise.all([
     read("../app/components/LoginForm.tsx"),
     read("../app/api/customer/auth/register/route.ts"),
     read("../app/api/customer/auth/login/route.ts"),
+    read("../app/api/auth/access/route.ts"),
     read("../lib/customer-auth.ts"),
     read("../db/customer-repository.ts"),
   ]);
@@ -188,9 +196,43 @@ test("los clientes pueden registrarse e ingresar con una sesión separada", asyn
   assert.match(form, /acceptedTerms/);
   assert.match(register, /bcrypt\.hash/);
   assert.match(login, /customerSessionCookie/);
+  assert.match(unifiedAccess, /authenticate.*authenticateCustomer/s);
+  assert.match(unifiedAccess, /destination/);
   assert.match(auth, /gdc_customer_session/);
   assert.match(auth, /HttpOnly/);
   assert.match(repository, /customer_users/);
+});
+
+test("cada entrenamiento tiene portada propia y los enlaces de pago se sincronizan", async () => {
+  const repository = await read("../db/repository.ts");
+  const covers = [...repository.matchAll(/heroImage: "(\/images\/catalog\/covers\/[^"]+)"/g)].map((match) => match[1]);
+  assert.equal(covers.length, 18);
+  assert.equal(new Set(covers).size, covers.length);
+  assert.match(repository, /UPDATE trainings SET logo = \?, hero_image = \?, checkout_provider = \?, checkout_url = \?/);
+  assert.match(repository, /https:\/\/pay\.hotmart\.com\/I95298513M/);
+  assert.match(repository, /https:\/\/pay\.hotmart\.com\/A102005977H/);
+  assert.match(repository, /https:\/\/pay\.hotmart\.com\/V95461171E/);
+});
+
+test("el administrador puede asignar y retirar contenidos a usuarios", async () => {
+  const [manager, route, repository] = await Promise.all([
+    read("../app/components/CustomerManager.tsx"),
+    read("../app/api/admin/customers/[id]/entitlements/route.ts"),
+    read("../db/customer-repository.ts"),
+  ]);
+  assert.match(manager, /Asignar \/ regalar/);
+  assert.match(manager, /updateEntitlement/);
+  assert.match(route, /SUPERADMIN.*COMERCIAL/);
+  assert.match(route, /setCustomerEntitlement/);
+  assert.match(repository, /getAllCustomerEntitlementAssignments/);
+});
+
+test("WhatsApp corta esperas del proveedor y libera el botón QR", async () => {
+  const [provider, panel] = await Promise.all([read("../lib/evolution-api.ts"), read("../app/components/WhatsAppAdmin.tsx")]);
+  assert.match(provider, /AbortSignal\.timeout\(8000\)/);
+  assert.match(provider, /Promise\.all/);
+  assert.match(panel, /controller\.abort\(\), 28000/);
+  assert.match(panel, /finally.*setLoading\(false\)/s);
 });
 
 test("la agenda evita cruces y permite bloquear turnos", async () => {

@@ -37,11 +37,17 @@ async function providerConfig(): Promise<ProviderConfig> {
 
 async function evolutionRequest<T>(path: string, init: RequestInit = {}) {
   const config = await providerConfig();
-  const response = await fetch(`${config.baseUrl}${path}`, {
-    ...init,
-    headers: { apikey: config.apiKey, accept: "application/json", ...(init.body ? { "content-type": "application/json" } : {}), ...init.headers },
-    signal: AbortSignal.timeout(15000),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${config.baseUrl}${path}`, {
+      ...init,
+      headers: { apikey: config.apiKey, accept: "application/json", ...(init.body ? { "content-type": "application/json" } : {}), ...init.headers },
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch (error) {
+    if (error instanceof Error && ["AbortError", "TimeoutError"].includes(error.name)) throw new EvolutionApiError("Evolution API no respondió a tiempo. Verifica que el servicio esté activo y vuelve a intentar.", 504);
+    throw new EvolutionApiError("No se pudo conectar con Evolution API. Verifica la URL, la clave y el estado del servicio.", 502);
+  }
   const payload = await response.json().catch(() => ({})) as T & { message?: string; error?: string };
   if (!response.ok) throw new EvolutionApiError(payload.message || payload.error || `Evolution API respondió ${response.status}.`, response.status);
   return payload;
@@ -80,8 +86,10 @@ function dataImage(value: unknown) {
 
 export async function createWhatsAppQr() {
   const instanceName = await ensureEvolutionInstance();
-  const webhookConfigured = await configureEvolutionWebhook();
-  const payload = await evolutionRequest<Record<string, unknown>>(`/instance/connect/${encodeURIComponent(instanceName)}`);
+  const [payload, webhookConfigured] = await Promise.all([
+    evolutionRequest<Record<string, unknown>>(`/instance/connect/${encodeURIComponent(instanceName)}`),
+    configureEvolutionWebhook().catch(() => false),
+  ]);
   const nested = payload.qrcode && typeof payload.qrcode === "object" ? payload.qrcode as Record<string, unknown> : {};
   const qr = dataImage(payload.base64 || nested.base64);
   return { qr, pairingCode: String(payload.pairingCode || nested.pairingCode || ""), webhookConfigured };

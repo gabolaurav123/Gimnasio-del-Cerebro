@@ -13,7 +13,7 @@ export function TrainingCard({ training, index }: { training: Training; index: n
   return (
     <article className="training-card" style={{ "--order": index } as React.CSSProperties}>
       <div className="training-card__top"><span>{String(index + 1).padStart(2, "0")}</span><strong>{training.acronym}</strong></div>
-      <div className={`training-card__logo ${training.heroImage ? "training-card__logo--cover" : ""}`}><img src={image} alt={training.heroImage ? `Portada de ${training.name}` : `Logo oficial de ${training.name}`} width={720} height={480} loading="lazy" />{training.heroImage && <span className="training-card__brand"><img src="/logos/gdc-full-v2.jpg" alt="" width={34} height={34} />Gimnasio del Cerebro</span>}</div>
+      <div className={`training-card__logo ${training.heroImage ? "training-card__logo--cover" : ""}`}><img src={image} alt={training.heroImage ? `Portada de ${training.name}, Gimnasio del Cerebro` : `Logo oficial de ${training.name}`} width={720} height={480} loading="lazy" /></div>
       <div className="training-card__body"><h3>{training.name}</h3><p>{training.shortDescription}</p></div>
       <div className="training-card__links"><a href={`/entrenamientos/${training.slug}`}>Ver entrenamiento <ArrowRight size={17} /></a><a className="training-card__buy" href={`/checkout/entrenamiento/${training.slug}`} aria-label={`Adquirir ${training.name}`}><ShoppingBag size={16} />Adquirir</a></div>
     </article>

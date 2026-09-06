@@ -6,6 +6,7 @@ import { BlogCard, TrainingCard } from "../components/PublicUI";
 import { SectionEyebrow } from "../components/SiteChrome";
 import { TestimonialStories } from "../components/TestimonialStories";
 import { whatsappUrl } from "../../lib/whatsapp";
+import { trainingCategories } from "../../lib/training-categories";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Gimnasio del Cerebro | Entrena tu cerebro. Transforma tu vida.", description: "Entrenamientos de desarrollo personal, mente y aprendizaje consciente desde 2014." };
@@ -39,7 +40,7 @@ export default async function Home() {
       <section className="science-band"><div className="shell"><div className="science-band__intro"><SectionEyebrow>Cómo trabajamos</SectionEyebrow><h2>Neurociencia para aprender. Práctica para transformar.</h2><p>Integramos herramientas de neurociencia y aprendizaje con una perspectiva conceptual inspirada en la física cuántica, siempre como propuesta educativa y no como sustituto de atención médica o psicológica.</p><a className="text-link" href="/nosotros">Conocer nuestro enfoque <ArrowRight size={16} /></a></div><div className="science-band__cards"><article><BrainCircuit /><strong>Neurociencia aplicada</strong><span>Comprender atención, hábitos y aprendizaje.</span></article><article><Atom /><strong>Perspectiva cuántica</strong><span>Una mirada conceptual sobre posibilidades e interconexión.</span></article></div></div></section>
 
       <section className="trainings-section" id="entrenamientos">
-        <div className="shell"><div className="section-heading section-heading--split"><div><SectionEyebrow>Rutas de transformación</SectionEyebrow><h2>Nuestros entrenamientos</h2></div><div><p>Seis programas con enfoques distintos, conectados por una misma intención: comprender, entrenar y ampliar posibilidades.</p></div></div><div className="training-grid">{trainings.slice(0, 3).map((training, index) => <TrainingCard training={training} index={index} key={training.id} />)}</div><div className="section-more"><a className="button button--primary" href="/entrenamientos">Ver más entrenamientos <ArrowRight size={18} /></a></div></div>
+        <div className="shell"><div className="section-heading section-heading--split"><div><SectionEyebrow>Rutas de transformación</SectionEyebrow><h2>Nuestros entrenamientos</h2></div><div><p>Programas, cursos, neuroretos y talleres conectados por una misma intención: comprender, entrenar y ampliar posibilidades.</p></div></div><nav className="home-training-categories" aria-label="Explorar tipos de entrenamiento">{trainingCategories.map((item, index) => <a href={`/entrenamientos/${item.key}`} key={item.key}><span>{String(index + 1).padStart(2, "0")}</span><strong>{item.label}</strong><ArrowRight size={17} /></a>)}</nav><div className="training-grid">{trainings.slice(0, 3).map((training, index) => <TrainingCard training={training} index={index} key={training.id} />)}</div><div className="section-more"><a className="button button--primary" href="/entrenamientos">Ver todas las categorías <ArrowRight size={18} /></a></div></div>
       </section>
 
       <TestimonialStories testimonials={testimonials} />

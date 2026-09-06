@@ -11,7 +11,7 @@ type NavItem = { href: string; label: string; children?: { href: string; label: 
 const nav: NavItem[] = [
   { href: "/", label: "Inicio" },
   { href: "/nosotros", label: "Nosotros" },
-  { href: "/entrenamientos", label: "Entrenamientos", children: [{ href: "/entrenamientos", label: "Todos los entrenamientos" }, { href: "/eventos", label: "Eventos" }] },
+  { href: "/entrenamientos", label: "Entrenamientos", children: [{ href: "/entrenamientos/programas", label: "Programas" }, { href: "/entrenamientos/cursos", label: "Cursos" }, { href: "/entrenamientos/neuroretos", label: "Neuroretos" }, { href: "/entrenamientos/talleres", label: "Talleres" }, { href: "/eventos", label: "Eventos" }] },
   { href: "/productos", label: "Productos" },
   { href: "/blog", label: "Blog" },
   { href: "/contacto", label: "Contacto", children: [{ href: "/contacto", label: "Enviar una consulta" }, { href: "/agenda", label: "Agenda tu cita" }] },
@@ -78,10 +78,10 @@ export function SiteFooter() {
         <div className="footer-intro">
           <Brand compact />
           <p>Entrenamos nuevas formas de comprender la mente para impulsar procesos de desarrollo humano y aprendizaje consciente.</p>
-          <div className="footer-partners"><small>Organizaciones vinculadas</small><div><span>Fundación Nueva Humanidad</span><a href="https://www.comunidadkiryus.org/" target="_blank" rel="noreferrer">Comunidad Kiryus <ArrowUpRight size={13} /></a></div></div>
+          <div className="footer-partners"><small>Organizaciones vinculadas</small><div><span className="footer-partner"><span className="footer-partner__monogram">FNH</span><span>Fundación<br />Nueva Humanidad</span></span><a className="footer-partner footer-partner--kiryus" href="https://www.comunidadkiryus.org/" target="_blank" rel="noreferrer"><img src="/logos/kiryus-official-v2.png" alt="Kiryus" width={150} height={150} /><span>Comunidad<br />Kiryus</span><ArrowUpRight size={13} /></a></div></div>
         </div>
         <div><h3>Navegación</h3>{nav.filter((item) => ["/", "/nosotros", "/productos", "/asociados"].includes(item.href)).map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}</div>
-        <div><h3>Entrenamientos</h3><a href="/entrenamientos/neurofitness-active">Neurofitness Active</a><a href="/entrenamientos/neurotraumas">Neurotraumas</a><a href="/entrenamientos/brain-full-training">Brain Full Training</a></div>
+        <div><h3>Entrenamientos</h3><a href="/entrenamientos/programas">Programas</a><a href="/entrenamientos/cursos">Cursos</a><a href="/entrenamientos/neuroretos">Neuroretos</a><a href="/entrenamientos/talleres">Talleres</a></div>
         <div><h3>Contacto</h3><a href={whatsappUrl("Hola, quisiera recibir información sobre los entrenamientos de Gimnasio del Cerebro.", whatsapp)} target="_blank" rel="noreferrer">{formatWhatsAppNumber(whatsapp)}</a><a href="/contacto">Enviar una consulta</a><a href="/agenda">Agendar una cita</a><a href="/privacidad">Privacidad</a><a href="/terminos">Términos</a><a href="/cookies">Cookies</a></div>
       </div>
       <div className="shell footer-bottom"><span>© {year} Gimnasio del Cerebro</span><span>Conocimiento · Desarrollo humano · Tecnología</span><a href="/login">Ingresar</a></div>
