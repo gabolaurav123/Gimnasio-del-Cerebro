@@ -46,6 +46,8 @@ test("el catálogo separa programas, cursos, neuroretos y talleres con pagos pú
   ]);
   assert.match(repository, /Cartas Neurofitness Active/);
   assert.match(repository, /Neurofitness Active Express/);
+  assert.match(repository, /Super Cerebro — Master Class/);
+  assert.match(repository, /super-cerebro-master-class-v3\.png/);
   assert.match(repository, /Neuroreto: 21 d.as de merecimiento/);
   assert.match(repository, /Taller Autohipnosis/);
   assert.match(repository, /https:\/\/pay\.hotmart\.com\/V96727899W/);
@@ -206,7 +208,7 @@ test("los clientes pueden registrarse e ingresar con una sesión separada", asyn
 test("cada entrenamiento tiene portada propia y los enlaces de pago se sincronizan", async () => {
   const repository = await read("../db/repository.ts");
   const covers = [...repository.matchAll(/heroImage: "(\/images\/catalog\/covers\/[^"]+)"/g)].map((match) => match[1]);
-  assert.equal(covers.length, 18);
+  assert.equal(covers.length, 19);
   assert.equal(new Set(covers).size, covers.length);
   assert.match(repository, /UPDATE trainings SET logo = \?, hero_image = \?, checkout_provider = \?, checkout_url = \?/);
   assert.match(repository, /https:\/\/pay\.hotmart\.com\/I95298513M/);

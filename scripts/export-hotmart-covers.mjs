@@ -5,6 +5,7 @@ import sharp from "sharp";
 const root = process.cwd();
 const catalog = path.join(root, "public", "images", "catalog");
 const output = path.join(root, "outputs", "hotmart-portadas-gdc");
+const onlyName = process.argv[2] ?? null;
 
 const covers = [
   ["01-programa-neurofitness-active", "../../logos/nfa-full-v2.jpg", "contain"],
@@ -25,6 +26,7 @@ const covers = [
   ["16-taller-recordarme-desde-adentro", "backgrounds/recordarme-v1.png", "cover"],
   ["17-taller-cerrando-ciclos-nuevo-tu", "backgrounds/cerrando-ciclos-v1.png", "cover"],
   ["18-taller-autovaloracion", "backgrounds/autovaloracion-v1.png", "cover"],
+  ["19-curso-super-cerebro-master-class", "backgrounds/super-cerebro-master-class-v1.png", "cover"],
 ];
 
 const strip = Buffer.from(`<svg width="1200" height="675" xmlns="http://www.w3.org/2000/svg">
@@ -36,7 +38,7 @@ const strip = Buffer.from(`<svg width="1200" height="675" xmlns="http://www.w3.o
 
 await mkdir(output, { recursive: true });
 
-for (const [name, sourceRelative, fit] of covers) {
+for (const [name, sourceRelative, fit] of covers.filter(([name]) => !onlyName || name === onlyName)) {
   const source = path.resolve(catalog, sourceRelative);
   const art = await sharp(source)
     .resize(1088, 675, { fit, position: "attention", background: "#ffffff" })
@@ -50,4 +52,5 @@ for (const [name, sourceRelative, fit] of covers) {
     .toFile(path.join(output, `${name}.png`));
 }
 
-console.log(`Exported ${covers.length} Hotmart covers to ${output}`);
+const exportedCount = covers.filter(([name]) => !onlyName || name === onlyName).length;
+console.log(`Exported ${exportedCount} Hotmart cover${exportedCount === 1 ? "" : "s"} to ${output}`);

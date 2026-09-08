@@ -4,6 +4,7 @@ import sharp from "sharp";
 const root = process.cwd();
 const catalog = path.join(root, "public", "images", "catalog");
 const output = path.join(catalog, "covers");
+const onlySlug = process.argv[2] ?? null;
 
 const programCovers = [
   ["neurofitness-active", "../../logos/nfa-full-v2.jpg"],
@@ -27,9 +28,10 @@ const visualCovers = [
   ["taller-recordarme-desde-adentro", "backgrounds/recordarme-v1.png"],
   ["taller-cerrando-ciclos-nuevo-tu", "backgrounds/cerrando-ciclos-v1.png"],
   ["taller-autovaloracion", "backgrounds/autovaloracion-v1.png"],
+  ["super-cerebro-master-class", "backgrounds/super-cerebro-master-class-v1.png"],
 ];
 
-for (const [slug, sourceRelative] of programCovers) {
+for (const [slug, sourceRelative] of programCovers.filter(([slug]) => !onlySlug || slug === onlySlug)) {
   const source = path.resolve(catalog, sourceRelative);
   const logo = await sharp(source)
     .resize(900, 555, { fit: "contain", background: "#ffffff", withoutEnlargement: false })
@@ -50,7 +52,7 @@ const verticalBrand = Buffer.from(`<svg width="1200" height="675" xmlns="http://
   <text class="brand" text-anchor="middle" transform="translate(46 337.5) rotate(-90)">GIMNASIO DEL CEREBRO</text>
 </svg>`);
 
-for (const [slug, sourceRelative] of visualCovers) {
+for (const [slug, sourceRelative] of visualCovers.filter(([slug]) => !onlySlug || slug === onlySlug)) {
   const source = path.resolve(catalog, sourceRelative);
   const art = await sharp(source)
     .resize(1100, 675, { fit: "cover", position: "attention", background: "#ffffff" })
@@ -64,4 +66,5 @@ for (const [slug, sourceRelative] of visualCovers) {
     .toFile(path.join(output, `${slug}-v3.png`));
 }
 
-console.log(`Created ${programCovers.length + visualCovers.length} distinct branded covers in ${output}`);
+const createdCount = [...programCovers, ...visualCovers].filter(([slug]) => !onlySlug || slug === onlySlug).length;
+console.log(`Created ${createdCount} distinct branded cover${createdCount === 1 ? "" : "s"} in ${output}`);
