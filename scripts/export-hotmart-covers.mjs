@@ -4,8 +4,14 @@ import sharp from "sharp";
 
 const root = process.cwd();
 const catalog = path.join(root, "public", "images", "catalog");
-const output = path.join(root, "outputs", "hotmart-portadas-gdc");
-const onlyName = process.argv[2] ?? null;
+const args = process.argv.slice(2);
+const square = args.includes("--square");
+const onlyName = args.find((arg) => arg !== "--square") ?? null;
+const output = path.join(
+  root,
+  "outputs",
+  square ? "hotmart-portadas-gdc-cuadradas-600x600" : "hotmart-portadas-gdc",
+);
 
 const covers = [
   ["01-programa-neurofitness-active", "../../logos/nfa-full-v2.jpg", "contain"],
@@ -29,11 +35,20 @@ const covers = [
   ["19-curso-super-cerebro-master-class", "backgrounds/super-cerebro-master-class-v1.png", "cover"],
 ];
 
-const strip = Buffer.from(`<svg width="1200" height="675" xmlns="http://www.w3.org/2000/svg">
-  <style>.brand { font: 700 21px Arial, sans-serif; letter-spacing: 4px; fill: #ffffff; }</style>
-  <rect width="104" height="675" fill="#082342"/>
-  <rect x="104" width="8" height="675" fill="#0872ed"/>
-  <text class="brand" text-anchor="middle" transform="translate(52 337.5) rotate(-90)">GIMNASIO DEL CEREBRO</text>
+const canvasWidth = square ? 600 : 1200;
+const canvasHeight = square ? 600 : 675;
+const stripWidth = square ? 56 : 104;
+const dividerWidth = square ? 5 : 8;
+const artLeft = stripWidth + dividerWidth;
+const artWidth = canvasWidth - artLeft;
+const brandFontSize = square ? 13 : 21;
+const brandLetterSpacing = square ? 2.5 : 4;
+
+const strip = Buffer.from(`<svg width="${canvasWidth}" height="${canvasHeight}" xmlns="http://www.w3.org/2000/svg">
+  <style>.brand { font: 700 ${brandFontSize}px Arial, sans-serif; letter-spacing: ${brandLetterSpacing}px; fill: #ffffff; }</style>
+  <rect width="${stripWidth}" height="${canvasHeight}" fill="#082342"/>
+  <rect x="${stripWidth}" width="${dividerWidth}" height="${canvasHeight}" fill="#0872ed"/>
+  <text class="brand" text-anchor="middle" transform="translate(${stripWidth / 2} ${canvasHeight / 2}) rotate(-90)">GIMNASIO DEL CEREBRO</text>
 </svg>`);
 
 await mkdir(output, { recursive: true });
@@ -41,13 +56,13 @@ await mkdir(output, { recursive: true });
 for (const [name, sourceRelative, fit] of covers.filter(([name]) => !onlyName || name === onlyName)) {
   const source = path.resolve(catalog, sourceRelative);
   const art = await sharp(source)
-    .resize(1088, 675, { fit, position: "attention", background: "#ffffff" })
+    .resize(artWidth, canvasHeight, { fit, position: "attention", background: "#ffffff" })
     .flatten({ background: "#ffffff" })
     .png()
     .toBuffer();
 
-  await sharp({ create: { width: 1200, height: 675, channels: 3, background: "#ffffff" } })
-    .composite([{ input: art, left: 112, top: 0 }, { input: strip, left: 0, top: 0 }])
+  await sharp({ create: { width: canvasWidth, height: canvasHeight, channels: 3, background: "#ffffff" } })
+    .composite([{ input: art, left: artLeft, top: 0 }, { input: strip, left: 0, top: 0 }])
     .png({ quality: 94, compressionLevel: 9 })
     .toFile(path.join(output, `${name}.png`));
 }
