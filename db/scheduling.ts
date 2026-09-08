@@ -1,7 +1,29 @@
 import { getDatabase } from "./repository";
 
-export const appointmentSlots = ["09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00"];
+export const appointmentSlots = ["08:00", "09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00"];
 export type AppointmentType = "CONSULTATION" | "TRAINING";
+
+type AppointmentWindow = { start: string; end: string };
+
+export const weeklyAppointmentSchedule: Record<number, readonly AppointmentWindow[]> = {
+  2: [{ start: "08:00", end: "13:00" }, { start: "14:00", end: "18:00" }],
+  4: [{ start: "08:00", end: "13:00" }, { start: "14:00", end: "18:00" }],
+  5: [{ start: "08:00", end: "13:00" }],
+};
+
+function dayOfAppointmentDate(date: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const parsed = new Date(`${date}T12:00:00Z`);
+  if (!Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) return null;
+  return parsed.getUTCDay();
+}
+
+export function appointmentSlotsForDate(date: string) {
+  const day = dayOfAppointmentDate(date);
+  const windows = day === null ? undefined : weeklyAppointmentSchedule[day];
+  if (!windows) return [];
+  return appointmentSlots.filter((time) => windows.some((window) => window.start <= time && time < window.end));
+}
 
 export type AppointmentBlock = {
   id: string;
@@ -14,13 +36,15 @@ export type AppointmentBlock = {
 };
 
 export async function getAppointmentAvailability(date: string, type: AppointmentType) {
+  const scheduledSlots = appointmentSlotsForDate(date);
+  if (!scheduledSlots.length) return [];
   const db = await getDatabase();
   const [appointments, blocks] = await Promise.all([
     db.prepare(`SELECT preferred_time FROM appointments WHERE preferred_date = ? AND status IN ('PENDING', 'CONFIRMED')`).bind(date).all<{ preferred_time: string }>(),
     db.prepare(`SELECT start_time, end_time FROM appointment_blocks WHERE date = ? AND active = 1 AND (appointment_type = 'ALL' OR appointment_type = ?)`).bind(date, type).all<{ start_time: string; end_time: string }>(),
   ]);
   const taken = new Set(appointments.results.map((row) => row.preferred_time));
-  return appointmentSlots.map((time) => ({
+  return scheduledSlots.map((time) => ({
     time,
     available: !taken.has(time) && !blocks.results.some((block) => block.start_time <= time && block.end_time > time),
   }));

@@ -235,18 +235,32 @@ test("WhatsApp corta esperas del proveedor y libera el botón QR", async () => {
   assert.match(panel, /finally.*setLoading\(false\)/s);
 });
 
-test("la agenda evita cruces y permite bloquear turnos", async () => {
-  const [route, scheduling, repository, manager] = await Promise.all([
+test("la agenda evita cruces y permite bloquear días o rangos", async () => {
+  const [route, availability, scheduling, repository, manager, form, styles] = await Promise.all([
     read("../app/api/appointments/route.ts"),
+    read("../app/api/appointments/availability/route.ts"),
     read("../db/scheduling.ts"),
     read("../db/repository.ts"),
     read("../app/components/BusinessManager.tsx"),
+    read("../app/components/PublicUI.tsx"),
+    read("../app/globals.css"),
   ]);
   assert.match(route, /getAppointmentAvailability/);
+  assert.match(route, /appointmentSlotsForDate/);
   assert.match(route, /AppointmentUnavailableError/);
   assert.match(repository, /idx_appointments_active_slot/);
   assert.match(scheduling, /appointment_blocks/);
-  assert.match(manager, /Bloquear turno/);
+  assert.match(scheduling, /2:.*08:00.*13:00.*14:00.*18:00/s);
+  assert.match(scheduling, /4:.*08:00.*13:00.*14:00.*18:00/s);
+  assert.match(scheduling, /5:.*08:00.*13:00/s);
+  assert.match(availability, /open/);
+  assert.match(manager, /Día completo/);
+  assert.match(manager, /Rango horario/);
+  assert.match(manager, /00:00/);
+  assert.match(manager, /23:59/);
+  assert.match(form, /Ese día no hay atención/);
+  assert.match(form, /La reserva bloquea el horario automáticamente/);
+  assert.match(styles, /training-card__buy.*background: var\(--blue-700\)/);
 });
 
 test("pagos verificados habilitan contenido y contabilidad por producto", async () => {

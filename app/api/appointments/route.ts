@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { AppointmentUnavailableError, createAppointment } from "../../../db/repository";
-import { appointmentSlots, getAppointmentAvailability } from "../../../db/scheduling";
+import { appointmentSlotsForDate, getAppointmentAvailability } from "../../../db/scheduling";
 import { requestIsSameOrigin } from "../../../lib/auth";
 import { checkRateLimit, rateLimitKey, recordRateLimitFailure } from "../../../lib/rate-limit";
 
@@ -28,8 +28,10 @@ export async function POST(request: Request) {
     if (!allowed.allowed) return Response.json({ error: "Ya recibimos varias solicitudes. Inténtalo más tarde." }, { status: 429, headers: { "retry-after": String(allowed.retryAfter) } });
     const parsed = schema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return Response.json({ error: "Revisa los campos e inténtalo nuevamente." }, { status: 400 });
+    const slotsForDate = appointmentSlotsForDate(parsed.data.preferredDate);
+    if (!slotsForDate.length) return Response.json({ error: "La atención se realiza martes, jueves y viernes. Elige una fecha habilitada." }, { status: 400 });
     const selected = new Date(`${parsed.data.preferredDate}T${parsed.data.preferredTime}:00-04:00`);
-    if (!Number.isFinite(selected.getTime()) || selected.getTime() < Date.now() - 60_000 || !appointmentSlots.includes(parsed.data.preferredTime)) return Response.json({ error: "Selecciona una fecha y hora futuras disponibles." }, { status: 400 });
+    if (!Number.isFinite(selected.getTime()) || selected.getTime() < Date.now() - 60_000 || !slotsForDate.includes(parsed.data.preferredTime)) return Response.json({ error: "Selecciona una fecha y hora futuras disponibles." }, { status: 400 });
     const availability = await getAppointmentAvailability(parsed.data.preferredDate, parsed.data.appointmentType);
     if (!availability.some((slot) => slot.time === parsed.data.preferredTime && slot.available)) return Response.json({ error: "Ese horario acaba de ocuparse o está bloqueado. Elige otro." }, { status: 409 });
     const id = await createAppointment({

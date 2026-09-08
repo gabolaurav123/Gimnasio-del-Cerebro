@@ -15,7 +15,7 @@ export function TrainingCard({ training, index }: { training: Training; index: n
       <div className="training-card__top"><span>{String(index + 1).padStart(2, "0")}</span><strong>{training.acronym}</strong></div>
       <div className={`training-card__logo ${training.heroImage ? "training-card__logo--cover" : ""}`}><img src={image} alt={training.heroImage ? `Portada de ${training.name}, Gimnasio del Cerebro` : `Logo oficial de ${training.name}`} width={720} height={480} loading="lazy" /></div>
       <div className="training-card__body"><h3>{training.name}</h3><p>{training.shortDescription}</p></div>
-      <div className="training-card__links"><a href={`/entrenamientos/${training.slug}`}>Ver entrenamiento <ArrowRight size={17} /></a><a className="training-card__buy" href={`/checkout/entrenamiento/${training.slug}`} aria-label={`Adquirir ${training.name}`}><ShoppingBag size={16} />Adquirir</a></div>
+      <div className="training-card__links"><a className="training-card__view" href={`/entrenamientos/${training.slug}`}>Ver entrenamiento <ArrowRight size={17} /></a><a className="training-card__buy" href={`/checkout/entrenamiento/${training.slug}`} aria-label={`Adquirir ${training.name}`}><ShoppingBag size={16} />Adquirir</a></div>
     </article>
   );
 }
@@ -80,16 +80,27 @@ export function AppointmentForm({ trainings }: { trainings: Training[] }) {
   const [message, setMessage] = useState("");
   const [appointmentType, setAppointmentType] = useState<"CONSULTATION" | "TRAINING">("CONSULTATION");
   const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
   const [slots, setSlots] = useState<{ time: string; available: boolean }[]>([]);
+  const [dayOpen, setDayOpen] = useState<boolean | null>(null);
+  const [slotNotice, setSlotNotice] = useState("Selecciona un día para consultar los horarios disponibles.");
   const [loadingSlots, setLoadingSlots] = useState(false);
   const today = new Date();
   const minDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   async function loadSlots(date: string, type: "CONSULTATION" | "TRAINING") {
-    setSelectedDate(date); setLoadingSlots(Boolean(date)); setSlots([]);
-    if (!date) return;
-    const response = await fetch(`/api/appointments/availability?date=${encodeURIComponent(date)}&type=${type}`, { cache: "no-store" });
-    const payload = await response.json() as { slots?: { time: string; available: boolean }[] };
-    setSlots(payload.slots || []); setLoadingSlots(false);
+    setSelectedDate(date); setSelectedTime(""); setSlots([]); setDayOpen(null); setState("idle"); setMessage("");
+    if (!date) { setLoadingSlots(false); setSlotNotice("Selecciona un día para consultar los horarios disponibles."); return; }
+    setLoadingSlots(true); setSlotNotice("Consultando horarios disponibles…");
+    try {
+      const response = await fetch(`/api/appointments/availability?date=${encodeURIComponent(date)}&type=${type}`, { cache: "no-store" });
+      const payload = await response.json() as { slots?: { time: string; available: boolean }[]; open?: boolean; message?: string; error?: string };
+      if (!response.ok) throw new Error(payload.error || "No pudimos consultar la agenda.");
+      const nextSlots = payload.slots || [];
+      setSlots(nextSlots); setDayOpen(payload.open ?? true);
+      setSlotNotice(payload.open === false ? (payload.message || "Ese día no hay atención.") : nextSlots.some((slot) => slot.available) ? "Los horarios ocupados o bloqueados no se muestran." : "No quedan horarios disponibles para esta fecha.");
+    } catch (error) {
+      setDayOpen(null); setSlotNotice(error instanceof Error ? error.message : "No pudimos consultar la agenda.");
+    } finally { setLoadingSlots(false); }
   }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setState("loading");
@@ -100,10 +111,11 @@ export function AppointmentForm({ trainings }: { trainings: Training[] }) {
   }
   if (state === "success") return <div className="form-success"><span><CalendarCheck /></span><h2>Solicitud recibida</h2><p>{message}</p><div className="button-row"><a className="button button--primary" href={whatsappUrl("Hola, acabo de solicitar una cita desde la web de Gimnasio del Cerebro.", whatsapp)} target="_blank" rel="noreferrer"><MessageCircle size={17} />Continuar por WhatsApp</a>{appointmentType === "CONSULTATION" && <a className="button button--outline" href={internationalConsultationPaymentUrl} target="_blank" rel="noreferrer"><ShoppingBag size={17} />Pagar consulta internacional</a>}</div><small>El pago en Stripe se realiza fuera de la web y no almacena datos de tarjeta en Gimnasio del Cerebro.</small></div>;
   return <form className="contact-form appointment-form" onSubmit={submit}>
+    <div className="appointment-schedule" aria-label="Horarios semanales de atención"><p><strong>Horarios de atención</strong><span>Turnos de una hora. La reserva bloquea el horario automáticamente.</span></p><article><strong>Martes</strong><span>08:00–13:00</span><span>14:00–18:00</span></article><article><strong>Jueves</strong><span>08:00–13:00</span><span>14:00–18:00</span></article><article><strong>Viernes</strong><span>08:00–13:00</span><span>Sin turno por la tarde</span></article></div>
     <div className="field-row"><label>Nombre completo<input name="name" autoComplete="name" minLength={2} required /></label><label>Email<input name="email" type="email" autoComplete="email" required /></label></div>
     <div className="field-row"><label>WhatsApp / teléfono<input name="phone" autoComplete="tel" minLength={7} required /></label><label>País<input name="country" autoComplete="country-name" minLength={2} required /></label></div>
     <div className="field-row"><label>Tipo de cita<select name="appointmentType" value={appointmentType} onChange={(event) => { const type = event.target.value as "CONSULTATION" | "TRAINING"; setAppointmentType(type); if (selectedDate) void loadSlots(selectedDate, type); }}><option value="CONSULTATION">Sesión personalizada de consulta</option><option value="TRAINING">Cita de entrenamiento</option></select></label><label>Fecha disponible<input name="preferredDate" type="date" min={minDate} value={selectedDate} onChange={(event) => void loadSlots(event.target.value, appointmentType)} required /></label></div>
-    <label>Horario disponible<select name="preferredTime" defaultValue="" required disabled={!selectedDate || loadingSlots}><option value="">{loadingSlots ? "Consultando horarios…" : "Selecciona un horario"}</option>{slots.filter((slot) => slot.available).map((slot) => <option value={slot.time} key={slot.time}>{slot.time}</option>)}</select><small>{selectedDate && !loadingSlots && !slots.some((slot) => slot.available) ? "No quedan horarios disponibles para esta fecha." : "Los horarios ocupados o bloqueados no se muestran."}</small></label>
+    <label>Horario disponible<select name="preferredTime" value={selectedTime} onChange={(event) => setSelectedTime(event.target.value)} required disabled={!selectedDate || loadingSlots || dayOpen === false || !slots.some((slot) => slot.available)}><option value="">{loadingSlots ? "Consultando horarios…" : dayOpen === false ? "Día sin atención" : "Selecciona un horario"}</option>{slots.filter((slot) => slot.available).map((slot) => <option value={slot.time} key={slot.time}>{slot.time}</option>)}</select><small className={dayOpen === false ? "slot-notice slot-notice--closed" : "slot-notice"}>{slotNotice}</small></label>
     <label>Entrenamiento de interés<select name="trainingInterest" defaultValue=""><option value="">Sesión personalizada / aún no lo sé</option>{trainings.map((training) => <option value={training.name} key={training.id}>{training.name}</option>)}</select></label>
     <label>Cuéntanos brevemente qué necesitas<textarea name="message" rows={4} maxLength={1200} /></label>
     <label className="form-honeypot" aria-hidden="true">Sitio web<input name="website" tabIndex={-1} autoComplete="off" /></label>
