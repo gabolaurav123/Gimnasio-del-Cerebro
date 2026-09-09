@@ -130,6 +130,12 @@ export const siteSettings = sqliteTable("site_settings", {
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const systemSecrets = sqliteTable("system_secrets", {
+  key: text("key").primaryKey(),
+  encryptedValue: text("encrypted_value").notNull(),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 export const whatsappEvents = sqliteTable("whatsapp_events", {
   providerMessageId: text("provider_message_id").primaryKey(),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
@@ -205,10 +211,16 @@ export const appointmentBlocks = sqliteTable("appointment_blocks", {
   startTime: text("start_time").notNull(),
   endTime: text("end_time").notNull(),
   appointmentType: text("appointment_type", { enum: ["ALL", "CONSULTATION", "TRAINING"] }).notNull().default("ALL"),
+  recurrence: text("recurrence", { enum: ["DATE", "WEEKLY"] }).notNull().default("DATE"),
+  weekday: integer("weekday"),
+  endDate: text("end_date"),
   reason: text("reason").notNull().default("Horario no disponible"),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
   ...timestamps,
-}, (table) => [index("idx_appointment_blocks_date_active").on(table.date, table.active)]);
+}, (table) => [
+  index("idx_appointment_blocks_date_active").on(table.date, table.active),
+  index("idx_appointment_blocks_recurrence_active").on(table.recurrence, table.weekday, table.active),
+]);
 
 export const products = sqliteTable("products", {
   id: text("id").primaryKey(),
@@ -226,6 +238,7 @@ export const products = sqliteTable("products", {
   currency: text("currency").notNull().default("BOB"),
   status: text("status", { enum: ["DRAFT", "PUBLISHED", "HIDDEN"] }).notNull().default("DRAFT"),
   displayOrder: integer("display_order").notNull().default(0),
+  deletedAt: text("deleted_at"),
   ...timestamps,
 }, (table) => [index("idx_products_status_order").on(table.status, table.displayOrder)]);
 
@@ -324,6 +337,7 @@ export const events = sqliteTable("events", {
   registrationUrl: text("registration_url"),
   status: text("status", { enum: ["DRAFT", "PUBLISHED", "HIDDEN"] }).notNull().default("DRAFT"),
   displayOrder: integer("display_order").notNull().default(0),
+  deletedAt: text("deleted_at"),
   ...timestamps,
 }, (table) => [index("idx_events_status_date").on(table.status, table.startsAt)]);
 

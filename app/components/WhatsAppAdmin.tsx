@@ -199,7 +199,7 @@ export function WhatsAppAdmin({ settings, initialConnection, campaigns }: { sett
       if (!response.ok) throw new Error(await errorMessage(response, "No se pudo guardar el asistente."));
       const payload = await response.json() as { ready?: boolean };
       setAssistantSaved(true);
-      setNotice(payload.ready ? "Asistente guardado y listo para responder." : "Configuración guardada. Falta OPENAI_API_KEY en el servidor para activar respuestas.");
+      setNotice(payload.ready ? "Asistente guardado y listo para responder." : "Configuración guardada. Agrega la clave en Configuración → OpenAI para activar respuestas.");
     } catch (error) { setNotice(error instanceof Error ? error.message : "No se pudo guardar el asistente."); }
     finally { setBusy(""); }
   }
@@ -236,7 +236,7 @@ export function WhatsAppAdmin({ settings, initialConnection, campaigns }: { sett
 
     <form className="whatsapp-config-grid" onSubmit={saveAssistant}>
       <section className="admin-card whatsapp-assistant-card">
-        <div className="admin-card__heading"><div><h2><Bot size={20} /> Chatbot con IA</h2><p>La IA consulta el catálogo publicado y conserva el contexto de cada conversación.</p></div><span className={`wa-readiness ${connection.openAiConfigured ? "ready" : ""}`}>{connection.openAiConfigured ? <CheckCircle2 /> : <CircleAlert />}{connection.openAiConfigured ? "OpenAI listo" : "Falta OpenAI"}</span></div>
+        <div className="admin-card__heading"><div><h2><Bot size={20} /> Chatbot con IA</h2><p>La IA consulta el catálogo publicado y conserva el contexto de cada conversación.</p></div><div className="wa-readiness-group"><span className={`wa-readiness ${connection.openAiConfigured ? "ready" : ""}`}>{connection.openAiConfigured ? <CheckCircle2 /> : <CircleAlert />}{connection.openAiConfigured ? "OpenAI listo" : "Falta OpenAI"}</span>{!connection.openAiConfigured && <a href="/admin/configuracion#openai">Configurar API</a>}</div></div>
         <div className="assistant-toggle"><input id="whatsapp-ai-enabled" name="enabled" type="checkbox" defaultChecked={settings.whatsappAiEnabled === "true"} /><label htmlFor="whatsapp-ai-enabled"><strong>Responder automáticamente</strong><small>La IA se pausa de forma individual cuando una conversación pasa a atención humana.</small></label></div>
         <div className="field-row"><label>Modelo de OpenAI<input name="model" pattern="[A-Za-z0-9._-]+" defaultValue={settings.whatsappAiModel || "gpt-5.6-luna"} required /></label><label>Campaña destacada<select name="currentCampaignSlug" defaultValue={settings.whatsappCurrentCampaignSlug || ""}><option value="">Sin campaña destacada</option>{campaigns.map((campaign) => <option value={campaign.slug} key={campaign.slug}>{campaign.name}</option>)}</select></label></div>
         <label>Comportamiento adicional<textarea name="instructions" rows={8} minLength={30} maxLength={6000} defaultValue={settings.whatsappAiInstructions} required /><small>Las reglas de seguridad, veracidad y tono del sistema siempre se mantienen.</small></label>

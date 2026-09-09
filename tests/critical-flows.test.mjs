@@ -136,11 +136,12 @@ test("la agenda registra citas y las expone en la bandeja administrativa", async
 });
 
 test("productos, eventos y asociados son módulos administrables", async () => {
-  const [chrome, manager, repository, shell] = await Promise.all([
+  const [chrome, manager, repository, shell, itemRoute] = await Promise.all([
     read("../app/components/SiteChrome.tsx"),
     read("../app/components/BusinessManager.tsx"),
     read("../db/repository.ts"),
     read("../app/components/AdminShell.tsx"),
+    read("../app/api/admin/catalog/[resource]/[id]/route.ts"),
   ]);
   for (const label of ["Productos", "Eventos", "Asociados", "Agenda tu cita"]) assert.match(chrome, new RegExp(label));
   assert.match(chrome, /notification-menu/);
@@ -149,6 +150,11 @@ test("productos, eventos y asociados son módulos administrables", async () => {
   assert.match(repository, /https:\/\/www\.comunidadkiryus\.org\//);
   assert.match(shell, /Volver al sitio/);
   assert.match(shell, /href="\/" title="Volver a Gimnasio del Cerebro"/);
+  assert.match(manager, /method: "DELETE"/);
+  assert.match(manager, /Eliminar.*titleOf/s);
+  assert.match(itemRoute, /softDeleteCatalogItem/);
+  assert.match(itemRoute, /export async function DELETE/);
+  assert.match(repository, /deleted_at IS NULL/);
 });
 
 test("la sesión administrativa usa cookie HttpOnly y contraseña bcrypt", async () => {
@@ -261,7 +267,7 @@ test("WhatsApp genera QR real, representa estados y persiste la sesión cifrada"
 });
 
 test("la agenda evita cruces y permite bloquear días o rangos", async () => {
-  const [route, availability, scheduling, repository, manager, form, styles] = await Promise.all([
+  const [route, availability, scheduling, repository, manager, form, styles, blocksRoute] = await Promise.all([
     read("../app/api/appointments/route.ts"),
     read("../app/api/appointments/availability/route.ts"),
     read("../db/scheduling.ts"),
@@ -269,6 +275,7 @@ test("la agenda evita cruces y permite bloquear días o rangos", async () => {
     read("../app/components/BusinessManager.tsx"),
     read("../app/components/PublicUI.tsx"),
     read("../app/globals.css"),
+    read("../app/api/admin/appointments/blocks/[id]/route.ts"),
   ]);
   assert.match(route, /getAppointmentAvailability/);
   assert.match(route, /appointmentSlotsForDate/);
@@ -283,6 +290,13 @@ test("la agenda evita cruces y permite bloquear días o rangos", async () => {
   assert.match(manager, /Rango horario/);
   assert.match(manager, /00:00/);
   assert.match(manager, /23:59/);
+  assert.match(manager, /Todas las semanas/);
+  assert.match(manager, /name="weekdays"/);
+  assert.match(manager, /method: "DELETE"/);
+  assert.match(scheduling, /recurrence = 'WEEKLY'/);
+  assert.match(scheduling, /end_date/);
+  assert.match(blocksRoute, /deleteAppointmentBlock/);
+  assert.match(blocksRoute, /export async function DELETE/);
   assert.match(form, /Ese día no hay atención/);
   assert.match(form, /La reserva bloquea el horario automáticamente/);
   assert.match(styles, /training-card__buy.*background: var\(--blue-700\)/);
@@ -307,10 +321,10 @@ test("pagos verificados habilitan contenido y contabilidad por producto", async 
 test("los asistentes personalizados requieren acceso, servidor y store false", async () => {
   const [route, manager] = await Promise.all([read("../app/api/customer/assistant/route.ts"), read("../app/components/AssistantManager.tsx")]);
   assert.match(route, /getCustomerAssistant/);
-  assert.match(route, /OPENAI_API_KEY/);
+  assert.match(route, /getOpenAIConfiguration/);
   assert.match(route, /safety_identifier/);
   assert.match(route, /store: false/);
-  assert.match(manager, /La clave API nunca|Falta OPENAI_API_KEY|clave API/i);
+  assert.match(manager, /API de OpenAI configurada|Falta configurar OpenAI|clave de forma segura/i);
 });
 
 test("el blog admite imágenes y un asistente editorial opcional", async () => {
@@ -322,7 +336,7 @@ test("el blog admite imágenes y un asistente editorial opcional", async () => {
   assert.match(manager, /imageFile/);
   assert.match(manager, /Generar borrador con OpenAI/);
   assert.match(repository, /image = \?/);
-  assert.match(aiRoute, /OPENAI_API_KEY/);
+  assert.match(aiRoute, /getOpenAIConfiguration/);
   assert.match(aiRoute, /store: false/);
 });
 
@@ -365,12 +379,37 @@ test("WhatsApp e IA usan catálogo dinámico, contexto, derivación humana y sec
   assert.match(ai, /getWhatsAppMessages/);
   assert.match(ai, /store: false/);
   assert.match(ai, /safety_identifier/);
+  assert.match(ai, /buildWhatsAppInstructions/);
+  assert.match(ai, /getOpenAIConfiguration/);
   assert.match(inbound, /WHATSAPP_BRIDGE_TOKEN/);
   assert.match(assistant, /whatsappAiInstructions/);
   assert.match(assistant, /whatsappCurrentCampaignSlug/);
   assert.match(panel, /IA activa/);
   assert.match(panel, /Atención humana/);
   assert.match(manualSend, /setWhatsAppConversationMode\(conversation\.id, "HUMAN"\)/);
+});
+
+test("OpenAI se configura desde el panel sin devolver la clave al navegador", async () => {
+  const [page, component, route, config, schema, repository] = await Promise.all([
+    read("../app/admin/[section]/page.tsx"),
+    read("../app/components/OpenAISettings.tsx"),
+    read("../app/api/admin/openai/route.ts"),
+    read("../lib/openai-config.ts"),
+    read("../db/schema.ts"),
+    read("../db/repository.ts"),
+  ]);
+  assert.match(page, /OpenAISettings/);
+  assert.match(component, /API Key de OpenAI/);
+  assert.match(component, /Probar conexión/);
+  assert.match(component, /Probar el asistente de WhatsApp/);
+  assert.doesNotMatch(route, /apiKey:\s*configuration\.apiKey/);
+  assert.match(route, /requestIsAdmin.*SUPERADMIN/s);
+  assert.match(route, /previewWhatsAppReply/);
+  assert.match(config, /AES-GCM/);
+  assert.match(config, /system_secrets/);
+  assert.match(config, /getOpenAIConfiguration/);
+  assert.match(schema, /systemSecrets/);
+  assert.match(repository, /CREATE TABLE IF NOT EXISTS system_secrets/);
 });
 
 test("la derivación humana distingue consultas normales de casos que requieren al equipo", async () => {
@@ -384,6 +423,9 @@ test("la derivación humana distingue consultas normales de casos que requieren 
   assert.ok(AI_CONFIG.strictRules.some((rule) => rule.includes("No inventes precios")));
   assert.ok(AI_CONFIG.strictRules.some((rule) => rule.includes("No prometas mejoras")));
   assert.ok(AI_CONFIG.conversationFlow.some((rule) => rule.includes("pregunta directa")));
+  assert.ok(AI_CONFIG.conversationFlow.some((rule) => rule.includes("Programas, Cursos, Neuroretos y Talleres")));
+  assert.ok(AI_CONFIG.strictRules.some((rule) => rule.includes("campaña destacada")));
+  assert.ok(AI_CONFIG.strictRules.some((rule) => rule.includes("exactamente el enlace")));
 });
 
 test("el checkout conserva el producto para visitantes, clientes y administradores", async () => {

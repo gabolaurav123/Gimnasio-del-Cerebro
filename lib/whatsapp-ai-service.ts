@@ -1,7 +1,7 @@
 import { getSettings, getWhatsAppMessages, type WhatsAppConversation } from "../db/repository";
 import { catalogContext, getWhatsAppCatalog } from "./catalog-service";
 import { getRuntimeValues } from "./runtime-env";
-import { getUsableOpenAIKey } from "./openai-config";
+import { getOpenAIConfiguration } from "./openai-config";
 import { AI_CONFIG } from "./whatsapp-ai-config";
 
 function outputText(payload: Record<string, unknown>) {
@@ -20,17 +20,8 @@ async function safetyIdentifier(phoneNumber: string) {
   return [...new Uint8Array(bytes)].map((byte) => byte.toString(16).padStart(2, "0")).join("").slice(0, 64);
 }
 
-export async function generateWhatsAppReply(conversation: WhatsAppConversation) {
-  const [settings, catalog, history, runtime] = await Promise.all([
-    getSettings(),
-    getWhatsAppCatalog(),
-    getWhatsAppMessages(conversation.id, 18),
-    getRuntimeValues(["OPENAI_API_KEY", "OPENAI_MODEL"]),
-  ]);
-  const apiKey = getUsableOpenAIKey(runtime.OPENAI_API_KEY);
-  if (!apiKey) throw new Error("OPENAI_API_KEY no está configurada en el servidor.");
-  const model = settings.whatsappAiModel?.trim() || runtime.OPENAI_MODEL?.trim() || "gpt-5.6-luna";
-  const instructions = [
+export function buildWhatsAppInstructions(settings: Record<string, string>, catalog: Awaited<ReturnType<typeof getWhatsAppCatalog>>) {
+  return [
     AI_CONFIG.identity,
     `OBJETIVO\n${AI_CONFIG.objective}`,
     `PERSONALIDAD\n${AI_CONFIG.personality.join(", ")}.`,
@@ -42,20 +33,22 @@ export async function generateWhatsAppReply(conversation: WhatsAppConversation) 
     `INSTRUCCIONES ADICIONALES DEL ADMINISTRADOR\n${settings.whatsappAiInstructions}`,
     catalogContext(catalog),
   ].join("\n\n");
-  const input = history.map((message) => ({
-    role: message.direction === "INBOUND" ? "user" : "assistant",
-    content: message.content,
-  }));
+}
+
+async function requestWhatsAppReply(input: { phoneNumber: string; history: { role: "user" | "assistant"; content: string }[]; settings: Record<string, string>; catalog: Awaited<ReturnType<typeof getWhatsAppCatalog>> }) {
+  const [configuration, runtime] = await Promise.all([getOpenAIConfiguration(), getRuntimeValues(["OPENAI_MODEL"])]);
+  if (!configuration.apiKey) throw new Error("La API de OpenAI no está configurada.");
+  const model = input.settings.whatsappAiModel?.trim() || runtime.OPENAI_MODEL?.trim() || input.settings.openAiDefaultModel?.trim() || "gpt-5.6-luna";
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
-    headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+    headers: { authorization: `Bearer ${configuration.apiKey}`, "content-type": "application/json" },
     body: JSON.stringify({
       model,
       store: false,
       max_output_tokens: 700,
-      safety_identifier: await safetyIdentifier(conversation.phoneNumber),
-      instructions,
-      input,
+      safety_identifier: await safetyIdentifier(input.phoneNumber),
+      instructions: buildWhatsAppInstructions(input.settings, input.catalog),
+      input: input.history,
     }),
     signal: AbortSignal.timeout(40_000),
   });
@@ -67,4 +60,21 @@ export async function generateWhatsAppReply(conversation: WhatsAppConversation) 
   const reply = outputText(payload);
   if (!reply) throw new Error("OpenAI no devolvió una respuesta utilizable.");
   return reply;
+}
+
+export async function generateWhatsAppReply(conversation: WhatsAppConversation) {
+  const [settings, catalog, history] = await Promise.all([
+    getSettings(),
+    getWhatsAppCatalog(),
+    getWhatsAppMessages(conversation.id, 18),
+  ]);
+  return requestWhatsAppReply({ phoneNumber: conversation.phoneNumber, settings, catalog, history: history.map((message) => ({
+    role: message.direction === "INBOUND" ? "user" : "assistant",
+    content: message.content,
+  })) });
+}
+
+export async function previewWhatsAppReply(message: string) {
+  const [settings, catalog] = await Promise.all([getSettings(), getWhatsAppCatalog()]);
+  return requestWhatsAppReply({ phoneNumber: "admin-preview", settings, catalog, history: [{ role: "user", content: message }] });
 }

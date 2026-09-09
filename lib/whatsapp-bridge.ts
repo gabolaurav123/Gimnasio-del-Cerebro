@@ -1,5 +1,5 @@
 import { getRuntimeValues } from "./runtime-env";
-import { hasUsableOpenAIKey } from "./openai-config";
+import { getOpenAIConfiguration } from "./openai-config";
 
 export type WhatsAppConnectionState =
   | "service_unavailable"
@@ -33,10 +33,10 @@ export class WhatsAppBridgeError extends Error {
 }
 
 async function bridgeConfig() {
-  const values = await getRuntimeValues(["WHATSAPP_BRIDGE_URL", "WHATSAPP_BRIDGE_TOKEN", "OPENAI_API_KEY"]);
+  const [values, openAI] = await Promise.all([getRuntimeValues(["WHATSAPP_BRIDGE_URL", "WHATSAPP_BRIDGE_TOKEN"]), getOpenAIConfiguration()]);
   const url = values.WHATSAPP_BRIDGE_URL?.trim().replace(/\/+$/, "") || "";
   const token = values.WHATSAPP_BRIDGE_TOKEN?.trim() || "";
-  return { url, token, openAiConfigured: hasUsableOpenAIKey(values.OPENAI_API_KEY) };
+  return { url, token, openAiConfigured: openAI.configured };
 }
 
 async function bridgeRequest<T>(path: string, init: RequestInit = {}): Promise<T> {

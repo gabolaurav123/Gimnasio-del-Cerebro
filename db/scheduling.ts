@@ -31,17 +31,26 @@ export type AppointmentBlock = {
   startTime: string;
   endTime: string;
   appointmentType: "ALL" | AppointmentType;
+  recurrence: "DATE" | "WEEKLY";
+  weekday: number | null;
+  endDate: string | null;
   reason: string;
   active: boolean;
 };
 
+export function appointmentWeekday(date: string) {
+  return dayOfAppointmentDate(date);
+}
+
 export async function getAppointmentAvailability(date: string, type: AppointmentType) {
   const scheduledSlots = appointmentSlotsForDate(date);
   if (!scheduledSlots.length) return [];
+  const weekday = appointmentWeekday(date);
   const db = await getDatabase();
   const [appointments, blocks] = await Promise.all([
     db.prepare(`SELECT preferred_time FROM appointments WHERE preferred_date = ? AND status IN ('PENDING', 'CONFIRMED')`).bind(date).all<{ preferred_time: string }>(),
-    db.prepare(`SELECT start_time, end_time FROM appointment_blocks WHERE date = ? AND active = 1 AND (appointment_type = 'ALL' OR appointment_type = ?)`).bind(date, type).all<{ start_time: string; end_time: string }>(),
+    db.prepare(`SELECT start_time, end_time FROM appointment_blocks WHERE active = 1 AND (appointment_type = 'ALL' OR appointment_type = ?) AND ((recurrence = 'DATE' AND date = ?) OR (recurrence = 'WEEKLY' AND weekday = ? AND date <= ? AND (end_date IS NULL OR end_date = '' OR end_date >= ?)))`)
+      .bind(type, date, weekday ?? -1, date, date).all<{ start_time: string; end_time: string }>(),
   ]);
   const taken = new Set(appointments.results.map((row) => row.preferred_time));
   return scheduledSlots.map((time) => ({
@@ -52,22 +61,30 @@ export async function getAppointmentAvailability(date: string, type: Appointment
 
 export async function getAppointmentBlocks() {
   const db = await getDatabase();
-  const result = await db.prepare(`SELECT * FROM appointment_blocks ORDER BY date DESC, start_time`).all<Record<string, unknown>>();
+  const result = await db.prepare(`SELECT * FROM appointment_blocks ORDER BY active DESC, recurrence DESC, weekday, date DESC, start_time`).all<Record<string, unknown>>();
   return result.results.map((row): AppointmentBlock => ({
     id: String(row.id), date: String(row.date), startTime: String(row.start_time), endTime: String(row.end_time),
     appointmentType: String(row.appointment_type) as AppointmentBlock["appointmentType"], reason: String(row.reason), active: Boolean(Number(row.active)),
+    recurrence: String(row.recurrence || "DATE") as AppointmentBlock["recurrence"],
+    weekday: row.weekday === null || row.weekday === undefined ? null : Number(row.weekday),
+    endDate: row.end_date ? String(row.end_date) : null,
   }));
 }
 
 export async function createAppointmentBlock(input: Omit<AppointmentBlock, "id" | "active">) {
   const db = await getDatabase();
   const id = crypto.randomUUID();
-  await db.prepare(`INSERT INTO appointment_blocks (id, date, start_time, end_time, appointment_type, reason, active) VALUES (?, ?, ?, ?, ?, ?, 1)`)
-    .bind(id, input.date, input.startTime, input.endTime, input.appointmentType, input.reason).run();
+  await db.prepare(`INSERT INTO appointment_blocks (id, date, start_time, end_time, appointment_type, recurrence, weekday, end_date, reason, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`)
+    .bind(id, input.date, input.startTime, input.endTime, input.appointmentType, input.recurrence, input.weekday, input.endDate, input.reason).run();
   return id;
 }
 
 export async function setAppointmentBlockActive(id: string, active: boolean) {
   const db = await getDatabase();
   await db.prepare(`UPDATE appointment_blocks SET active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(active ? 1 : 0, id).run();
+}
+
+export async function deleteAppointmentBlock(id: string) {
+  const db = await getDatabase();
+  await db.prepare(`DELETE FROM appointment_blocks WHERE id = ?`).bind(id).run();
 }

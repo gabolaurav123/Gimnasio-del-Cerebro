@@ -696,6 +696,7 @@ const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS testimonials (id TEXT PRIMARY KEY, name TEXT NOT NULL, program TEXT, quote TEXT, video_url TEXT, thumbnail TEXT, rating INTEGER, visible INTEGER NOT NULL DEFAULT 0, display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS media_assets (id TEXT PRIMARY KEY, name TEXT NOT NULL, key TEXT NOT NULL UNIQUE, mime_type TEXT NOT NULL, size INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS system_secrets (key TEXT PRIMARY KEY, encrypted_value TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS whatsapp_events (provider_message_id TEXT PRIMARY KEY, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS whatsapp_auth_credentials (id TEXT PRIMARY KEY, encrypted_value TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS whatsapp_auth_keys (category TEXT NOT NULL, key_id TEXT NOT NULL, encrypted_value TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (category, key_id))`,
@@ -703,15 +704,15 @@ const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS whatsapp_conversations (id TEXT PRIMARY KEY, jid TEXT NOT NULL UNIQUE, phone_number TEXT NOT NULL, contact_name TEXT NOT NULL DEFAULT 'Contacto', mode TEXT NOT NULL DEFAULT 'AI', product_interest TEXT, last_message TEXT NOT NULL DEFAULT '', last_message_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, unread_count INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS whatsapp_messages (id TEXT PRIMARY KEY, conversation_id TEXT NOT NULL, provider_message_id TEXT UNIQUE, direction TEXT NOT NULL, sender_type TEXT NOT NULL, content TEXT NOT NULL, delivery_status TEXT NOT NULL DEFAULT 'SENT', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS appointments (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, country TEXT NOT NULL, preferred_date TEXT NOT NULL, preferred_time TEXT NOT NULL, training_interest TEXT, appointment_type TEXT NOT NULL DEFAULT 'CONSULTATION', disclaimer_accepted_at TEXT, message TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'PENDING', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
-  `CREATE TABLE IF NOT EXISTS appointment_blocks (id TEXT PRIMARY KEY, date TEXT NOT NULL, start_time TEXT NOT NULL, end_time TEXT NOT NULL, appointment_type TEXT NOT NULL DEFAULT 'ALL', reason TEXT NOT NULL DEFAULT 'Horario no disponible', active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
-  `CREATE TABLE IF NOT EXISTS products (id TEXT PRIMARY KEY, name TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT NOT NULL, image TEXT, price_label TEXT NOT NULL DEFAULT 'Consultar', discount_label TEXT, resource_url TEXT, dashboard_content TEXT, checkout_provider TEXT NOT NULL DEFAULT 'MANUAL', checkout_url TEXT, price_cents INTEGER NOT NULL DEFAULT 0, currency TEXT NOT NULL DEFAULT 'BOB', status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS appointment_blocks (id TEXT PRIMARY KEY, date TEXT NOT NULL, start_time TEXT NOT NULL, end_time TEXT NOT NULL, appointment_type TEXT NOT NULL DEFAULT 'ALL', recurrence TEXT NOT NULL DEFAULT 'DATE', weekday INTEGER, end_date TEXT, reason TEXT NOT NULL DEFAULT 'Horario no disponible', active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS products (id TEXT PRIMARY KEY, name TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT NOT NULL, image TEXT, price_label TEXT NOT NULL DEFAULT 'Consultar', discount_label TEXT, resource_url TEXT, dashboard_content TEXT, checkout_provider TEXT NOT NULL DEFAULT 'MANUAL', checkout_url TEXT, price_cents INTEGER NOT NULL DEFAULT 0, currency TEXT NOT NULL DEFAULT 'BOB', status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS customer_users (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, phone TEXT, country TEXT, active INTEGER NOT NULL DEFAULT 1, terms_version TEXT NOT NULL, terms_accepted_at TEXT NOT NULL, privacy_accepted_at TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS payments (id TEXT PRIMARY KEY, reference TEXT NOT NULL UNIQUE, payer_name TEXT NOT NULL, payer_email TEXT, payer_phone TEXT, customer_id TEXT, concept TEXT NOT NULL, item_type TEXT NOT NULL DEFAULT 'OTHER', item_id TEXT, amount_cents INTEGER NOT NULL, currency TEXT NOT NULL DEFAULT 'BOB', payment_method TEXT NOT NULL DEFAULT 'OTHER', provider_reference TEXT, status TEXT NOT NULL DEFAULT 'PENDING', paid_at TEXT, verified_at TEXT, verified_by TEXT, notes TEXT, source TEXT NOT NULL DEFAULT 'MANUAL', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS customer_entitlements (id TEXT PRIMARY KEY, customer_id TEXT NOT NULL, item_type TEXT NOT NULL, item_id TEXT NOT NULL, payment_id TEXT, status TEXT NOT NULL DEFAULT 'ACTIVE', granted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, expires_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS assistant_profiles (id TEXT PRIMARY KEY, item_type TEXT NOT NULL, item_id TEXT NOT NULL, name TEXT NOT NULL, instructions TEXT NOT NULL, model TEXT NOT NULL DEFAULT 'gpt-5.6-luna', enabled INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS assistant_messages (id TEXT PRIMARY KEY, customer_id TEXT NOT NULL, assistant_profile_id TEXT NOT NULL, role TEXT NOT NULL, content TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS accounting_entries (id TEXT PRIMARY KEY, payment_id TEXT, entry_type TEXT NOT NULL, category TEXT NOT NULL, item_type TEXT NOT NULL DEFAULT 'GENERAL', item_id TEXT, description TEXT NOT NULL, amount_cents INTEGER NOT NULL, currency TEXT NOT NULL DEFAULT 'BOB', occurred_at TEXT NOT NULL, created_by TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
-  `CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, title TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT NOT NULL, image TEXT, starts_at TEXT NOT NULL, location TEXT NOT NULL, registration_url TEXT, status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, title TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT NOT NULL, image TEXT, starts_at TEXT NOT NULL, location TEXT NOT NULL, registration_url TEXT, status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS associates (id TEXT PRIMARY KEY, name TEXT NOT NULL, url TEXT NOT NULL, description TEXT NOT NULL, image TEXT, status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE INDEX IF NOT EXISTS idx_contacts_status_created_at ON contacts(status, created_at)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_whatsapp_auth_keys_unique ON whatsapp_auth_keys(category, key_id)`,
@@ -762,6 +763,12 @@ const additiveMigrations = [
   `ALTER TABLE products ADD COLUMN price_cents INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE products ADD COLUMN currency TEXT NOT NULL DEFAULT 'BOB'`,
   `ALTER TABLE payments ADD COLUMN customer_id TEXT`,
+  `ALTER TABLE appointment_blocks ADD COLUMN recurrence TEXT NOT NULL DEFAULT 'DATE'`,
+  `ALTER TABLE appointment_blocks ADD COLUMN weekday INTEGER`,
+  `ALTER TABLE appointment_blocks ADD COLUMN end_date TEXT`,
+  `ALTER TABLE products ADD COLUMN deleted_at TEXT`,
+  `ALTER TABLE events ADD COLUMN deleted_at TEXT`,
+  `CREATE INDEX IF NOT EXISTS idx_appointment_blocks_recurrence_active ON appointment_blocks(recurrence, weekday, active)`,
 ];
 
 function isExistingColumnError(error: unknown) {
@@ -1076,7 +1083,7 @@ export async function getTestimonials(includeHidden = false) {
 export async function getProducts(includeHidden = false) {
   try {
     const db = await ensureDatabase();
-    const result = await db.prepare(includeHidden ? `SELECT * FROM products ORDER BY display_order, name` : `SELECT * FROM products WHERE status = 'PUBLISHED' ORDER BY display_order, name`).all<Record<string, unknown>>();
+    const result = await db.prepare(includeHidden ? `SELECT * FROM products WHERE deleted_at IS NULL ORDER BY display_order, name` : `SELECT * FROM products WHERE status = 'PUBLISHED' AND deleted_at IS NULL ORDER BY display_order, name`).all<Record<string, unknown>>();
     return result.results.map(mapProduct);
   } catch (error) {
     if (canUsePublicFallback(error, includeHidden)) return productSeeds.filter((item) => includeHidden || item.status === "PUBLISHED");
@@ -1087,7 +1094,7 @@ export async function getProducts(includeHidden = false) {
 export async function getProduct(slug: string) {
   try {
     const db = await ensureDatabase();
-    const row = await db.prepare(`SELECT * FROM products WHERE slug = ? LIMIT 1`).bind(slug).first<Record<string, unknown>>();
+    const row = await db.prepare(`SELECT * FROM products WHERE slug = ? AND deleted_at IS NULL LIMIT 1`).bind(slug).first<Record<string, unknown>>();
     return row ? mapProduct(row) : null;
   } catch (error) {
     if (canUsePublicFallback(error)) return productSeeds.find((item) => item.slug === slug) ?? null;
@@ -1173,7 +1180,7 @@ export async function getPaymentSummary() {
 export async function getEvents(includeHidden = false) {
   try {
     const db = await ensureDatabase();
-    const result = await db.prepare(includeHidden ? `SELECT * FROM events ORDER BY starts_at, display_order` : `SELECT * FROM events WHERE status = 'PUBLISHED' ORDER BY starts_at, display_order`).all<Record<string, unknown>>();
+    const result = await db.prepare(includeHidden ? `SELECT * FROM events WHERE deleted_at IS NULL ORDER BY starts_at, display_order` : `SELECT * FROM events WHERE status = 'PUBLISHED' AND deleted_at IS NULL ORDER BY starts_at, display_order`).all<Record<string, unknown>>();
     return result.results.map(mapEvent);
   } catch (error) {
     if (canUsePublicFallback(error, includeHidden)) return [];
@@ -1216,8 +1223,9 @@ export class AppointmentUnavailableError extends Error {}
 export async function createAppointment(input: Omit<Appointment, "id" | "status" | "createdAt" | "updatedAt">) {
   const db = await ensureDatabase();
   const id = crypto.randomUUID();
-  const blocked = await db.prepare(`SELECT id FROM appointment_blocks WHERE date = ? AND active = 1 AND (appointment_type = 'ALL' OR appointment_type = ?) AND start_time <= ? AND end_time > ? LIMIT 1`)
-    .bind(input.preferredDate, input.appointmentType, input.preferredTime, input.preferredTime).first<{ id: string }>();
+  const weekday = new Date(`${input.preferredDate}T12:00:00Z`).getUTCDay();
+  const blocked = await db.prepare(`SELECT id FROM appointment_blocks WHERE active = 1 AND (appointment_type = 'ALL' OR appointment_type = ?) AND start_time <= ? AND end_time > ? AND ((recurrence = 'DATE' AND date = ?) OR (recurrence = 'WEEKLY' AND weekday = ? AND date <= ? AND (end_date IS NULL OR end_date = '' OR end_date >= ?))) LIMIT 1`)
+    .bind(input.appointmentType, input.preferredTime, input.preferredTime, input.preferredDate, weekday, input.preferredDate, input.preferredDate).first<{ id: string }>();
   const occupied = await db.prepare(`SELECT id FROM appointments WHERE preferred_date = ? AND preferred_time = ? AND status IN ('PENDING', 'CONFIRMED') LIMIT 1`)
     .bind(input.preferredDate, input.preferredTime).first<{ id: string }>();
   if (blocked || occupied) throw new AppointmentUnavailableError("Horario no disponible");
@@ -1277,6 +1285,11 @@ export async function updateAssociate(id: string, input: AssociateInput) {
 export async function setCatalogStatus(table: "products" | "events" | "associates", id: string, status: string) {
   const db = await ensureDatabase();
   await db.prepare(`UPDATE ${table} SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(status, id).run();
+}
+
+export async function softDeleteCatalogItem(table: "products" | "events", id: string) {
+  const db = await ensureDatabase();
+  await db.prepare(`UPDATE ${table} SET status = 'HIDDEN', deleted_at = CURRENT_TIMESTAMP, slug = slug || '-deleted-' || substr(id, 1, 8), updated_at = CURRENT_TIMESTAMP WHERE id = ? AND deleted_at IS NULL`).bind(id).run();
 }
 
 export async function createContact(input: Omit<Contact, "id" | "status" | "source" | "createdAt" | "updatedAt" | "nextFollowUp">) {
@@ -1339,8 +1352,8 @@ export async function getDashboardData() {
     db.prepare(`SELECT COUNT(*) AS count FROM payments WHERE status = 'PENDING'`).first<{ count: number }>(),
     db.prepare(`SELECT COUNT(*) AS count FROM trainings WHERE status = 'PUBLISHED' AND deleted_at IS NULL`).first<{ count: number }>(),
     db.prepare(`SELECT COUNT(*) AS count FROM blog_posts WHERE status = 'PUBLISHED'`).first<{ count: number }>(),
-    db.prepare(`SELECT COUNT(*) AS count FROM products WHERE status = 'PUBLISHED'`).first<{ count: number }>(),
-    db.prepare(`SELECT COUNT(*) AS count FROM events WHERE status = 'PUBLISHED'`).first<{ count: number }>(),
+    db.prepare(`SELECT COUNT(*) AS count FROM products WHERE status = 'PUBLISHED' AND deleted_at IS NULL`).first<{ count: number }>(),
+    db.prepare(`SELECT COUNT(*) AS count FROM events WHERE status = 'PUBLISHED' AND deleted_at IS NULL`).first<{ count: number }>(),
     db.prepare(`SELECT * FROM contacts ORDER BY created_at DESC LIMIT 6`).all<Record<string, unknown>>(),
     db.prepare(`SELECT * FROM contact_activities ORDER BY created_at DESC LIMIT 6`).all<Record<string, unknown>>(),
   ]);
@@ -1465,6 +1478,7 @@ export const defaultSettings: Record<string, string> = {
   instagram: "",
   facebook: "",
   youtube: "",
+  openAiDefaultModel: "gpt-5.6-luna",
   whatsappAiEnabled: "false",
   whatsappAiModel: "gpt-5.6-luna",
   whatsappAiInstructions: "Responde en español de forma clara, cercana y breve como asistente de Gimnasio del Cerebro. Orienta sobre los entrenamientos sin inventar precios, certificaciones, resultados ni afirmaciones médicas. Si la consulta requiere decisión humana, pide los datos de contacto y avisa que un asesor continuará.",

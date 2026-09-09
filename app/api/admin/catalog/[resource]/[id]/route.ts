@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { requestIsAdmin } from "../../../../../../lib/auth";
-import { setCatalogStatus, updateAssociate, updateEvent, updateProduct } from "../../../../../../db/repository";
+import { setCatalogStatus, softDeleteCatalogItem, updateAssociate, updateEvent, updateProduct } from "../../../../../../db/repository";
 
 const asset = z.string().trim().max(500).refine((value) => !value || /^\/(?:api\/media\/[a-z0-9-]+|logos\/[a-z0-9._/-]+|images\/[a-z0-9._/-]+)$/i.test(value));
 const externalUrl = z.string().trim().max(500).refine((value) => !value || /^https:\/\//i.test(value));
@@ -27,5 +27,13 @@ export async function PATCH(request: Request, context: { params: Promise<{ resou
     const parsed = associateSchema.safeParse(body); if (!parsed.success) return Response.json({ error: "Revisa los datos del asociado." }, { status: 400 });
     await updateAssociate(id, { ...parsed.data, image: parsed.data.image || null });
   }
+  return Response.json({ ok: true });
+}
+
+export async function DELETE(request: Request, context: { params: Promise<{ resource: string; id: string }> }) {
+  if (!(await requestIsAdmin(request, ["SUPERADMIN", "EDITOR"]))) return Response.json({ error: "No autorizado" }, { status: 401 });
+  const { resource, id } = await context.params;
+  if (resource !== "products" && resource !== "events") return Response.json({ error: "Este recurso no admite eliminación." }, { status: 400 });
+  await softDeleteCatalogItem(resource, id);
   return Response.json({ ok: true });
 }
