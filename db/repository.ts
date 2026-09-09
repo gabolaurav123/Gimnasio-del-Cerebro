@@ -163,6 +163,31 @@ export type PublicNotification = {
   kind: "event" | "discount";
 };
 
+export type WhatsAppConversation = {
+  id: string;
+  jid: string;
+  phoneNumber: string;
+  contactName: string;
+  mode: "AI" | "HUMAN";
+  productInterest: string | null;
+  lastMessage: string;
+  lastMessageAt: string;
+  unreadCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type WhatsAppMessage = {
+  id: string;
+  conversationId: string;
+  providerMessageId: string | null;
+  direction: "INBOUND" | "OUTBOUND";
+  senderType: "CONTACT" | "AI" | "HUMAN";
+  content: string;
+  deliveryStatus: string;
+  createdAt: string;
+};
+
 export const associateSeeds: Associate[] = [{
   id: "associate-kiryus",
   name: "Comunidad Kiryus",
@@ -672,6 +697,11 @@ const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS media_assets (id TEXT PRIMARY KEY, name TEXT NOT NULL, key TEXT NOT NULL UNIQUE, mime_type TEXT NOT NULL, size INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS whatsapp_events (provider_message_id TEXT PRIMARY KEY, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS whatsapp_auth_credentials (id TEXT PRIMARY KEY, encrypted_value TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS whatsapp_auth_keys (category TEXT NOT NULL, key_id TEXT NOT NULL, encrypted_value TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (category, key_id))`,
+  `CREATE TABLE IF NOT EXISTS whatsapp_session_metadata (id TEXT PRIMARY KEY, phone_number TEXT, account_name TEXT, last_connected_at TEXT, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS whatsapp_conversations (id TEXT PRIMARY KEY, jid TEXT NOT NULL UNIQUE, phone_number TEXT NOT NULL, contact_name TEXT NOT NULL DEFAULT 'Contacto', mode TEXT NOT NULL DEFAULT 'AI', product_interest TEXT, last_message TEXT NOT NULL DEFAULT '', last_message_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, unread_count INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS whatsapp_messages (id TEXT PRIMARY KEY, conversation_id TEXT NOT NULL, provider_message_id TEXT UNIQUE, direction TEXT NOT NULL, sender_type TEXT NOT NULL, content TEXT NOT NULL, delivery_status TEXT NOT NULL DEFAULT 'SENT', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS appointments (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, country TEXT NOT NULL, preferred_date TEXT NOT NULL, preferred_time TEXT NOT NULL, training_interest TEXT, appointment_type TEXT NOT NULL DEFAULT 'CONSULTATION', disclaimer_accepted_at TEXT, message TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'PENDING', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS appointment_blocks (id TEXT PRIMARY KEY, date TEXT NOT NULL, start_time TEXT NOT NULL, end_time TEXT NOT NULL, appointment_type TEXT NOT NULL DEFAULT 'ALL', reason TEXT NOT NULL DEFAULT 'Horario no disponible', active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS products (id TEXT PRIMARY KEY, name TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT NOT NULL, image TEXT, price_label TEXT NOT NULL DEFAULT 'Consultar', discount_label TEXT, resource_url TEXT, dashboard_content TEXT, checkout_provider TEXT NOT NULL DEFAULT 'MANUAL', checkout_url TEXT, price_cents INTEGER NOT NULL DEFAULT 0, currency TEXT NOT NULL DEFAULT 'BOB', status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
@@ -684,6 +714,10 @@ const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, title TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT NOT NULL, image TEXT, starts_at TEXT NOT NULL, location TEXT NOT NULL, registration_url TEXT, status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS associates (id TEXT PRIMARY KEY, name TEXT NOT NULL, url TEXT NOT NULL, description TEXT NOT NULL, image TEXT, status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE INDEX IF NOT EXISTS idx_contacts_status_created_at ON contacts(status, created_at)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_whatsapp_auth_keys_unique ON whatsapp_auth_keys(category, key_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_whatsapp_conversations_updated ON whatsapp_conversations(last_message_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_whatsapp_conversations_mode ON whatsapp_conversations(mode)`,
+  `CREATE INDEX IF NOT EXISTS idx_whatsapp_messages_conversation ON whatsapp_messages(conversation_id, created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_contacts_training_interest ON contacts(training_interest)`,
   `CREATE INDEX IF NOT EXISTS idx_trainings_status_order ON trainings(status, display_order)`,
   `CREATE INDEX IF NOT EXISTS idx_blog_posts_status_published_at ON blog_posts(status, published_at)`,
@@ -1434,6 +1468,12 @@ export const defaultSettings: Record<string, string> = {
   whatsappAiEnabled: "false",
   whatsappAiModel: "gpt-5.6-luna",
   whatsappAiInstructions: "Responde en español de forma clara, cercana y breve como asistente de Gimnasio del Cerebro. Orienta sobre los entrenamientos sin inventar precios, certificaciones, resultados ni afirmaciones médicas. Si la consulta requiere decisión humana, pide los datos de contacto y avisa que un asesor continuará.",
+  whatsappAiGreeting: "¡Hola! 😊 Soy el asistente de Gimnasio del Cerebro. Cuéntame qué te gustaría mejorar o sobre qué entrenamiento deseas información.",
+  whatsappAiHandoffMessage: "Gracias por contármelo. Voy a dejar esta conversación en atención humana para que una persona del equipo pueda ayudarte con cuidado.",
+  whatsappAiResponseDelayMs: "900",
+  whatsappAiBusinessHours: "Atención humana según disponibilidad del equipo. La IA puede orientar en cualquier momento.",
+  whatsappCurrentCampaignSlug: "super-cerebro-master-class",
+  whatsappCatalogPath: "/entrenamientos",
 };
 
 export async function getSettings() {
@@ -1501,4 +1541,101 @@ export async function claimWhatsAppEvent(providerMessageId: string) {
 export async function releaseWhatsAppEvent(providerMessageId: string) {
   const db = await ensureDatabase();
   await db.prepare(`DELETE FROM whatsapp_events WHERE provider_message_id = ?`).bind(providerMessageId).run();
+}
+
+function mapWhatsAppConversation(row: Record<string, unknown>): WhatsAppConversation {
+  return {
+    id: String(row.id),
+    jid: String(row.jid),
+    phoneNumber: String(row.phone_number),
+    contactName: String(row.contact_name || "Contacto"),
+    mode: String(row.mode || "AI") as WhatsAppConversation["mode"],
+    productInterest: row.product_interest ? String(row.product_interest) : null,
+    lastMessage: String(row.last_message || ""),
+    lastMessageAt: String(row.last_message_at),
+    unreadCount: Number(row.unread_count || 0),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  };
+}
+
+function mapWhatsAppMessage(row: Record<string, unknown>): WhatsAppMessage {
+  return {
+    id: String(row.id),
+    conversationId: String(row.conversation_id),
+    providerMessageId: row.provider_message_id ? String(row.provider_message_id) : null,
+    direction: String(row.direction) as WhatsAppMessage["direction"],
+    senderType: String(row.sender_type) as WhatsAppMessage["senderType"],
+    content: String(row.content),
+    deliveryStatus: String(row.delivery_status || "SENT"),
+    createdAt: String(row.created_at),
+  };
+}
+
+export async function getWhatsAppConversations(limit = 100) {
+  const db = await ensureDatabase();
+  const result = await db.prepare(`SELECT * FROM whatsapp_conversations ORDER BY last_message_at DESC LIMIT ?`).bind(Math.min(Math.max(limit, 1), 250)).all<Record<string, unknown>>();
+  return result.results.map(mapWhatsAppConversation);
+}
+
+export async function getWhatsAppConversation(id: string) {
+  const db = await ensureDatabase();
+  const row = await db.prepare(`SELECT * FROM whatsapp_conversations WHERE id = ? LIMIT 1`).bind(id).first<Record<string, unknown>>();
+  return row ? mapWhatsAppConversation(row) : null;
+}
+
+export async function getWhatsAppConversationByJid(jid: string) {
+  const db = await ensureDatabase();
+  const row = await db.prepare(`SELECT * FROM whatsapp_conversations WHERE jid = ? LIMIT 1`).bind(jid).first<Record<string, unknown>>();
+  return row ? mapWhatsAppConversation(row) : null;
+}
+
+export async function getWhatsAppMessages(conversationId: string, limit = 80) {
+  const db = await ensureDatabase();
+  const result = await db.prepare(`SELECT * FROM whatsapp_messages WHERE conversation_id = ? ORDER BY created_at DESC LIMIT ?`).bind(conversationId, Math.min(Math.max(limit, 1), 200)).all<Record<string, unknown>>();
+  return result.results.reverse().map(mapWhatsAppMessage);
+}
+
+export async function recordWhatsAppIncoming(input: { jid: string; phoneNumber: string; contactName?: string | null; providerMessageId: string; content: string; receivedAt?: string | null }) {
+  const db = await ensureDatabase();
+  const existing = await db.prepare(`SELECT id FROM whatsapp_conversations WHERE jid = ? LIMIT 1`).bind(input.jid).first<{ id: string }>();
+  const conversationId = existing?.id || crypto.randomUUID();
+  const receivedAt = input.receivedAt || new Date().toISOString();
+  if (!existing) {
+    await db.prepare(`INSERT INTO whatsapp_conversations (id, jid, phone_number, contact_name, mode, last_message, last_message_at, unread_count) VALUES (?, ?, ?, ?, 'AI', ?, ?, 1)`)
+      .bind(conversationId, input.jid, input.phoneNumber, input.contactName?.trim() || input.phoneNumber, input.content, receivedAt).run();
+  } else {
+    await db.prepare(`UPDATE whatsapp_conversations SET phone_number = ?, contact_name = CASE WHEN ? <> '' THEN ? ELSE contact_name END, last_message = ?, last_message_at = ?, unread_count = unread_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+      .bind(input.phoneNumber, input.contactName?.trim() || "", input.contactName?.trim() || "", input.content, receivedAt, conversationId).run();
+  }
+  await db.prepare(`INSERT OR IGNORE INTO whatsapp_messages (id, conversation_id, provider_message_id, direction, sender_type, content, delivery_status, created_at) VALUES (?, ?, ?, 'INBOUND', 'CONTACT', ?, 'RECEIVED', ?)`)
+    .bind(crypto.randomUUID(), conversationId, input.providerMessageId, input.content, receivedAt).run();
+  return getWhatsAppConversation(conversationId);
+}
+
+export async function recordWhatsAppOutgoing(input: { conversationId: string; providerMessageId?: string | null; content: string; senderType: "AI" | "HUMAN"; sentAt?: string | null }) {
+  const db = await ensureDatabase();
+  const sentAt = input.sentAt || new Date().toISOString();
+  await db.batch([
+    db.prepare(`INSERT OR IGNORE INTO whatsapp_messages (id, conversation_id, provider_message_id, direction, sender_type, content, delivery_status, created_at) VALUES (?, ?, ?, 'OUTBOUND', ?, ?, 'SENT', ?)`)
+      .bind(crypto.randomUUID(), input.conversationId, input.providerMessageId || null, input.senderType, input.content, sentAt),
+    db.prepare(`UPDATE whatsapp_conversations SET last_message = ?, last_message_at = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+      .bind(input.content, sentAt, input.conversationId),
+  ]);
+}
+
+export async function setWhatsAppConversationMode(id: string, mode: "AI" | "HUMAN") {
+  const db = await ensureDatabase();
+  await db.prepare(`UPDATE whatsapp_conversations SET mode = ?, unread_count = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(mode, id).run();
+  return getWhatsAppConversation(id);
+}
+
+export async function setWhatsAppConversationInterest(id: string, interest: string | null) {
+  const db = await ensureDatabase();
+  await db.prepare(`UPDATE whatsapp_conversations SET product_interest = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(interest, id).run();
+}
+
+export async function markWhatsAppConversationRead(id: string) {
+  const db = await ensureDatabase();
+  await db.prepare(`UPDATE whatsapp_conversations SET unread_count = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(id).run();
 }

@@ -17,10 +17,13 @@
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
+    "@whiskeysockets/baileys": "6.7.24",
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "0.45.2",
     "lucide-react": "^1.31.0",
+    "pino": "9.14.0",
     "postgres": "^3.4.7",
+    "qrcode": "1.5.4",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "zod": "^4.4.3"
@@ -50,6 +53,10 @@
     "vinext": "1.0.0-beta.2",
     "vite": "8.0.13",
     "wrangler": "4.92.0"
+  },
+  "overrides": {
+    "sharp": "0.35.4",
+    "ws": "8.21.3"
   },
   "type": "module"
 }

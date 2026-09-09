@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { ArrowUpRight, Bell, BrainCircuit, CalendarDays, ChevronDown, Menu, MessageCircle, Tag, X } from "lucide-react";
 import { formatWhatsAppNumber, whatsappUrl } from "../../lib/whatsapp";
 import { useWhatsAppNumber } from "./WhatsAppContext";
-import type { PublicNotification } from "../../db/repository";
+import type { Associate, PublicNotification } from "../../db/repository";
 
 type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
 const nav: NavItem[] = [
@@ -69,16 +69,18 @@ export function SiteHeader({ notifications = [] }: { notifications?: PublicNotif
   );
 }
 
-export function SiteFooter() {
+export function SiteFooter({ associates = [] }: { associates?: Associate[] }) {
   const year = new Date().getFullYear();
   const whatsapp = useWhatsAppNumber();
+  const foundation = associates.find((associate) => associate.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes("fundacion nueva humanidad"));
+  const kiryus = associates.find((associate) => associate.name.toLowerCase().includes("kiryus"));
   return (
     <footer className="site-footer">
       <div className="shell footer-grid">
         <div className="footer-intro">
           <Brand compact />
           <p>Entrenamos nuevas formas de comprender la mente para impulsar procesos de desarrollo humano y aprendizaje consciente.</p>
-          <div className="footer-partners"><small>Organizaciones vinculadas</small><div><span className="footer-partner"><span className="footer-partner__monogram">FNH</span><span>Fundación<br />Nueva Humanidad</span></span><a className="footer-partner footer-partner--kiryus" href="https://www.comunidadkiryus.org/" target="_blank" rel="noreferrer"><img src="/logos/kiryus-official-v2.png" alt="Kiryus" width={150} height={150} /><span>Comunidad<br />Kiryus</span><ArrowUpRight size={13} /></a></div></div>
+          <div className="footer-partners"><small>Organizaciones vinculadas</small><div>{foundation ? <a className="footer-partner footer-partner--foundation" href={foundation.url} target="_blank" rel="noreferrer">{foundation.image ? <img src={foundation.image} alt="Fundación Nueva Humanidad" width={150} height={150} /> : <span className="footer-partner__monogram">FNH</span>}<span>Fundación<br />Nueva Humanidad</span><ArrowUpRight size={13} /></a> : <span className="footer-partner"><span className="footer-partner__monogram">FNH</span><span>Fundación<br />Nueva Humanidad</span></span>}<a className="footer-partner footer-partner--kiryus" href={kiryus?.url || "https://www.comunidadkiryus.org/"} target="_blank" rel="noreferrer"><img src={kiryus?.image || "/logos/kiryus-official-v2.png"} alt="Kiryus" width={150} height={150} /><span>Comunidad<br />Kiryus</span><ArrowUpRight size={13} /></a></div></div>
         </div>
         <div><h3>Navegación</h3>{nav.filter((item) => ["/", "/nosotros", "/productos", "/asociados"].includes(item.href)).map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}</div>
         <div><h3>Entrenamientos</h3><a href="/entrenamientos/programas">Programas</a><a href="/entrenamientos/cursos">Cursos</a><a href="/entrenamientos/neuroretos">Neuroretos</a><a href="/entrenamientos/talleres">Talleres</a></div>

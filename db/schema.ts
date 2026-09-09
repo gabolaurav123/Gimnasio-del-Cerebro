@@ -135,6 +135,54 @@ export const whatsappEvents = sqliteTable("whatsapp_events", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const whatsappAuthCredentials = sqliteTable("whatsapp_auth_credentials", {
+  id: text("id").primaryKey(),
+  encryptedValue: text("encrypted_value").notNull(),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const whatsappAuthKeys = sqliteTable("whatsapp_auth_keys", {
+  category: text("category").notNull(),
+  keyId: text("key_id").notNull(),
+  encryptedValue: text("encrypted_value").notNull(),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [uniqueIndex("idx_whatsapp_auth_keys_unique").on(table.category, table.keyId)]);
+
+export const whatsappSessionMetadata = sqliteTable("whatsapp_session_metadata", {
+  id: text("id").primaryKey(),
+  phoneNumber: text("phone_number"),
+  accountName: text("account_name"),
+  lastConnectedAt: text("last_connected_at"),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const whatsappConversations = sqliteTable("whatsapp_conversations", {
+  id: text("id").primaryKey(),
+  jid: text("jid").notNull().unique(),
+  phoneNumber: text("phone_number").notNull(),
+  contactName: text("contact_name").notNull().default("Contacto"),
+  mode: text("mode", { enum: ["AI", "HUMAN"] }).notNull().default("AI"),
+  productInterest: text("product_interest"),
+  lastMessage: text("last_message").notNull().default(""),
+  lastMessageAt: text("last_message_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  unreadCount: integer("unread_count").notNull().default(0),
+  ...timestamps,
+}, (table) => [
+  index("idx_whatsapp_conversations_updated").on(table.lastMessageAt),
+  index("idx_whatsapp_conversations_mode").on(table.mode),
+]);
+
+export const whatsappMessages = sqliteTable("whatsapp_messages", {
+  id: text("id").primaryKey(),
+  conversationId: text("conversation_id").notNull(),
+  providerMessageId: text("provider_message_id").unique(),
+  direction: text("direction", { enum: ["INBOUND", "OUTBOUND"] }).notNull(),
+  senderType: text("sender_type", { enum: ["CONTACT", "AI", "HUMAN"] }).notNull(),
+  content: text("content").notNull(),
+  deliveryStatus: text("delivery_status").notNull().default("SENT"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [index("idx_whatsapp_messages_conversation").on(table.conversationId, table.createdAt)]);
+
 export const appointments = sqliteTable("appointments", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),

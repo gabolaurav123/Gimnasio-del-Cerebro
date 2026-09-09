@@ -88,7 +88,7 @@ test("el acceso administrativo no conserva la navegacion publica", async () => {
   assert.match(shell, /pathname === "\/login"/);
   assert.match(shell, /auth-main/);
   assert.match(login, /login-back/);
-  assert.match(login, /href="\/"/);
+  assert.match(login, /href=\{next \|\| "\/"\}/);
 });
 
 test("la Home muestra los cuatro testimonios reales con sus videos", async () => {
@@ -180,7 +180,7 @@ test("la navegación administrativa funciona sin depender del router RSC", async
   }
   assert.match(shell, /<a className=.*href=\{href\}/);
   assert.match(dashboard, /<a href="\/admin\/crm"/);
-  assert.match(login, /payload\.destination === "\/admin" \? "\/admin" : safeNext/);
+  assert.match(login, /payload\.destination === "\/admin" \? safeNext \|\| "\/admin" : safeNext \|\| "\/mi-cuenta"/);
   assert.doesNotMatch(login, /Administraci.n/);
   assert.match(shell, /window\.location\.assign\("\/login"\)/);
 });
@@ -229,12 +229,28 @@ test("el administrador puede asignar y retirar contenidos a usuarios", async () 
   assert.match(repository, /getAllCustomerEntitlementAssignments/);
 });
 
-test("WhatsApp corta esperas del proveedor y libera el botón QR", async () => {
-  const [provider, panel] = await Promise.all([read("../lib/evolution-api.ts"), read("../app/components/WhatsAppAdmin.tsx")]);
-  assert.match(provider, /AbortSignal\.timeout\(8000\)/);
-  assert.match(provider, /Promise\.all/);
-  assert.match(panel, /controller\.abort\(\), 28000/);
-  assert.match(panel, /finally.*setLoading\(false\)/s);
+test("WhatsApp genera QR real, representa estados y persiste la sesión cifrada", async () => {
+  const [bridge, client, panel, start, repository] = await Promise.all([
+    read("../scripts/whatsapp-bridge.mjs"),
+    read("../lib/whatsapp-bridge.ts"),
+    read("../app/components/WhatsAppAdmin.tsx"),
+    read("../scripts/start-server.mjs"),
+    read("../db/repository.ts"),
+  ]);
+  assert.match(bridge, /@whiskeysockets\/baileys/);
+  assert.match(bridge, /QRCode\.toDataURL/);
+  assert.match(bridge, /connection\.update/);
+  assert.match(bridge, /creds\.update/);
+  assert.match(bridge, /aes-256-gcm/);
+  assert.match(bridge, /whatsapp_auth_credentials/);
+  assert.match(bridge, /whatsapp_auth_keys/);
+  assert.match(bridge, /session_recovered/);
+  assert.match(client, /AbortSignal\.timeout\(15_000\)/);
+  for (const state of ["disconnected", "initializing", "generating_qr", "qr_available", "connecting", "connected", "reconnecting", "error"]) assert.match(panel, new RegExp(state));
+  for (const action of ["Vincular WhatsApp", "Generar nuevo QR", "Probar conexión", "Reconectar", "Desconectar"]) assert.match(panel, new RegExp(action));
+  assert.match(start, /startWhatsAppBridge/);
+  assert.match(start, /WHATSAPP_BRIDGE_TOKEN/);
+  assert.match(repository, /CREATE TABLE IF NOT EXISTS whatsapp_conversations/);
 });
 
 test("la agenda evita cruces y permite bloquear días o rangos", async () => {
@@ -317,21 +333,82 @@ test("el panel administra entrenamientos, adjuntos y testimonios", async () => {
   assert.match(mediaRoute, /application\/pdf/);
 });
 
-test("WhatsApp e IA usan proveedor, webhook firmado y secretos del servidor", async () => {
-  const [shell, provider, webhook, assistant] = await Promise.all([
+test("WhatsApp e IA usan catálogo dinámico, contexto, derivación humana y secretos del servidor", async () => {
+  const [shell, config, catalog, conversation, ai, inbound, assistant, panel, manualSend] = await Promise.all([
     read("../app/components/AdminShell.tsx"),
-    read("../lib/evolution-api.ts"),
-    read("../app/api/webhooks/whatsapp/route.ts"),
+    read("../lib/whatsapp-ai-config.ts"),
+    read("../lib/catalog-service.ts"),
+    read("../lib/conversation-service.ts"),
+    read("../lib/whatsapp-ai-service.ts"),
+    read("../app/api/internal/whatsapp/inbound/route.ts"),
     read("../app/api/admin/whatsapp/assistant/route.ts"),
+    read("../app/components/WhatsAppAdmin.tsx"),
+    read("../app/api/admin/whatsapp/send/route.ts"),
   ]);
   assert.match(shell, /WhatsApp \+ IA/);
-  assert.match(provider, /EVOLUTION_API_KEY/);
-  assert.match(provider, /instance\/connect/);
-  assert.match(provider, /chat\/findChats/);
-  assert.match(webhook, /x-webhook-secret/);
-  assert.match(webhook, /store: false/);
-  assert.match(webhook, /claimWhatsAppEvent/);
+  assert.match(config, /AI_CONFIG/);
+  assert.match(config, /No inventes precios/);
+  assert.match(catalog, /getTrainings\(\).*getProducts\(\)/s);
+  assert.match(catalog, /whatsappCurrentCampaignSlug/);
+  assert.match(catalog, /catalogUrl/);
+  assert.match(conversation, /needsHumanHandoff/);
+  assert.match(conversation, /setWhatsAppConversationMode/);
+  assert.match(conversation, /getWhatsAppCatalog/);
+  assert.match(conversation, /event: "ai_error"/);
+  assert.match(ai, /getWhatsAppMessages/);
+  assert.match(ai, /store: false/);
+  assert.match(ai, /safety_identifier/);
+  assert.match(inbound, /WHATSAPP_BRIDGE_TOKEN/);
   assert.match(assistant, /whatsappAiInstructions/);
+  assert.match(assistant, /whatsappCurrentCampaignSlug/);
+  assert.match(panel, /IA activa/);
+  assert.match(panel, /Atención humana/);
+  assert.match(manualSend, /setWhatsAppConversationMode\(conversation\.id, "HUMAN"\)/);
+});
+
+test("la derivación humana distingue consultas normales de casos que requieren al equipo", async () => {
+  const { AI_CONFIG, needsHumanHandoff } = await import("../lib/whatsapp-ai-config.ts");
+  for (const message of ["Hola", "Quiero información", "¿Qué cursos tienen?", "¿Qué es Super Cerebro?", "Quiero mejorar mi memoria", "¿Dónde me inscribo?"]) {
+    assert.equal(needsHumanHandoff(message), false, message);
+  }
+  for (const message of ["Quiero hablar con una persona", "Tengo un problema con el pago", "El acceso no funciona y necesito soporte técnico"]) {
+    assert.equal(needsHumanHandoff(message), true, message);
+  }
+  assert.ok(AI_CONFIG.strictRules.some((rule) => rule.includes("No inventes precios")));
+  assert.ok(AI_CONFIG.strictRules.some((rule) => rule.includes("No prometas mejoras")));
+  assert.ok(AI_CONFIG.conversationFlow.some((rule) => rule.includes("pregunta directa")));
+});
+
+test("el checkout conserva el producto para visitantes, clientes y administradores", async () => {
+  const [page, loginPage, loginForm, checkoutRoute] = await Promise.all([
+    read("../app/checkout/[type]/[slug]/page.tsx"),
+    read("../app/(public)/login/page.tsx"),
+    read("../app/components/LoginForm.tsx"),
+    read("../app/api/customer/checkout/route.ts"),
+  ]);
+  assert.match(page, /getCustomerSession\(\).*getAdminSession\(\)/s);
+  assert.match(page, /Para adquirir este entrenamiento necesitas iniciar sesión o crear una cuenta/);
+  assert.match(page, /login\?next=/);
+  assert.match(page, /login\?mode=register&next=/);
+  assert.match(page, /Vista comercial como administrador/);
+  assert.match(loginPage, /startsWith\("\/checkout\/"\)/);
+  assert.match(loginForm, /safeNext \|\| "\/admin"/);
+  assert.match(checkoutRoute, /getRequestAdmin/);
+  assert.match(checkoutRoute, /session\?\.customerId \|\| admin\?\.userId/);
+});
+
+test("el pie reutiliza la imagen de Fundación Nueva Humanidad registrada en Asociados", async () => {
+  const [layout, shell, footer, styles] = await Promise.all([
+    read("../app/(public)/layout.tsx"),
+    read("../app/components/PublicShell.tsx"),
+    read("../app/components/SiteChrome.tsx"),
+    read("../app/globals.css"),
+  ]);
+  assert.match(layout, /getAssociates\(\)/);
+  assert.match(shell, /<SiteFooter associates=\{associates\}/);
+  assert.match(footer, /foundation\.image/);
+  assert.match(footer, /src=\{foundation\.image\}/);
+  assert.match(styles, /footer-partner--foundation img[^}]*object-fit: contain/);
 });
 
 test("las páginas internas usan un encabezado sólido y cabeceras de seguridad", async () => {

@@ -105,10 +105,6 @@ DATABASE_URL=
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-5.6-luna
 TERMS_VERSION=2026-08-31
-EVOLUTION_API_URL=https://tu-evolution-api.example.com
-EVOLUTION_API_KEY=
-EVOLUTION_INSTANCE_NAME=gimnasio-del-cerebro
-WHATSAPP_WEBHOOK_SECRET=
 ```
 
 En producción puedes guardar una contraseña de al menos 8 caracteres como secreto en `ADMIN_PASSWORD`. Si prefieres administrar únicamente el hash, genéralo así:
@@ -137,7 +133,7 @@ El formulario público valida la información en frontend y backend, crea un `Co
 - Portal de clientes: registro, inicio de sesión, programas adquiridos y asistentes de IA separados por producto.
 - Agenda: horarios sin doble reserva, citas de consulta o entrenamiento y bloqueos manuales desde el CRM.
 - Pagos y contabilidad: enlaces de Stripe o Hotmart por producto, verificación, acceso automático, movimientos por producto/moneda y exportación compatible con Excel.
-- WhatsApp + IA: QR de vinculación, estado de conexión, listado de chats, respuesta manual y asistente automático. Requiere una instalación compatible de Evolution API y las variables `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE_NAME` y `WHATSAPP_WEBHOOK_SECRET`.
+- WhatsApp + IA: vinculación directa mediante QR, sesión cifrada en PostgreSQL, recuperación automática, historial de conversaciones, atención humana y asistente con catálogo dinámico. No requiere Evolution API, token de Meta ni claves de un proveedor de WhatsApp.
 
 ## Contenido inicial
 
@@ -161,15 +157,15 @@ Variables base obligatorias en Seenode: `DATABASE_URL`, `SITE_URL`, `ADMIN_EMAIL
 
 Para activar **WhatsApp + IA**, configura además:
 
-- `EVOLUTION_API_URL`: URL HTTPS de tu servidor Evolution API, sin barra final.
-- `EVOLUTION_API_KEY`: clave secreta del servidor Evolution API.
-- `EVOLUTION_INSTANCE_NAME`: por ejemplo `gimnasio-del-cerebro`.
-- `WHATSAPP_WEBHOOK_SECRET`: cadena aleatoria larga; el panel la envía como cabecera privada al webhook.
-- `OPENAI_API_KEY`: clave secreta de OpenAI.
+- `OPENAI_API_KEY`: clave secreta de OpenAI para las respuestas automáticas. El QR, los chats y la respuesta humana funcionan sin esta clave.
 - `OPENAI_MODEL`: modelo configurable, por defecto `gpt-5.6-luna`.
 - `TERMS_VERSION`: versión legal aceptada al registrar una cuenta, por ejemplo `2026-08-31`.
 
-No coloques `EVOLUTION_API_KEY`, `WHATSAPP_WEBHOOK_SECRET` ni `OPENAI_API_KEY` en campos del panel o código cliente. Todas se leen exclusivamente desde el servidor.
+El proceso Node inicia automáticamente un puente local de WhatsApp en una dirección privada, sin publicar un puerto adicional. Las credenciales multidispositivo y sus claves Signal se cifran con una clave derivada de `SESSION_SECRET` antes de guardarse en PostgreSQL. Si la sesión sigue siendo válida, se recupera al reiniciar el servidor; al usar **Desconectar WhatsApp**, se cierra la sesión y se eliminan esas credenciales.
+
+La vinculación tipo WhatsApp Web usa `@whiskeysockets/baileys`, una biblioteca no oficial. No debe utilizarse para spam ni mensajería masiva y puede verse afectada por cambios de WhatsApp. Este servicio necesita el proceso Node persistente de Seenode; una ejecución exclusiva en Cloudflare Workers no puede mantener esa conexión WebSocket de larga duración.
+
+No coloques `OPENAI_API_KEY`, `SESSION_SECRET` ni credenciales de sesión en campos del panel o código cliente. Todas se leen o procesan exclusivamente en el servidor.
 
 Medidas activas: hash bcrypt, sesiones HMAC HttpOnly/Secure/SameSite, verificación de usuario activo y rol en servidor, protección de origen/CSRF, límites de intentos de acceso y formularios, validación Zod, subida restringida por tipo y tamaño, consultas parametrizadas y cabeceras CSP/HSTS/anti-iframe.
 

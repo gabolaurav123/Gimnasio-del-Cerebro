@@ -3,8 +3,8 @@
 import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, UserRound } from "lucide-react";
 import { FormEvent, useState } from "react";
 
-export function LoginForm() {
-  const [registering, setRegistering] = useState(false);
+export function LoginForm({ initialMode = "login" }: { initialMode?: "login" | "register" }) {
+  const [registering, setRegistering] = useState(initialMode === "register");
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -19,8 +19,8 @@ export function LoginForm() {
       if (!response.ok) { const payload = await response.json() as { error?: string }; setError(payload.error || "No pudimos completar el acceso."); setLoading(false); return; }
       const next = new URLSearchParams(window.location.search).get("next");
       const payload = await response.json() as { destination?: string };
-      const safeNext = next?.startsWith("/") && !next.startsWith("//") ? next : "/mi-cuenta";
-      window.location.assign(payload.destination === "/admin" ? "/admin" : safeNext);
+      const safeNext = next?.startsWith("/checkout/") && !next.startsWith("//") ? next : "";
+      window.location.assign(payload.destination === "/admin" ? safeNext || "/admin" : safeNext || "/mi-cuenta");
     } catch {
       setError("No pudimos conectar con el servidor. Comprueba tu conexión e inténtalo nuevamente.");
       setLoading(false);
