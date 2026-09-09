@@ -2,6 +2,7 @@ import { z } from "zod";
 import { addAssistantMessage, getAssistantMessages, getCustomerAssistant } from "../../../../db/customer-repository";
 import { getRequestCustomer } from "../../../../lib/customer-auth";
 import { getRuntimeValues } from "../../../../lib/runtime-env";
+import { getUsableOpenAIKey } from "../../../../lib/openai-config";
 import { checkRateLimit, rateLimitKey, recordRateLimitFailure } from "../../../../lib/rate-limit";
 
 const schema = z.object({ assistantId: z.string().uuid(), message: z.string().trim().min(2).max(2000) });
@@ -23,11 +24,12 @@ export async function POST(request: Request) {
   const profile = await getCustomerAssistant(customer.customerId, parsed.data.assistantId);
   if (!profile) return Response.json({ error: "Este asistente no está habilitado para tu cuenta." }, { status: 403 });
   const env = await getRuntimeValues(["OPENAI_API_KEY", "OPENAI_MODEL"]);
-  if (!env.OPENAI_API_KEY) return Response.json({ error: "El administrador todavía no configuró OPENAI_API_KEY en el servidor." }, { status: 503 });
+  const apiKey = getUsableOpenAIKey(env.OPENAI_API_KEY);
+  if (!apiKey) return Response.json({ error: "El administrador todavía no configuró una OPENAI_API_KEY válida en el servidor." }, { status: 503 });
   const history = await getAssistantMessages(customer.customerId, profile.id, 14);
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
-    headers: { authorization: `Bearer ${env.OPENAI_API_KEY}`, "content-type": "application/json" },
+    headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
     body: JSON.stringify({
       model: profile.model || env.OPENAI_MODEL || "gpt-5.6-luna",
       store: false,

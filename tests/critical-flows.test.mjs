@@ -1,8 +1,15 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { getUsableOpenAIKey, hasUsableOpenAIKey } from "../lib/openai-config.ts";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
+
+test("la configuración de IA rechaza valores de ejemplo", () => {
+  assert.equal(getUsableOpenAIKey("PEGA_AQUI_TU_CLAVE_DE_OPENAI"), null);
+  assert.equal(hasUsableOpenAIKey("changeme"), false);
+  assert.equal(hasUsableOpenAIKey(`sk-${"a".repeat(40)}`), true);
+});
 
 test("la Home conserva la propuesta central y usa contenido persistente", async () => {
   const page = await read("../app/(public)/page.tsx");

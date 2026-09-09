@@ -1,4 +1,5 @@
 import { getRuntimeValues } from "./runtime-env";
+import { hasUsableOpenAIKey } from "./openai-config";
 
 export type WhatsAppConnectionState =
   | "service_unavailable"
@@ -35,7 +36,7 @@ async function bridgeConfig() {
   const values = await getRuntimeValues(["WHATSAPP_BRIDGE_URL", "WHATSAPP_BRIDGE_TOKEN", "OPENAI_API_KEY"]);
   const url = values.WHATSAPP_BRIDGE_URL?.trim().replace(/\/+$/, "") || "";
   const token = values.WHATSAPP_BRIDGE_TOKEN?.trim() || "";
-  return { url, token, openAiConfigured: Boolean(values.OPENAI_API_KEY?.trim()) };
+  return { url, token, openAiConfigured: hasUsableOpenAIKey(values.OPENAI_API_KEY) };
 }
 
 async function bridgeRequest<T>(path: string, init: RequestInit = {}): Promise<T> {

@@ -1,6 +1,7 @@
 import { getSettings, getWhatsAppMessages, type WhatsAppConversation } from "../db/repository";
 import { catalogContext, getWhatsAppCatalog } from "./catalog-service";
 import { getRuntimeValues } from "./runtime-env";
+import { getUsableOpenAIKey } from "./openai-config";
 import { AI_CONFIG } from "./whatsapp-ai-config";
 
 function outputText(payload: Record<string, unknown>) {
@@ -26,7 +27,7 @@ export async function generateWhatsAppReply(conversation: WhatsAppConversation) 
     getWhatsAppMessages(conversation.id, 18),
     getRuntimeValues(["OPENAI_API_KEY", "OPENAI_MODEL"]),
   ]);
-  const apiKey = runtime.OPENAI_API_KEY?.trim();
+  const apiKey = getUsableOpenAIKey(runtime.OPENAI_API_KEY);
   if (!apiKey) throw new Error("OPENAI_API_KEY no está configurada en el servidor.");
   const model = settings.whatsappAiModel?.trim() || runtime.OPENAI_MODEL?.trim() || "gpt-5.6-luna";
   const instructions = [
