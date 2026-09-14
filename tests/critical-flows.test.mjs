@@ -41,6 +41,29 @@ test("BioShield by Kirius aparece como producto inicial", async () => {
   assert.match(repository, /productSeeds/);
 });
 
+test("el gorro by Kirius tiene una página editorial antes del pago", async () => {
+  const [repository, products, detail, routes, catalog, checkout, styles] = await Promise.all([
+    read("../db/repository.ts"),
+    read("../app/(public)/productos/page.tsx"),
+    read("../app/(public)/productos/[slug]/page.tsx"),
+    read("../lib/product-routes.ts"),
+    read("../lib/catalog-service.ts"),
+    read("../app/checkout/[type]/[slug]/page.tsx"),
+    read("../app/globals.css"),
+  ]);
+  assert.match(repository, /Gorro Gimnasio del Cerebro by Kirius/);
+  assert.match(products, /Conocer el gorro/);
+  assert.match(products, /productCatalogActionPath/);
+  assert.match(detail, /Una identidad que/);
+  assert.match(detail, /cap-product-page/);
+  assert.match(detail, /checkout\/producto\/\$\{product\.slug\}/);
+  assert.match(routes, /gorro-gimnasio-del-cerebro/);
+  assert.match(catalog, /productCatalogActionPath/);
+  assert.match(checkout, /productDetailPath/);
+  assert.match(styles, /\.cap-product-page[^}]*--cap-gold/);
+  assert.match(styles, /\.button--product-gold/);
+});
+
 test("el catálogo separa programas, cursos, neuroretos y talleres con pagos públicos", async () => {
   const [repository, trainings, categories, catalogPage, products, checkout, footer] = await Promise.all([
     read("../db/repository.ts"),
@@ -386,6 +409,14 @@ test("WhatsApp e IA usan catálogo dinámico, contexto, derivación humana y sec
   assert.match(assistant, /whatsappCurrentCampaignSlug/);
   assert.match(panel, /IA activa/);
   assert.match(panel, /Atención humana/);
+  assert.match(panel, /OpenAISettings/);
+  assert.match(panel, /Todo lo importante, visible al entrar/);
+  assert.match(panel, /Cómo responderá la IA/);
+  assert.match(panel, /Reglas base activas/);
+  assert.match(panel, /Contexto de los últimos 18 mensajes/);
+  assert.match(panel, /id="wa-openai"/);
+  assert.match(panel, /id="wa-asistente"/);
+  assert.match(panel, /id="wa-conversaciones"/);
   assert.match(manualSend, /setWhatsAppConversationMode\(conversation\.id, "HUMAN"\)/);
 });
 

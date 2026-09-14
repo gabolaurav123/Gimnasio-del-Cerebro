@@ -48,5 +48,10 @@ export async function PATCH(request: Request) {
     whatsappCatalogPath: parsed.data.catalogPath,
   });
   const connection = await getWhatsAppStatus();
-  return Response.json({ ok: true, ready: connection.openAiConfigured });
+  return Response.json({
+    ok: true,
+    ready: parsed.data.enabled && connection.openAiConfigured && connection.state === "connected",
+    connectionState: connection.state,
+    openAiConfigured: connection.openAiConfigured,
+  });
 }

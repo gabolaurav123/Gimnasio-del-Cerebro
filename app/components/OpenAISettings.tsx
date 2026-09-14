@@ -4,14 +4,14 @@ import { Bot, CheckCircle2, EyeOff, KeyRound, Loader2, Play, Save, ShieldCheck, 
 import { FormEvent, useState } from "react";
 import type { OpenAIKeySource } from "../../lib/openai-config";
 
-type Status = { configured: boolean; source: OpenAIKeySource };
+export type OpenAISettingsStatus = { configured: boolean; source: OpenAIKeySource };
 
 async function responseMessage(response: Response, fallback: string) {
   const payload = await response.json().catch(() => ({})) as { error?: string };
   return payload.error || fallback;
 }
 
-export function OpenAISettings({ initialStatus, defaultModel }: { initialStatus: Status; defaultModel: string }) {
+export function OpenAISettings({ initialStatus, defaultModel, onStatusChange }: { initialStatus: OpenAISettingsStatus; defaultModel: string; onStatusChange?: (status: OpenAISettingsStatus) => void }) {
   const [status, setStatus] = useState(initialStatus);
   const [apiKey, setApiKey] = useState("");
   const [busy, setBusy] = useState("");
@@ -24,8 +24,8 @@ export function OpenAISettings({ initialStatus, defaultModel }: { initialStatus:
     const response = await fetch("/api/admin/openai", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ apiKey: apiKey || undefined, model: form.get("model") }) });
     if (!response.ok) setNotice(await responseMessage(response, "No se pudo guardar la configuración."));
     else {
-      const payload = await response.json() as Status;
-      setStatus(payload); setApiKey(""); setNotice(payload.configured ? "Configuración de OpenAI guardada y validada." : "Modelo guardado. Ingresa una API Key para activar la inteligencia artificial.");
+      const payload = await response.json() as OpenAISettingsStatus;
+      setStatus(payload); onStatusChange?.(payload); setApiKey(""); setNotice(payload.configured ? "Configuración de OpenAI guardada y validada." : "Modelo guardado. Ingresa una API Key para activar la inteligencia artificial.");
     }
     setBusy("");
   }
@@ -51,7 +51,7 @@ export function OpenAISettings({ initialStatus, defaultModel }: { initialStatus:
     setBusy("delete"); setNotice(""); setReply("");
     const response = await fetch("/api/admin/openai", { method: "DELETE" });
     if (!response.ok) setNotice(await responseMessage(response, "No se pudo eliminar la clave."));
-    else { const payload = await response.json() as Status; setStatus(payload); setNotice(payload.configured ? "Se eliminó la clave del panel; continúa activa la clave configurada en el servidor." : "Clave eliminada. OpenAI quedó desactivado."); }
+    else { const payload = await response.json() as OpenAISettingsStatus; setStatus(payload); onStatusChange?.(payload); setNotice(payload.configured ? "Se eliminó la clave del panel; continúa activa la clave configurada en el servidor." : "Clave eliminada. OpenAI quedó desactivado."); }
     setBusy("");
   }
 

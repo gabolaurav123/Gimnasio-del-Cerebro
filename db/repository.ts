@@ -235,9 +235,9 @@ export const productSeeds: Product[] = [
   },
   {
     id: "product-gdc-cap",
-    name: "Gorro Gimnasio del Cerebro",
+    name: "Gorro Gimnasio del Cerebro by Kirius",
     slug: "gorro-gimnasio-del-cerebro",
-    description: "Gorro de la comunidad Gimnasio del Cerebro con identidad visual inspirada en el aprendizaje, la mente y la neurociencia aplicada.",
+    description: "Una pieza de la comunidad Gimnasio del Cerebro, presentada en negro y dorado como símbolo de aprendizaje, consciencia e identidad compartida.",
     image: "/images/catalog/product-cap-v1.png",
     priceLabel: "Venta activa en Stripe",
     discountLabel: null,
@@ -854,10 +854,15 @@ export function ensureDatabase() {
     const productCheckoutSyncBatch = productSeeds.map((item) =>
       db.prepare(`UPDATE products SET image = ?, checkout_provider = ?, checkout_url = ? WHERE id = ?`).bind(item.image, item.checkoutProvider, item.checkoutUrl, item.id),
     );
+    const cap = productSeeds.find((item) => item.id === "product-gdc-cap");
+    const featuredProductCopySyncBatch = cap ? [
+      db.prepare(`UPDATE products SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND name = ?`)
+        .bind(cap.name, cap.description, cap.id, "Gorro Gimnasio del Cerebro"),
+    ] : [];
     const associateImageSyncBatch = associateSeeds.map((item) =>
       db.prepare(`UPDATE associates SET image = ? WHERE id = ?`).bind(item.image, item.id),
     );
-    await db.batch([...trainingBatch, ...postBatch, ...testimonialBatch, ...associateBatch, ...productBatch, ...trainingLogoSyncBatch, ...productCheckoutSyncBatch, ...associateImageSyncBatch]);
+    await db.batch([...trainingBatch, ...postBatch, ...testimonialBatch, ...associateBatch, ...productBatch, ...trainingLogoSyncBatch, ...productCheckoutSyncBatch, ...featuredProductCopySyncBatch, ...associateImageSyncBatch]);
     return db;
   })().catch((error) => {
     ready = null;

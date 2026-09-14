@@ -1,5 +1,6 @@
 import { getProducts, getSettings, getTrainings, type Product, type Training } from "../db/repository";
 import { trainingBelongsTo, trainingCategories, type TrainingCategoryKey } from "./training-categories";
+import { productCatalogActionPath } from "./product-routes";
 import { getSiteOrigin } from "./site-url";
 
 export type WhatsAppCatalogItem = {
@@ -59,7 +60,7 @@ function productItem(product: Product, origin: string): WhatsAppCatalogItem {
     details: product.dashboardContent || "",
     price: product.priceCents > 0 ? money(product.priceCents, product.currency) : product.priceLabel,
     checkoutProvider: product.checkoutProvider,
-    acquisitionUrl: `${origin}/checkout/producto/${product.slug}`,
+    acquisitionUrl: `${origin}${productCatalogActionPath(product.slug)}`,
   };
 }
 
