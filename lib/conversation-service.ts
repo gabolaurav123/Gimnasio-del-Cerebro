@@ -10,7 +10,7 @@ import {
 import { detectCatalogInterest, getWhatsAppCatalog } from "./catalog-service";
 import { sendWhatsAppMessage } from "./whatsapp-bridge";
 import { generateWhatsAppReply } from "./whatsapp-ai-service";
-import { needsHumanHandoff } from "./whatsapp-ai-config";
+import { CRISIS_RESPONSE, isCrisisMessage, isOptOutRequest, needsHumanHandoff } from "./whatsapp-ai-config";
 
 export type IncomingWhatsAppMessage = {
   providerMessageId: string;
@@ -35,6 +35,19 @@ export async function processIncomingWhatsApp(input: IncomingWhatsAppMessage) {
     if (interest) {
       await setWhatsAppConversationInterest(conversation.id, interest);
       conversation = { ...conversation, productInterest: interest };
+    }
+    if (isCrisisMessage(input.content)) {
+      await setWhatsAppConversationMode(conversation.id, "HUMAN");
+      const sent = await sendWhatsAppMessage(conversation.jid, CRISIS_RESPONSE);
+      await recordWhatsAppOutgoing({ conversationId: conversation.id, providerMessageId: sent.id, content: CRISIS_RESPONSE, senderType: "AI", sentAt: sent.sentAt });
+      return { accepted: true, mode: "HUMAN", replied: true, crisis: true };
+    }
+    if (isOptOutRequest(input.content)) {
+      await setWhatsAppConversationMode(conversation.id, "HUMAN");
+      const reply = "Entendido. Las respuestas automáticas quedaron detenidas. Si deseas reactivarlas, indícalo expresamente.";
+      const sent = await sendWhatsAppMessage(conversation.jid, reply);
+      await recordWhatsAppOutgoing({ conversationId: conversation.id, providerMessageId: sent.id, content: reply, senderType: "AI", sentAt: sent.sentAt });
+      return { accepted: true, mode: "HUMAN", replied: true, optedOut: true };
     }
     if (conversation.mode === "HUMAN") return { accepted: true, mode: "HUMAN", replied: false };
     if (needsHumanHandoff(input.content)) {

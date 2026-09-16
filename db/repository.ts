@@ -26,6 +26,7 @@ export type Training = {
   dashboardContent: string | null;
   checkoutProvider: "STRIPE" | "HOTMART" | "MANUAL";
   checkoutUrl: string | null;
+  checkoutExternalId?: string | null;
   priceCents: number;
   currency: string;
   status: string;
@@ -102,6 +103,7 @@ export type Product = {
   dashboardContent: string | null;
   checkoutProvider: "STRIPE" | "HOTMART" | "MANUAL";
   checkoutUrl: string | null;
+  checkoutExternalId?: string | null;
   priceCents: number;
   currency: string;
   status: string;
@@ -213,7 +215,7 @@ export const productSeeds: Product[] = [
     checkoutUrl: null,
     priceCents: 0,
     currency: "USD",
-    status: "PUBLISHED",
+    status: "HIDDEN",
     displayOrder: 1,
   },
   {
@@ -228,6 +230,7 @@ export const productSeeds: Product[] = [
     dashboardContent: "Desde aquí encontrarás las indicaciones, novedades y materiales digitales habilitados para las Cartas Neurofitness Active.",
     checkoutProvider: "HOTMART",
     checkoutUrl: "https://pay.hotmart.com/V96727899W",
+    checkoutExternalId: "4768798",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
@@ -235,14 +238,14 @@ export const productSeeds: Product[] = [
   },
   {
     id: "product-gdc-cap",
-    name: "Gorro Gimnasio del Cerebro by Kirius",
+    name: "BioShield by KIRYUS™",
     slug: "gorro-gimnasio-del-cerebro",
-    description: "Una pieza de la comunidad Gimnasio del Cerebro, presentada en negro y dorado como símbolo de aprendizaje, consciencia e identidad compartida.",
-    image: "/images/catalog/product-cap-v1.png",
-    priceLabel: "Venta activa en Stripe",
-    discountLabel: null,
+    description: "Un gorro técnico de edición Founder creado por KIRYUS para acompañar momentos de enfoque, pausa y presencia.",
+    image: "/images/bioshield/hero-wellness.png",
+    priceLabel: "Precio mostrado por Stripe",
+    discountLabel: "Edición Founder",
     resourceUrl: null,
-    dashboardContent: "Información de compra y coordinación de entrega del Gorro Gimnasio del Cerebro.",
+    dashboardContent: "Información de compra, cuidados, entrega y acceso al kit digital de BioShield by KIRYUS™.",
     checkoutProvider: "STRIPE",
     checkoutUrl: "https://buy.stripe.com/6oU3cvb3E9GYglgcNB97H03",
     priceCents: 0,
@@ -338,6 +341,7 @@ export const trainingSeeds: Training[] = [
     dashboardContent: null,
     checkoutProvider: "MANUAL",
     checkoutUrl: null,
+    checkoutExternalId: "5686905",
     priceCents: 0,
     currency: "BOB",
     status: "PUBLISHED",
@@ -374,6 +378,7 @@ export const trainingSeeds: Training[] = [
     dashboardContent: "Bienvenida al curso Neurofitness Active Express. Aquí aparecerán tus indicaciones de acceso, materiales y próximos pasos.",
     checkoutProvider: "HOTMART",
     checkoutUrl: "https://pay.hotmart.com/I95298513M",
+    checkoutExternalId: "4473112",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
@@ -392,6 +397,7 @@ export const trainingSeeds: Training[] = [
     dashboardContent: "Aquí encontrarás el acceso y los materiales correspondientes a los 21 días del Neuroreto de Merecimiento.",
     checkoutProvider: "HOTMART",
     checkoutUrl: "https://pay.hotmart.com/A102005977H",
+    checkoutExternalId: "6288280",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
@@ -410,6 +416,7 @@ export const trainingSeeds: Training[] = [
     dashboardContent: "Aquí encontrarás el acceso, las indicaciones y los materiales de cada etapa del Neuroreto Sé feliz y eficiente.",
     checkoutProvider: "HOTMART",
     checkoutUrl: "https://pay.hotmart.com/V95461171E",
+    checkoutExternalId: "4505399",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
@@ -428,6 +435,7 @@ export const trainingSeeds: Training[] = [
     dashboardContent: "Bienvenida a Neurotraumas Express. Aquí se habilitarán las instrucciones, materiales y acceso al programa.",
     checkoutProvider: "MANUAL",
     checkoutUrl: null,
+    checkoutExternalId: "4474668",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
@@ -446,6 +454,7 @@ export const trainingSeeds: Training[] = [
     dashboardContent: "Aquí aparecerán las instrucciones, materiales y recursos habilitados para Tabla Radiónica del Cerebro.",
     checkoutProvider: "MANUAL",
     checkoutUrl: null,
+    checkoutExternalId: "4474702",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
@@ -482,6 +491,7 @@ export const trainingSeeds: Training[] = [
     dashboardContent: "Aquí se publicarán el acceso, las indicaciones y los materiales del taller Neuroconstelaciones Holográficas.",
     checkoutProvider: "MANUAL",
     checkoutUrl: null,
+    checkoutExternalId: "5219876",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
@@ -500,6 +510,7 @@ export const trainingSeeds: Training[] = [
     dashboardContent: "Aquí aparecerán las indicaciones, audios y materiales habilitados para el taller Encuentra tu seguridad interior.",
     checkoutProvider: "MANUAL",
     checkoutUrl: null,
+    checkoutExternalId: "4925729",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
@@ -518,6 +529,7 @@ export const trainingSeeds: Training[] = [
     dashboardContent: "Aquí se habilitarán las indicaciones, audios y materiales del nivel medio de Autohipnosis.",
     checkoutProvider: "MANUAL",
     checkoutUrl: null,
+    checkoutExternalId: "4971920",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
@@ -536,6 +548,7 @@ export const trainingSeeds: Training[] = [
     dashboardContent: "Aquí encontrarás el acceso, las indicaciones y los materiales del Taller Neurosexualidad.",
     checkoutProvider: "MANUAL",
     checkoutUrl: null,
+    checkoutExternalId: "6527283",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
@@ -554,6 +567,7 @@ export const trainingSeeds: Training[] = [
     dashboardContent: "Aquí se habilitarán el acceso y los materiales del taller Recordarme desde adentro.",
     checkoutProvider: "MANUAL",
     checkoutUrl: null,
+    checkoutExternalId: "6010207",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
@@ -572,6 +586,7 @@ export const trainingSeeds: Training[] = [
     dashboardContent: "Aquí encontrarás el acceso y los materiales del taller Cerrando ciclos.",
     checkoutProvider: "MANUAL",
     checkoutUrl: null,
+    checkoutExternalId: "6721419",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
@@ -590,6 +605,7 @@ export const trainingSeeds: Training[] = [
     dashboardContent: "Aquí se publicarán el acceso, las indicaciones y los materiales del Taller Autovaloración.",
     checkoutProvider: "MANUAL",
     checkoutUrl: null,
+    checkoutExternalId: "6998704",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
@@ -688,7 +704,7 @@ export const testimonialSeeds: Testimonial[] = [
 
 const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, role TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
-  `CREATE TABLE IF NOT EXISTS trainings (id TEXT PRIMARY KEY, name TEXT NOT NULL, acronym TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, short_description TEXT NOT NULL, full_description TEXT NOT NULL DEFAULT '', logo TEXT NOT NULL, hero_image TEXT, resource_url TEXT, dashboard_content TEXT, checkout_provider TEXT NOT NULL DEFAULT 'MANUAL', checkout_url TEXT, price_cents INTEGER NOT NULL DEFAULT 0, currency TEXT NOT NULL DEFAULT 'BOB', cta_label TEXT NOT NULL DEFAULT 'Consultar', status TEXT NOT NULL DEFAULT 'PUBLISHED', display_order INTEGER NOT NULL DEFAULT 0, seo_title TEXT, seo_description TEXT, deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS trainings (id TEXT PRIMARY KEY, name TEXT NOT NULL, acronym TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, short_description TEXT NOT NULL, full_description TEXT NOT NULL DEFAULT '', logo TEXT NOT NULL, hero_image TEXT, resource_url TEXT, dashboard_content TEXT, checkout_provider TEXT NOT NULL DEFAULT 'MANUAL', checkout_url TEXT, checkout_external_id TEXT, price_cents INTEGER NOT NULL DEFAULT 0, currency TEXT NOT NULL DEFAULT 'BOB', cta_label TEXT NOT NULL DEFAULT 'Consultar', status TEXT NOT NULL DEFAULT 'PUBLISHED', display_order INTEGER NOT NULL DEFAULT 0, seo_title TEXT, seo_description TEXT, deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS blog_posts (id TEXT PRIMARY KEY, title TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, excerpt TEXT NOT NULL, content TEXT NOT NULL, image TEXT, attachment_url TEXT, author TEXT, category TEXT NOT NULL DEFAULT 'Consciencia', status TEXT NOT NULL DEFAULT 'PUBLISHED', published_at TEXT, seo_title TEXT, seo_description TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS contacts (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, country TEXT NOT NULL, training_interest TEXT, message TEXT NOT NULL, source TEXT NOT NULL DEFAULT 'website_contact', status TEXT NOT NULL DEFAULT 'NEW', tags TEXT NOT NULL DEFAULT '[]', assignee TEXT, next_follow_up TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS contact_notes (id TEXT PRIMARY KEY, contact_id TEXT NOT NULL, user_id TEXT, body TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
@@ -705,9 +721,10 @@ const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS whatsapp_messages (id TEXT PRIMARY KEY, conversation_id TEXT NOT NULL, provider_message_id TEXT UNIQUE, direction TEXT NOT NULL, sender_type TEXT NOT NULL, content TEXT NOT NULL, delivery_status TEXT NOT NULL DEFAULT 'SENT', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS appointments (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, country TEXT NOT NULL, preferred_date TEXT NOT NULL, preferred_time TEXT NOT NULL, training_interest TEXT, appointment_type TEXT NOT NULL DEFAULT 'CONSULTATION', disclaimer_accepted_at TEXT, message TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'PENDING', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS appointment_blocks (id TEXT PRIMARY KEY, date TEXT NOT NULL, start_time TEXT NOT NULL, end_time TEXT NOT NULL, appointment_type TEXT NOT NULL DEFAULT 'ALL', recurrence TEXT NOT NULL DEFAULT 'DATE', weekday INTEGER, end_date TEXT, reason TEXT NOT NULL DEFAULT 'Horario no disponible', active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
-  `CREATE TABLE IF NOT EXISTS products (id TEXT PRIMARY KEY, name TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT NOT NULL, image TEXT, price_label TEXT NOT NULL DEFAULT 'Consultar', discount_label TEXT, resource_url TEXT, dashboard_content TEXT, checkout_provider TEXT NOT NULL DEFAULT 'MANUAL', checkout_url TEXT, price_cents INTEGER NOT NULL DEFAULT 0, currency TEXT NOT NULL DEFAULT 'BOB', status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS products (id TEXT PRIMARY KEY, name TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT NOT NULL, image TEXT, price_label TEXT NOT NULL DEFAULT 'Consultar', discount_label TEXT, resource_url TEXT, dashboard_content TEXT, checkout_provider TEXT NOT NULL DEFAULT 'MANUAL', checkout_url TEXT, checkout_external_id TEXT, price_cents INTEGER NOT NULL DEFAULT 0, currency TEXT NOT NULL DEFAULT 'BOB', status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS customer_users (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, phone TEXT, country TEXT, active INTEGER NOT NULL DEFAULT 1, terms_version TEXT NOT NULL, terms_accepted_at TEXT NOT NULL, privacy_accepted_at TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS payments (id TEXT PRIMARY KEY, reference TEXT NOT NULL UNIQUE, payer_name TEXT NOT NULL, payer_email TEXT, payer_phone TEXT, customer_id TEXT, concept TEXT NOT NULL, item_type TEXT NOT NULL DEFAULT 'OTHER', item_id TEXT, amount_cents INTEGER NOT NULL, currency TEXT NOT NULL DEFAULT 'BOB', payment_method TEXT NOT NULL DEFAULT 'OTHER', provider_reference TEXT, status TEXT NOT NULL DEFAULT 'PENDING', paid_at TEXT, verified_at TEXT, verified_by TEXT, notes TEXT, source TEXT NOT NULL DEFAULT 'MANUAL', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS payment_webhook_events (id TEXT PRIMARY KEY, provider TEXT NOT NULL, event_id TEXT NOT NULL, event_type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'PROCESSING', payload_hash TEXT, error TEXT, processed_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS customer_entitlements (id TEXT PRIMARY KEY, customer_id TEXT NOT NULL, item_type TEXT NOT NULL, item_id TEXT NOT NULL, payment_id TEXT, status TEXT NOT NULL DEFAULT 'ACTIVE', granted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, expires_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS assistant_profiles (id TEXT PRIMARY KEY, item_type TEXT NOT NULL, item_id TEXT NOT NULL, name TEXT NOT NULL, instructions TEXT NOT NULL, model TEXT NOT NULL DEFAULT 'gpt-5.6-luna', enabled INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS assistant_messages (id TEXT PRIMARY KEY, customer_id TEXT NOT NULL, assistant_profile_id TEXT NOT NULL, role TEXT NOT NULL, content TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
@@ -721,14 +738,19 @@ const schemaStatements = [
   `CREATE INDEX IF NOT EXISTS idx_whatsapp_messages_conversation ON whatsapp_messages(conversation_id, created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_contacts_training_interest ON contacts(training_interest)`,
   `CREATE INDEX IF NOT EXISTS idx_trainings_status_order ON trainings(status, display_order)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_trainings_provider_external_unique ON trainings(checkout_provider, checkout_external_id) WHERE checkout_external_id IS NOT NULL`,
   `CREATE INDEX IF NOT EXISTS idx_blog_posts_status_published_at ON blog_posts(status, published_at)`,
   `CREATE INDEX IF NOT EXISTS idx_contact_activities_contact_id ON contact_activities(contact_id)`,
   `CREATE INDEX IF NOT EXISTS idx_appointments_status_date ON appointments(status, preferred_date)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_appointments_active_slot ON appointments(preferred_date, preferred_time) WHERE status IN ('PENDING', 'CONFIRMED')`,
   `CREATE INDEX IF NOT EXISTS idx_appointment_blocks_date_active ON appointment_blocks(date, active)`,
   `CREATE INDEX IF NOT EXISTS idx_products_status_order ON products(status, display_order)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_products_provider_external_unique ON products(checkout_provider, checkout_external_id) WHERE checkout_external_id IS NOT NULL`,
   `CREATE INDEX IF NOT EXISTS idx_payments_status_created_at ON payments(status, created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_payments_payer_email ON payments(payer_email)`,
+  `CREATE INDEX IF NOT EXISTS idx_payments_provider_reference ON payments(source, provider_reference)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_source_provider_reference_unique ON payments(source, provider_reference) WHERE provider_reference IS NOT NULL`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_webhook_events_provider_event ON payment_webhook_events(provider, event_id)`,
   `CREATE INDEX IF NOT EXISTS idx_customer_users_email_active ON customer_users(email, active)`,
   `CREATE INDEX IF NOT EXISTS idx_customer_entitlements_customer_status ON customer_entitlements(customer_id, status)`,
   `CREATE INDEX IF NOT EXISTS idx_customer_entitlements_item ON customer_entitlements(item_type, item_id)`,
@@ -751,6 +773,7 @@ const additiveMigrations = [
   `ALTER TABLE trainings ADD COLUMN dashboard_content TEXT`,
   `ALTER TABLE trainings ADD COLUMN checkout_provider TEXT NOT NULL DEFAULT 'MANUAL'`,
   `ALTER TABLE trainings ADD COLUMN checkout_url TEXT`,
+  `ALTER TABLE trainings ADD COLUMN checkout_external_id TEXT`,
   `ALTER TABLE trainings ADD COLUMN price_cents INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE trainings ADD COLUMN currency TEXT NOT NULL DEFAULT 'BOB'`,
   `ALTER TABLE blog_posts ADD COLUMN attachment_url TEXT`,
@@ -760,6 +783,7 @@ const additiveMigrations = [
   `ALTER TABLE products ADD COLUMN dashboard_content TEXT`,
   `ALTER TABLE products ADD COLUMN checkout_provider TEXT NOT NULL DEFAULT 'MANUAL'`,
   `ALTER TABLE products ADD COLUMN checkout_url TEXT`,
+  `ALTER TABLE products ADD COLUMN checkout_external_id TEXT`,
   `ALTER TABLE products ADD COLUMN price_cents INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE products ADD COLUMN currency TEXT NOT NULL DEFAULT 'BOB'`,
   `ALTER TABLE payments ADD COLUMN customer_id TEXT`,
@@ -829,8 +853,8 @@ export function ensureDatabase() {
       ]);
     }
     const trainingBatch = trainingSeeds.map((item) =>
-      db.prepare(`INSERT OR IGNORE INTO trainings (id, name, acronym, slug, short_description, full_description, logo, hero_image, resource_url, dashboard_content, checkout_provider, checkout_url, price_cents, currency, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-        .bind(item.id, item.name, item.acronym, item.slug, item.shortDescription, item.fullDescription, item.logo, item.heroImage, item.resourceUrl, item.dashboardContent, item.checkoutProvider, item.checkoutUrl, item.priceCents, item.currency, item.status, item.displayOrder),
+      db.prepare(`INSERT OR IGNORE INTO trainings (id, name, acronym, slug, short_description, full_description, logo, hero_image, resource_url, dashboard_content, checkout_provider, checkout_url, checkout_external_id, price_cents, currency, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        .bind(item.id, item.name, item.acronym, item.slug, item.shortDescription, item.fullDescription, item.logo, item.heroImage, item.resourceUrl, item.dashboardContent, item.checkoutProvider, item.checkoutUrl, item.checkoutExternalId || null, item.priceCents, item.currency, item.status, item.displayOrder),
     );
     const postBatch = postSeeds.map((item) =>
       db.prepare(`INSERT OR IGNORE INTO blog_posts (id, title, slug, excerpt, content, category, status, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
@@ -845,19 +869,20 @@ export function ensureDatabase() {
         .bind(item.id, item.name, item.url, item.description, item.image, item.status, item.displayOrder),
     );
     const productBatch = productSeeds.map((item) =>
-      db.prepare(`INSERT OR IGNORE INTO products (id, name, slug, description, image, price_label, discount_label, resource_url, dashboard_content, checkout_provider, checkout_url, price_cents, currency, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-        .bind(item.id, item.name, item.slug, item.description, item.image, item.priceLabel, item.discountLabel, item.resourceUrl, item.dashboardContent, item.checkoutProvider, item.checkoutUrl, item.priceCents, item.currency, item.status, item.displayOrder),
+      db.prepare(`INSERT OR IGNORE INTO products (id, name, slug, description, image, price_label, discount_label, resource_url, dashboard_content, checkout_provider, checkout_url, checkout_external_id, price_cents, currency, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        .bind(item.id, item.name, item.slug, item.description, item.image, item.priceLabel, item.discountLabel, item.resourceUrl, item.dashboardContent, item.checkoutProvider, item.checkoutUrl, item.checkoutExternalId || null, item.priceCents, item.currency, item.status, item.displayOrder),
     );
     const trainingLogoSyncBatch = trainingSeeds.map((item) =>
-      db.prepare(`UPDATE trainings SET logo = ?, hero_image = ?, checkout_provider = ?, checkout_url = ? WHERE id = ?`).bind(item.logo, item.heroImage, item.checkoutProvider, item.checkoutUrl, item.id),
+      db.prepare(`UPDATE trainings SET logo = ?, hero_image = ?, checkout_external_id = COALESCE(checkout_external_id, ?) WHERE id = ?`).bind(item.logo, item.heroImage, item.checkoutExternalId || null, item.id),
     );
     const productCheckoutSyncBatch = productSeeds.map((item) =>
-      db.prepare(`UPDATE products SET image = ?, checkout_provider = ?, checkout_url = ? WHERE id = ?`).bind(item.image, item.checkoutProvider, item.checkoutUrl, item.id),
+      db.prepare(`UPDATE products SET image = ?, checkout_external_id = COALESCE(checkout_external_id, ?) WHERE id = ?`).bind(item.image, item.checkoutExternalId || null, item.id),
     );
     const cap = productSeeds.find((item) => item.id === "product-gdc-cap");
     const featuredProductCopySyncBatch = cap ? [
-      db.prepare(`UPDATE products SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND name = ?`)
-        .bind(cap.name, cap.description, cap.id, "Gorro Gimnasio del Cerebro"),
+      db.prepare(`UPDATE products SET name = ?, description = ?, price_label = ?, discount_label = ?, dashboard_content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND name IN (?, ?)`)
+        .bind(cap.name, cap.description, cap.priceLabel, cap.discountLabel, cap.dashboardContent, cap.id, "Gorro Gimnasio del Cerebro", "Gorro Gimnasio del Cerebro by Kirius"),
+      db.prepare(`UPDATE products SET status = 'HIDDEN', updated_at = CURRENT_TIMESTAMP WHERE id = 'product-bioshield-kirius' AND checkout_provider = 'MANUAL' AND checkout_url IS NULL`),
     ] : [];
     const associateImageSyncBatch = associateSeeds.map((item) =>
       db.prepare(`UPDATE associates SET image = ? WHERE id = ?`).bind(item.image, item.id),
@@ -887,6 +912,7 @@ function mapTraining(row: Record<string, unknown>): Training {
     dashboardContent: row.dashboard_content ? String(row.dashboard_content) : null,
     checkoutProvider: String(row.checkout_provider || "MANUAL") as Training["checkoutProvider"],
     checkoutUrl: row.checkout_url ? String(row.checkout_url) : null,
+    checkoutExternalId: row.checkout_external_id ? String(row.checkout_external_id) : null,
     priceCents: Number(row.price_cents || 0),
     currency: String(row.currency || "BOB"),
     status: String(row.status),
@@ -972,6 +998,7 @@ function mapProduct(row: Record<string, unknown>): Product {
     dashboardContent: row.dashboard_content ? String(row.dashboard_content) : null,
     checkoutProvider: String(row.checkout_provider || "MANUAL") as Product["checkoutProvider"],
     checkoutUrl: row.checkout_url ? String(row.checkout_url) : null,
+    checkoutExternalId: row.checkout_external_id ? String(row.checkout_external_id) : null,
     priceCents: Number(row.price_cents || 0),
     currency: String(row.currency || "BOB"),
     status: String(row.status), displayOrder: Number(row.display_order),
@@ -1145,10 +1172,10 @@ export async function updatePaymentStatus(id: string, status: string, verifiedBy
   const payment = mapPayment(row);
   const statements = [db.prepare(`UPDATE payments SET status = ?, verified_at = CASE WHEN ? = 'VERIFIED' THEN CURRENT_TIMESTAMP ELSE verified_at END, verified_by = CASE WHEN ? = 'VERIFIED' THEN ? ELSE verified_by END, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
     .bind(status, status, status, verifiedBy, id)];
-  if (["VERIFIED", "REFUNDED"].includes(status)) {
+  if (status === "VERIFIED") {
     statements.push(db.prepare(`INSERT OR IGNORE INTO accounting_entries (id, payment_id, entry_type, category, item_type, item_id, description, amount_cents, currency, occurred_at, created_by) VALUES (?, ?, 'INCOME', 'Venta verificada', ?, ?, ?, ?, ?, ?, ?)`)
       .bind(`income-${id}`, id, ["PRODUCT", "TRAINING", "EVENT"].includes(payment.itemType) ? payment.itemType : "GENERAL", payment.itemId, payment.concept, payment.amountCents, payment.currency, payment.paidAt || new Date().toISOString(), verifiedBy));
-  } else {
+  } else if (status !== "REFUNDED") {
     statements.push(db.prepare(`DELETE FROM accounting_entries WHERE id = ?`).bind(`income-${id}`));
   }
   if (status === "VERIFIED") {
@@ -1160,6 +1187,7 @@ export async function updatePaymentStatus(id: string, status: string, verifiedBy
     }
   }
   if (status === "REFUNDED") {
+    statements.push(db.prepare(`DELETE FROM accounting_entries WHERE payment_id = ? AND category = 'Reembolso parcial'`).bind(id));
     statements.push(db.prepare(`INSERT OR IGNORE INTO accounting_entries (id, payment_id, entry_type, category, item_type, item_id, description, amount_cents, currency, occurred_at, created_by) VALUES (?, ?, 'REFUND', 'Reembolso', ?, ?, ?, ?, ?, ?, ?)`)
       .bind(`refund-${id}`, id, ["PRODUCT", "TRAINING", "EVENT"].includes(payment.itemType) ? payment.itemType : "GENERAL", payment.itemId, `Reembolso · ${payment.concept}`, -Math.abs(payment.amountCents), payment.currency, new Date().toISOString(), verifiedBy));
   } else {
@@ -1168,7 +1196,157 @@ export async function updatePaymentStatus(id: string, status: string, verifiedBy
   if (status !== "VERIFIED") {
     statements.push(db.prepare(`UPDATE customer_entitlements SET status = 'SUSPENDED', updated_at = CURRENT_TIMESTAMP WHERE payment_id = ?`).bind(id));
   }
+  if (payment.itemType === "OTHER" && payment.itemId && payment.source === "STRIPE" && payment.concept.startsWith("Consulta personalizada")) {
+    if (status === "VERIFIED") statements.push(db.prepare(`UPDATE appointments SET status = 'CONFIRMED', updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(payment.itemId));
+    if (["REFUNDED", "REJECTED"].includes(status)) statements.push(db.prepare(`UPDATE appointments SET status = 'CANCELLED', updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(payment.itemId));
+  }
   await db.batch(statements);
+}
+
+export type ProviderPaymentEventInput = {
+  provider: "STRIPE" | "HOTMART";
+  eventId: string;
+  eventType: string;
+  payloadHash: string;
+  localPaymentId?: string | null;
+  providerReference?: string | null;
+  externalItemId?: string | null;
+  status: "PENDING" | "VERIFIED" | "REJECTED" | "REFUNDED";
+  payerName?: string | null;
+  payerEmail?: string | null;
+  payerPhone?: string | null;
+  amountCents?: number | null;
+  refundAmountCents?: number | null;
+  refundIsFull?: boolean;
+  currency?: string | null;
+  paidAt?: string | null;
+  eventOccurredAt?: string | null;
+  paymentMethod?: string | null;
+};
+
+async function upsertPartialRefundAccounting(payment: Payment, cumulativeRefundCents: number, createdBy: string, occurredAt: string) {
+  if (payment.amountCents <= 0 || cumulativeRefundCents <= 0 || cumulativeRefundCents >= payment.amountCents) {
+    throw new Error("El importe del reembolso parcial no es válido para este pago.");
+  }
+  const db = await ensureDatabase();
+  const id = `partial-refund-${payment.id}`;
+  const itemType = ["PRODUCT", "TRAINING", "EVENT"].includes(payment.itemType) ? payment.itemType : "GENERAL";
+  const description = `Reembolso parcial acumulado · ${payment.concept}`;
+  await db.batch([
+    db.prepare(`INSERT OR IGNORE INTO accounting_entries (id, payment_id, entry_type, category, item_type, item_id, description, amount_cents, currency, occurred_at, created_by) VALUES (?, ?, 'REFUND', 'Reembolso parcial', ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(id, payment.id, itemType, payment.itemId, description, -cumulativeRefundCents, payment.currency, occurredAt, createdBy),
+    db.prepare(`UPDATE accounting_entries SET amount_cents = CASE WHEN ABS(amount_cents) < ? THEN -? ELSE amount_cents END, occurred_at = CASE WHEN ABS(amount_cents) < ? THEN ? ELSE occurred_at END, description = ?, created_by = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND payment_id = ? AND entry_type = 'REFUND'`)
+      .bind(cumulativeRefundCents, cumulativeRefundCents, cumulativeRefundCents, occurredAt, description, createdBy, id, payment.id),
+  ]);
+}
+
+async function setWebhookEventState(provider: string, eventId: string, status: "PROCESSING" | "PROCESSED" | "IGNORED" | "FAILED", error: string | null = null) {
+  const db = await ensureDatabase();
+  await db.prepare(`UPDATE payment_webhook_events SET status = ?, error = ?, processed_at = CASE WHEN ? IN ('PROCESSED','IGNORED') THEN CURRENT_TIMESTAMP ELSE processed_at END WHERE provider = ? AND event_id = ?`)
+    .bind(status, error, status, provider, eventId).run();
+}
+
+export async function reconcileProviderPayment(input: ProviderPaymentEventInput) {
+  const db = await ensureDatabase();
+  const existingEvent = await db.prepare(`SELECT status FROM payment_webhook_events WHERE provider = ? AND event_id = ? LIMIT 1`).bind(input.provider, input.eventId).first<{ status: string }>();
+  if (existingEvent && existingEvent.status !== "FAILED") return { duplicate: true, status: existingEvent.status };
+  if (existingEvent?.status === "FAILED") {
+    await db.prepare(`DELETE FROM payment_webhook_events WHERE provider = ? AND event_id = ? AND status = 'FAILED'`).bind(input.provider, input.eventId).run();
+  }
+  try {
+    await db.prepare(`INSERT INTO payment_webhook_events (id, provider, event_id, event_type, status, payload_hash) VALUES (?, ?, ?, ?, 'PROCESSING', ?)`)
+      .bind(`${input.provider}:${input.eventId}`, input.provider, input.eventId, input.eventType, input.payloadHash).run();
+  } catch {
+    const claimed = await db.prepare(`SELECT status FROM payment_webhook_events WHERE provider = ? AND event_id = ? LIMIT 1`).bind(input.provider, input.eventId).first<{ status: string }>();
+    return { duplicate: true, status: claimed?.status || "PROCESSING" };
+  }
+
+  try {
+    let row = input.localPaymentId
+      ? await db.prepare(`SELECT * FROM payments WHERE id = ? LIMIT 1`).bind(input.localPaymentId).first<Record<string, unknown>>()
+      : null;
+    if (!row && input.providerReference) {
+      row = await db.prepare(`SELECT * FROM payments WHERE source = ? AND provider_reference = ? ORDER BY created_at DESC LIMIT 1`)
+        .bind(input.provider, input.providerReference).first<Record<string, unknown>>();
+    }
+
+    let item: { id: string; name: string; item_type: "PRODUCT" | "TRAINING" } | null = null;
+    if (!row && input.externalItemId) {
+      item = await db.prepare(`SELECT id, name, 'PRODUCT' AS item_type FROM products WHERE checkout_provider = ? AND checkout_external_id = ? AND deleted_at IS NULL UNION ALL SELECT id, name, 'TRAINING' AS item_type FROM trainings WHERE checkout_provider = ? AND checkout_external_id = ? AND deleted_at IS NULL LIMIT 1`)
+        .bind(input.provider, input.externalItemId, input.provider, input.externalItemId).first<{ id: string; name: string; item_type: "PRODUCT" | "TRAINING" }>();
+    }
+
+    if (!row && item) {
+      const customer = input.payerEmail
+        ? await db.prepare(`SELECT id FROM customer_users WHERE email = ? AND active = 1 LIMIT 1`).bind(input.payerEmail.trim().toLowerCase()).first<{ id: string }>()
+        : null;
+      const created = await createPayment({
+        payerName: input.payerName || "Comprador",
+        payerEmail: input.payerEmail || null,
+        payerPhone: input.payerPhone || null,
+        customerId: customer?.id || null,
+        concept: item.name,
+        itemType: item.item_type,
+        itemId: item.id,
+        amountCents: Math.max(0, input.amountCents || 0),
+        currency: (input.currency || "USD").toUpperCase(),
+        paymentMethod: input.paymentMethod || "CARD",
+        providerReference: input.providerReference || null,
+        paidAt: input.paidAt || null,
+        notes: `Registrado automáticamente desde ${input.provider}.`,
+        source: input.provider,
+      });
+      row = await db.prepare(`SELECT * FROM payments WHERE id = ? LIMIT 1`).bind(created.id).first<Record<string, unknown>>();
+    }
+
+    if (!row) {
+      await setWebhookEventState(input.provider, input.eventId, "IGNORED", "No se encontró un intento de pago o artículo local asociado.");
+      return { ignored: true };
+    }
+
+    const payment = mapPayment(row);
+    if (payment.source !== input.provider) throw new Error("El proveedor del evento no coincide con el intento de pago.");
+    if (payment.status === "REFUNDED" && input.status !== "REFUNDED") {
+      await setWebhookEventState(input.provider, input.eventId, "IGNORED", "El pago ya está reembolsado; no se aplicó un estado anterior.");
+      return { ignored: true, paymentId: payment.id, status: payment.status };
+    }
+    if (payment.status === "VERIFIED" && ["PENDING", "REJECTED"].includes(input.status)) {
+      await setWebhookEventState(input.provider, input.eventId, "IGNORED", "El pago ya está verificado; no se aplicó un estado anterior.");
+      return { ignored: true, paymentId: payment.id, status: payment.status };
+    }
+    const eventAmount = input.amountCents == null ? payment.amountCents : Math.max(0, Math.round(input.amountCents));
+    const eventCurrency = (input.currency || payment.currency).toUpperCase();
+    const refundAmount = input.refundAmountCents == null ? null : Math.max(0, Math.round(input.refundAmountCents));
+    const isPartialRefund = refundAmount != null && !input.refundIsFull;
+    if (input.refundIsFull && input.status !== "REFUNDED") throw new Error("Un reembolso total debe cerrar el pago como reembolsado.");
+    if (isPartialRefund && input.status !== "VERIFIED") throw new Error("Un reembolso parcial debe conservar el pago verificado.");
+    if (isPartialRefund && (refundAmount <= 0 || eventAmount <= 0 || refundAmount >= eventAmount)) throw new Error("El importe del reembolso parcial no es válido para este pago.");
+    if (input.refundIsFull && refundAmount != null && eventAmount > 0 && refundAmount !== eventAmount) throw new Error("El importe del reembolso total no coincide con el pago.");
+    if (input.status === "VERIFIED" && eventAmount <= 0) throw new Error("El proveedor no informó un importe válido para un pago aprobado.");
+    if (payment.amountCents > 0 && eventAmount > 0 && payment.amountCents !== eventAmount) throw new Error("El importe recibido no coincide con el importe configurado.");
+    if (payment.amountCents > 0 && payment.currency && eventCurrency !== payment.currency.toUpperCase()) throw new Error("La moneda recibida no coincide con la moneda configurada.");
+    const customer = !payment.customerId && input.payerEmail
+      ? await db.prepare(`SELECT id FROM customer_users WHERE email = ? AND active = 1 LIMIT 1`).bind(input.payerEmail.trim().toLowerCase()).first<{ id: string }>()
+      : null;
+
+    await db.prepare(`UPDATE payments SET payer_name = ?, payer_email = ?, payer_phone = ?, customer_id = COALESCE(customer_id, ?), amount_cents = ?, currency = ?, payment_method = ?, provider_reference = COALESCE(?, provider_reference), paid_at = COALESCE(?, paid_at), notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+      .bind(input.payerName || payment.payerName, input.payerEmail || payment.payerEmail, input.payerPhone || payment.payerPhone, customer?.id || null, eventAmount, eventCurrency, input.paymentMethod || payment.paymentMethod, input.providerReference || null, input.paidAt || null, `Sincronizado automáticamente por ${input.provider} (${input.eventType}).`, payment.id).run();
+    if (input.status !== "PENDING") await updatePaymentStatus(payment.id, input.status, `${input.provider} automático`);
+    if (isPartialRefund && refundAmount != null) {
+      await upsertPartialRefundAccounting(
+        { ...payment, amountCents: eventAmount, currency: eventCurrency },
+        refundAmount,
+        `${input.provider} automático`,
+        input.eventOccurredAt || new Date().toISOString(),
+      );
+    }
+    await setWebhookEventState(input.provider, input.eventId, "PROCESSED");
+    return { paymentId: payment.id, status: input.status, partialRefundCents: isPartialRefund ? refundAmount : null };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Error de conciliación";
+    await setWebhookEventState(input.provider, input.eventId, "FAILED", message);
+    throw error;
+  }
 }
 
 export async function getPaymentSummary() {
@@ -1256,13 +1434,13 @@ export type AssociateInput = Omit<Associate, "id" | "status">;
 
 export async function createProduct(input: ProductInput) {
   const db = await ensureDatabase(); const id = crypto.randomUUID();
-  await db.prepare(`INSERT INTO products (id, name, slug, description, image, price_label, discount_label, resource_url, dashboard_content, checkout_provider, checkout_url, price_cents, currency, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?)`)
-    .bind(id, input.name, input.slug, input.description, input.image, input.priceLabel, input.discountLabel, input.resourceUrl, input.dashboardContent, input.checkoutProvider, input.checkoutUrl, input.priceCents, input.currency, input.displayOrder).run(); return id;
+  await db.prepare(`INSERT INTO products (id, name, slug, description, image, price_label, discount_label, resource_url, dashboard_content, checkout_provider, checkout_url, checkout_external_id, price_cents, currency, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?)`)
+    .bind(id, input.name, input.slug, input.description, input.image, input.priceLabel, input.discountLabel, input.resourceUrl, input.dashboardContent, input.checkoutProvider, input.checkoutUrl, input.checkoutExternalId || null, input.priceCents, input.currency, input.displayOrder).run(); return id;
 }
 
 export async function updateProduct(id: string, input: ProductInput) {
-  const db = await ensureDatabase(); await db.prepare(`UPDATE products SET name = ?, slug = ?, description = ?, image = ?, price_label = ?, discount_label = ?, resource_url = ?, dashboard_content = ?, checkout_provider = ?, checkout_url = ?, price_cents = ?, currency = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-    .bind(input.name, input.slug, input.description, input.image, input.priceLabel, input.discountLabel, input.resourceUrl, input.dashboardContent, input.checkoutProvider, input.checkoutUrl, input.priceCents, input.currency, input.displayOrder, id).run();
+  const db = await ensureDatabase(); await db.prepare(`UPDATE products SET name = ?, slug = ?, description = ?, image = ?, price_label = ?, discount_label = ?, resource_url = ?, dashboard_content = ?, checkout_provider = ?, checkout_url = ?, checkout_external_id = ?, price_cents = ?, currency = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+    .bind(input.name, input.slug, input.description, input.image, input.priceLabel, input.discountLabel, input.resourceUrl, input.dashboardContent, input.checkoutProvider, input.checkoutUrl, input.checkoutExternalId || null, input.priceCents, input.currency, input.displayOrder, id).run();
 }
 
 export async function createEvent(input: EventInput) {
@@ -1369,21 +1547,21 @@ export async function getDashboardData() {
   };
 }
 
-export type TrainingInput = { name: string; acronym: string; slug: string; shortDescription: string; fullDescription: string; logo: string; heroImage?: string | null; resourceUrl?: string | null; dashboardContent?: string | null; checkoutProvider: "STRIPE" | "HOTMART" | "MANUAL"; checkoutUrl?: string | null; priceCents: number; currency: string; displayOrder: number };
+export type TrainingInput = { name: string; acronym: string; slug: string; shortDescription: string; fullDescription: string; logo: string; heroImage?: string | null; resourceUrl?: string | null; dashboardContent?: string | null; checkoutProvider: "STRIPE" | "HOTMART" | "MANUAL"; checkoutUrl?: string | null; checkoutExternalId?: string | null; priceCents: number; currency: string; displayOrder: number };
 
 export async function createTraining(input: TrainingInput) {
   const db = await ensureDatabase();
   const id = crypto.randomUUID();
   const result = await db.prepare(`SELECT COALESCE(MAX(display_order), 0) + 1 AS next_order FROM trainings`).first<{ next_order: number }>();
-  await db.prepare(`INSERT INTO trainings (id, name, acronym, slug, short_description, full_description, logo, hero_image, resource_url, dashboard_content, checkout_provider, checkout_url, price_cents, currency, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?)`)
-    .bind(id, input.name, input.acronym, input.slug, input.shortDescription, input.fullDescription, input.logo, input.heroImage ?? null, input.resourceUrl ?? null, input.dashboardContent ?? null, input.checkoutProvider, input.checkoutUrl ?? null, input.priceCents, input.currency, input.displayOrder || result?.next_order || 1).run();
+  await db.prepare(`INSERT INTO trainings (id, name, acronym, slug, short_description, full_description, logo, hero_image, resource_url, dashboard_content, checkout_provider, checkout_url, checkout_external_id, price_cents, currency, status, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?)`)
+    .bind(id, input.name, input.acronym, input.slug, input.shortDescription, input.fullDescription, input.logo, input.heroImage ?? null, input.resourceUrl ?? null, input.dashboardContent ?? null, input.checkoutProvider, input.checkoutUrl ?? null, input.checkoutExternalId ?? null, input.priceCents, input.currency, input.displayOrder || result?.next_order || 1).run();
   return id;
 }
 
 export async function updateTraining(id: string, input: TrainingInput) {
   const db = await ensureDatabase();
-  await db.prepare(`UPDATE trainings SET name = ?, acronym = ?, slug = ?, short_description = ?, full_description = ?, logo = ?, hero_image = ?, resource_url = ?, dashboard_content = ?, checkout_provider = ?, checkout_url = ?, price_cents = ?, currency = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-    .bind(input.name, input.acronym, input.slug, input.shortDescription, input.fullDescription, input.logo, input.heroImage ?? null, input.resourceUrl ?? null, input.dashboardContent ?? null, input.checkoutProvider, input.checkoutUrl ?? null, input.priceCents, input.currency, input.displayOrder, id).run();
+  await db.prepare(`UPDATE trainings SET name = ?, acronym = ?, slug = ?, short_description = ?, full_description = ?, logo = ?, hero_image = ?, resource_url = ?, dashboard_content = ?, checkout_provider = ?, checkout_url = ?, checkout_external_id = ?, price_cents = ?, currency = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+    .bind(input.name, input.acronym, input.slug, input.shortDescription, input.fullDescription, input.logo, input.heroImage ?? null, input.resourceUrl ?? null, input.dashboardContent ?? null, input.checkoutProvider, input.checkoutUrl ?? null, input.checkoutExternalId ?? null, input.priceCents, input.currency, input.displayOrder, id).run();
 }
 
 export async function setTrainingStatus(id: string, status: string) {
@@ -1487,7 +1665,7 @@ export const defaultSettings: Record<string, string> = {
   whatsappAiEnabled: "false",
   whatsappAiModel: "gpt-5.6-luna",
   whatsappAiInstructions: "Responde en español de forma clara, cercana y breve como asistente de Gimnasio del Cerebro. Orienta sobre los entrenamientos sin inventar precios, certificaciones, resultados ni afirmaciones médicas. Si la consulta requiere decisión humana, pide los datos de contacto y avisa que un asesor continuará.",
-  whatsappAiGreeting: "¡Hola! 😊 Soy el asistente de Gimnasio del Cerebro. Cuéntame qué te gustaría mejorar o sobre qué entrenamiento deseas información.",
+  whatsappAiGreeting: "¡Hola! Soy el asistente automático de Gimnasio del Cerebro. ¿Qué producto, programa, curso, neuroreto o taller te interesa? 😊",
   whatsappAiHandoffMessage: "Gracias por contármelo. Voy a dejar esta conversación en atención humana para que una persona del equipo pueda ayudarte con cuidado.",
   whatsappAiResponseDelayMs: "900",
   whatsappAiBusinessHours: "Atención humana según disponibilidad del equipo. La IA puede orientar en cualquier momento.",
@@ -1505,6 +1683,7 @@ export async function getSettings() {
       ["heroEyebrow", "Conocimiento que se convierte en acción", defaultSettings.heroEyebrow],
       ["heroTitle", "Entrena tu cerebro. Transforma tu vida.", defaultSettings.heroTitle],
       ["heroDescription", "Más de una década acompañando a personas en el desarrollo de una vida más consciente.", defaultSettings.heroDescription],
+      ["whatsappAiGreeting", "¡Hola! 😊 Soy el asistente de Gimnasio del Cerebro. Cuéntame qué te gustaría mejorar o sobre qué entrenamiento deseas información.", defaultSettings.whatsappAiGreeting],
     ].map(([key, oldValue, newValue]) => db.prepare(`UPDATE site_settings SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ? AND value = ?`).bind(newValue, key, oldValue));
     await db.batch([...inserts, ...legacySettingMigrations]);
     const result = await db.prepare(`SELECT key, value FROM site_settings`).all<{ key: string; value: string }>();
@@ -1645,7 +1824,7 @@ export async function recordWhatsAppOutgoing(input: { conversationId: string; pr
 
 export async function setWhatsAppConversationMode(id: string, mode: "AI" | "HUMAN") {
   const db = await ensureDatabase();
-  await db.prepare(`UPDATE whatsapp_conversations SET mode = ?, unread_count = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(mode, id).run();
+  await db.prepare(`UPDATE whatsapp_conversations SET mode = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(mode, id).run();
   return getWhatsAppConversation(id);
 }
 

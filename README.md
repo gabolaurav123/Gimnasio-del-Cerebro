@@ -104,6 +104,12 @@ SITE_URL=
 DATABASE_URL=
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-5.6-luna
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_CONSULTATION_LINK=https://buy.stripe.com/...
+STRIPE_CONSULTATION_AMOUNT_CENTS=
+STRIPE_CONSULTATION_CURRENCY=USD
+HOTMART_WEBHOOK_TOKEN=
 TERMS_VERSION=2026-08-31
 ```
 
@@ -154,6 +160,13 @@ El proyecto detecta automáticamente el entorno: usa D1/R2 en Cloudflare y Postg
 5. Añade las variables administrativas de `.env.example` y vuelve a desplegar.
 
 Variables base obligatorias en Seenode: `DATABASE_URL`, `SITE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` (o `ADMIN_PASSWORD_HASH`), `SESSION_SECRET` y `WHATSAPP_NUMBER`.
+
+### Automatización de pagos
+
+- Stripe recibe eventos en `https://TU_DOMINIO/api/webhooks/stripe`. Configura `STRIPE_WEBHOOK_SECRET` con el secreto de firma del endpoint. Con `STRIPE_SECRET_KEY` y un precio numérico mayor que cero, el servidor crea una Checkout Session con retorno a `/pago/resultado`; si el artículo usa un Payment Link, conserva el identificador local mediante `client_reference_id`.
+- Hotmart recibe eventos en `https://TU_DOMINIO/api/webhooks/hotmart`. Configura el mismo token de verificación en Hotmart y en `HOTMART_WEBHOOK_TOKEN`, y usa `https://TU_DOMINIO/pago/resultado?provider=hotmart` como página externa de gracias.
+- El panel de Productos y Entrenamientos permite guardar el ID externo del producto. El webhook firmado es la única fuente que verifica el pago, crea el movimiento contable y concede o revoca acceso; la URL de retorno nunca concede acceso por sí sola.
+- Las consultas usan `STRIPE_CONSULTATION_LINK`. Si se define también un importe en `STRIPE_CONSULTATION_AMOUNT_CENTS`, se crea una sesión dinámica; de lo contrario se utiliza el Payment Link y Stripe informa el importe definitivo en el webhook.
 
 Para activar **WhatsApp + IA**, configura además:
 

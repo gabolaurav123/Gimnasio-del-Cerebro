@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
+import { createHmac } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { getUsableOpenAIKey, hasUsableOpenAIKey } from "../lib/openai-config.ts";
+import { verifyHotmartToken, verifyStripeSignature } from "../lib/payment-security.ts";
+import { isCrisisMessage, isOptOutRequest, needsHumanHandoff } from "../lib/whatsapp-ai-config.ts";
+import { isRetryableOpenAIStatus, normalizeWhatsAppReply } from "../lib/whatsapp-ai-safety.ts";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
@@ -51,10 +55,12 @@ test("el gorro by Kirius tiene una página editorial antes del pago", async () =
     read("../app/checkout/[type]/[slug]/page.tsx"),
     read("../app/globals.css"),
   ]);
-  assert.match(repository, /Gorro Gimnasio del Cerebro by Kirius/);
+  assert.match(repository, /BioShield by KIRYUS/);
   assert.match(products, /Conocer el gorro/);
   assert.match(products, /productCatalogActionPath/);
-  assert.match(detail, /Una identidad que/);
+  assert.match(detail, /Kit Founder/);
+  assert.match(detail, /bioshield-layers/);
+  assert.match(detail, /Precio mostrado por Stripe/);
   assert.match(detail, /cap-product-page/);
   assert.match(detail, /checkout\/producto\/\$\{product\.slug\}/);
   assert.match(routes, /gorro-gimnasio-del-cerebro/);
@@ -241,15 +247,55 @@ test("los clientes pueden registrarse e ingresar con una sesión separada", asyn
   assert.match(repository, /customer_users/);
 });
 
-test("cada entrenamiento tiene portada propia y los enlaces de pago se sincronizan", async () => {
+test("cada entrenamiento tiene portada propia y la configuración de pago se preserva", async () => {
   const repository = await read("../db/repository.ts");
   const covers = [...repository.matchAll(/heroImage: "(\/images\/catalog\/covers\/[^"]+)"/g)].map((match) => match[1]);
   assert.equal(covers.length, 19);
   assert.equal(new Set(covers).size, covers.length);
-  assert.match(repository, /UPDATE trainings SET logo = \?, hero_image = \?, checkout_provider = \?, checkout_url = \?/);
+  assert.match(repository, /UPDATE trainings SET logo = \?, hero_image = \?, checkout_external_id = COALESCE/);
+  assert.doesNotMatch(repository, /UPDATE trainings SET logo = \?, hero_image = \?, checkout_provider = \?, checkout_url = \?/);
   assert.match(repository, /https:\/\/pay\.hotmart\.com\/I95298513M/);
   assert.match(repository, /https:\/\/pay\.hotmart\.com\/A102005977H/);
   assert.match(repository, /https:\/\/pay\.hotmart\.com\/V95461171E/);
+});
+
+test("los webhooks de pagos validan autenticidad y concilian de forma idempotente", async () => {
+  const [automation, stripeRoute, hotmartRoute, repository, resultPage] = await Promise.all([
+    read("../lib/payment-automation.ts"),
+    read("../app/api/webhooks/stripe/route.ts"),
+    read("../app/api/webhooks/hotmart/route.ts"),
+    read("../db/repository.ts"),
+    read("../app/pago/resultado/page.tsx"),
+  ]);
+  assert.match(automation, /checkout\.session\.completed/);
+  assert.match(automation, /PURCHASE_APPROVED/);
+  assert.match(automation, /client_reference_id/);
+  assert.match(automation, /source_sck/);
+  assert.match(stripeRoute, /stripe-signature/);
+  assert.match(hotmartRoute, /x-hotmart-hottok/);
+  assert.match(repository, /idx_payment_webhook_events_provider_event/);
+  assert.match(repository, /El pago ya está reembolsado/);
+  assert.match(resultPage, /evento firmado del proveedor/);
+});
+
+test("la firma Stripe y el token Hotmart rechazan eventos manipulados", async () => {
+  const secret = `whsec_${"s".repeat(24)}`;
+  const payload = JSON.stringify({ id: "evt_test", type: "checkout.session.completed" });
+  const timestamp = 1_800_000_000;
+  const signature = createHmac("sha256", secret).update(`${timestamp}.${payload}`).digest("hex");
+  assert.equal(await verifyStripeSignature(payload, `t=${timestamp},v1=${signature}`, secret, timestamp * 1000), true);
+  assert.equal(await verifyStripeSignature(`${payload}x`, `t=${timestamp},v1=${signature}`, secret, timestamp * 1000), false);
+  assert.equal(verifyHotmartToken("token-seguro-123456", "token-seguro-123456"), true);
+  assert.equal(verifyHotmartToken("otro-token-123456", "token-seguro-123456"), false);
+});
+
+test("el asistente WhatsApp limita longitud y deriva STOP, humano y crisis", () => {
+  assert.equal(isOptOutRequest("STOP"), true);
+  assert.equal(isCrisisMessage("No quiero vivir"), true);
+  assert.equal(needsHumanHandoff("Quiero hablar con un operador"), true);
+  assert.equal(normalizeWhatsAppReply("a".repeat(4000)).length <= 2800, true);
+  assert.equal(isRetryableOpenAIStatus(429), true);
+  assert.equal(isRetryableOpenAIStatus(401), false);
 });
 
 test("el administrador puede asignar y retirar contenidos a usuarios", async () => {

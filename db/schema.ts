@@ -28,6 +28,7 @@ export const trainings = sqliteTable("trainings", {
   dashboardContent: text("dashboard_content"),
   checkoutProvider: text("checkout_provider", { enum: ["STRIPE", "HOTMART", "MANUAL"] }).notNull().default("MANUAL"),
   checkoutUrl: text("checkout_url"),
+  checkoutExternalId: text("checkout_external_id"),
   priceCents: integer("price_cents").notNull().default(0),
   currency: text("currency").notNull().default("BOB"),
   ctaLabel: text("cta_label").notNull().default("Consultar"),
@@ -37,7 +38,10 @@ export const trainings = sqliteTable("trainings", {
   seoDescription: text("seo_description"),
   deletedAt: text("deleted_at"),
   ...timestamps,
-}, (table) => [index("idx_trainings_status_order").on(table.status, table.displayOrder)]);
+}, (table) => [
+  index("idx_trainings_status_order").on(table.status, table.displayOrder),
+  uniqueIndex("idx_trainings_provider_external_unique").on(table.checkoutProvider, table.checkoutExternalId).where(sql`checkout_external_id IS NOT NULL`),
+]);
 
 export const blogCategories = sqliteTable("blog_categories", {
   id: text("id").primaryKey(),
@@ -234,13 +238,17 @@ export const products = sqliteTable("products", {
   dashboardContent: text("dashboard_content"),
   checkoutProvider: text("checkout_provider", { enum: ["STRIPE", "HOTMART", "MANUAL"] }).notNull().default("MANUAL"),
   checkoutUrl: text("checkout_url"),
+  checkoutExternalId: text("checkout_external_id"),
   priceCents: integer("price_cents").notNull().default(0),
   currency: text("currency").notNull().default("BOB"),
   status: text("status", { enum: ["DRAFT", "PUBLISHED", "HIDDEN"] }).notNull().default("DRAFT"),
   displayOrder: integer("display_order").notNull().default(0),
   deletedAt: text("deleted_at"),
   ...timestamps,
-}, (table) => [index("idx_products_status_order").on(table.status, table.displayOrder)]);
+}, (table) => [
+  index("idx_products_status_order").on(table.status, table.displayOrder),
+  uniqueIndex("idx_products_provider_external_unique").on(table.checkoutProvider, table.checkoutExternalId).where(sql`checkout_external_id IS NOT NULL`),
+]);
 
 export const payments = sqliteTable("payments", {
   id: text("id").primaryKey(),
@@ -263,7 +271,24 @@ export const payments = sqliteTable("payments", {
   notes: text("notes"),
   source: text("source").notNull().default("MANUAL"),
   ...timestamps,
-}, (table) => [index("idx_payments_status_created_at").on(table.status, table.createdAt), index("idx_payments_payer_email").on(table.payerEmail)]);
+}, (table) => [
+  index("idx_payments_status_created_at").on(table.status, table.createdAt),
+  index("idx_payments_payer_email").on(table.payerEmail),
+  index("idx_payments_provider_reference").on(table.source, table.providerReference),
+  uniqueIndex("idx_payments_source_provider_reference_unique").on(table.source, table.providerReference).where(sql`provider_reference IS NOT NULL`),
+]);
+
+export const paymentWebhookEvents = sqliteTable("payment_webhook_events", {
+  id: text("id").primaryKey(),
+  provider: text("provider", { enum: ["STRIPE", "HOTMART"] }).notNull(),
+  eventId: text("event_id").notNull(),
+  eventType: text("event_type").notNull(),
+  status: text("status", { enum: ["PROCESSING", "PROCESSED", "IGNORED", "FAILED"] }).notNull().default("PROCESSING"),
+  payloadHash: text("payload_hash"),
+  error: text("error"),
+  processedAt: text("processed_at"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [uniqueIndex("idx_payment_webhook_events_provider_event").on(table.provider, table.eventId)]);
 
 export const customerUsers = sqliteTable("customer_users", {
   id: text("id").primaryKey(),

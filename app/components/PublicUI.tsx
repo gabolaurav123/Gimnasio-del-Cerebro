@@ -6,8 +6,6 @@ import type { BlogPost, Training } from "../../db/repository";
 import { whatsappUrl } from "../../lib/whatsapp";
 import { useWhatsAppNumber } from "./WhatsAppContext";
 
-const internationalConsultationPaymentUrl = "https://buy.stripe.com/aFa5kD6No1as7OK5l997H01";
-
 export function TrainingCard({ training, index }: { training: Training; index: number }) {
   const image = training.heroImage || training.logo;
   return (
@@ -78,6 +76,7 @@ export function AppointmentForm({ trainings }: { trainings: Training[] }) {
   const whatsapp = useWhatsAppNumber();
   const [state, setState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [paymentUrl, setPaymentUrl] = useState("");
   const [appointmentType, setAppointmentType] = useState<"CONSULTATION" | "TRAINING">("CONSULTATION");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
@@ -105,11 +104,11 @@ export function AppointmentForm({ trainings }: { trainings: Training[] }) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setState("loading");
     const response = await fetch("/api/appointments", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.fromEntries(new FormData(event.currentTarget))) });
-    const payload = await response.json() as { message?: string; error?: string };
+    const payload = await response.json() as { message?: string; error?: string; paymentUrl?: string | null };
     if (!response.ok) { setState("error"); setMessage(payload.error ?? "No pudimos registrar la cita."); return; }
-    setState("success"); setMessage(payload.message ?? "Tu solicitud quedó registrada."); event.currentTarget.reset();
+    setPaymentUrl(payload.paymentUrl || ""); setState("success"); setMessage(payload.message ?? "Tu solicitud quedó registrada."); event.currentTarget.reset();
   }
-  if (state === "success") return <div className="form-success"><span><CalendarCheck /></span><h2>Solicitud recibida</h2><p>{message}</p><div className="button-row"><a className="button button--primary" href={whatsappUrl("Hola, acabo de solicitar una cita desde la web de Gimnasio del Cerebro.", whatsapp)} target="_blank" rel="noreferrer"><MessageCircle size={17} />Continuar por WhatsApp</a>{appointmentType === "CONSULTATION" && <a className="button button--outline" href={internationalConsultationPaymentUrl} target="_blank" rel="noreferrer"><ShoppingBag size={17} />Pagar consulta internacional</a>}</div><small>El pago en Stripe se realiza fuera de la web y no almacena datos de tarjeta en Gimnasio del Cerebro.</small></div>;
+  if (state === "success") return <div className="form-success"><span><CalendarCheck /></span><h2>Solicitud recibida</h2><p>{message}</p><div className="button-row">{paymentUrl && <a className="button button--primary" href={paymentUrl}><ShoppingBag size={17} />Pagar y confirmar en Stripe</a>}<a className="button button--outline" href={whatsappUrl("Hola, acabo de solicitar una cita desde la web de Gimnasio del Cerebro.", whatsapp)} target="_blank" rel="noreferrer"><MessageCircle size={17} />Continuar por WhatsApp</a></div>{paymentUrl && <small>Stripe procesa la tarjeta de forma segura. La confirmación llegará automáticamente al sitio después del pago.</small>}</div>;
   return <form className="contact-form appointment-form" onSubmit={submit}>
     <div className="appointment-schedule" aria-label="Horarios semanales de atención"><p><strong>Horarios de atención</strong><span>Turnos de una hora. La reserva bloquea el horario automáticamente.</span></p><article><strong>Martes</strong><span>08:00–13:00</span><span>14:00–18:00</span></article><article><strong>Jueves</strong><span>08:00–13:00</span><span>14:00–18:00</span></article><article><strong>Viernes</strong><span>08:00–13:00</span><span>Sin turno por la tarde</span></article></div>
     <div className="field-row"><label>Nombre completo<input name="name" autoComplete="name" minLength={2} required /></label><label>Email<input name="email" type="email" autoComplete="email" required /></label></div>

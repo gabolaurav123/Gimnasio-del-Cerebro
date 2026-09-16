@@ -16,9 +16,10 @@ const schema = z.object({
   dashboardContent: z.string().trim().max(10000).optional().default(""),
   checkoutProvider: z.enum(["STRIPE", "HOTMART", "MANUAL"]).default("MANUAL"),
   checkoutUrl: checkoutUrl.optional().default(""),
+  checkoutExternalId: z.string().trim().max(120).regex(/^[A-Za-z0-9_-]*$/).optional().default(""),
   priceCents: z.coerce.number().int().min(0).max(1_000_000_000),
   currency: z.enum(["BOB", "USD", "EUR"]),
   displayOrder: z.coerce.number().int().min(0).max(999),
 });
 export async function GET(request: Request) { if (!(await requestIsAdmin(request, ["SUPERADMIN", "EDITOR"]))) return Response.json({ error: "No autorizado" }, { status: 401 }); return Response.json({ trainings: await getTrainings(true) }); }
-export async function POST(request: Request) { if (!(await requestIsAdmin(request, ["SUPERADMIN", "EDITOR"]))) return Response.json({ error: "No autorizado" }, { status: 401 }); const parsed = schema.safeParse(await request.json()); if (!parsed.success) return Response.json({ error: "Datos inválidos", details: parsed.error.flatten() }, { status: 400 }); return Response.json({ id: await createTraining({ ...parsed.data, heroImage: parsed.data.heroImage || null, resourceUrl: parsed.data.resourceUrl || null, dashboardContent: parsed.data.dashboardContent || null, checkoutUrl: parsed.data.checkoutUrl || null }) }, { status: 201 }); }
+export async function POST(request: Request) { if (!(await requestIsAdmin(request, ["SUPERADMIN", "EDITOR"]))) return Response.json({ error: "No autorizado" }, { status: 401 }); const parsed = schema.safeParse(await request.json()); if (!parsed.success) return Response.json({ error: "Datos inválidos", details: parsed.error.flatten() }, { status: 400 }); return Response.json({ id: await createTraining({ ...parsed.data, heroImage: parsed.data.heroImage || null, resourceUrl: parsed.data.resourceUrl || null, dashboardContent: parsed.data.dashboardContent || null, checkoutUrl: parsed.data.checkoutUrl || null, checkoutExternalId: parsed.data.checkoutExternalId || null }) }, { status: 201 }); }
