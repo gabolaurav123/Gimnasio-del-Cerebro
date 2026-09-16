@@ -672,6 +672,24 @@ export const trainingSeeds: Training[] = [
     status: "PUBLISHED",
     displayOrder: 39,
   },
+  {
+    id: "training-neurofitness-gift",
+    name: "Entrenamiento Neurofitness · 5 minutos",
+    acronym: "REGALO",
+    slug: "entrenamiento-neurofitness-5-minutos",
+    shortDescription: "Una práctica breve para activar foco, control, memoria y flexibilidad de forma consciente.",
+    fullDescription: "Entrenamiento digital de cinco minutos creado como regalo para quienes completan el Reto Neurofitness. Es una experiencia educativa y lúdica; no constituye una evaluación médica ni neuropsicológica.",
+    logo: "/logos/gdc-full-v2.jpg",
+    heroImage: "/images/neurofitness/neurofitness-mascot.png",
+    resourceUrl: "/mi-cuenta/entrenamiento-neurofitness",
+    dashboardContent: "Tu regalo del Reto Neurofitness: una práctica guiada de cinco minutos para activar foco, control, memoria y flexibilidad.",
+    checkoutProvider: "MANUAL",
+    checkoutUrl: null,
+    priceCents: 0,
+    currency: "USD",
+    status: "HIDDEN",
+    displayOrder: 999,
+  },
 ];
 
 export const postSeeds: BlogPost[] = [
@@ -1853,6 +1871,7 @@ export const defaultSettings: Record<string, string> = {
   neurofitnessRankingLabel: "NEUROFITNESS LIVE · CCM",
   neurofitnessRewardLabel: "",
   neurofitnessRewardUrl: "",
+  neurofitnessRewardTrainingId: "training-neurofitness-gift",
 };
 
 export async function getSettings() {

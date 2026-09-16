@@ -3,7 +3,9 @@
 import { Check, Copy, Eye, EyeOff, Save, Trophy } from "lucide-react";
 import { FormEvent, useState } from "react";
 
-export function NeurofitnessSettings({ settings }: { settings: Record<string, string> }) {
+type TrainingOption = { id: string; name: string; status: string };
+
+export function NeurofitnessSettings({ settings, trainings }: { settings: Record<string, string>; trainings: TrainingOption[] }) {
   const [enabled, setEnabled] = useState(settings.neurofitnessEnabled === "true");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "copied" | "error">("idle");
 
@@ -26,6 +28,7 @@ export function NeurofitnessSettings({ settings }: { settings: Record<string, st
           popupCta: form.get("popupCta"),
           eventLabel: form.get("eventLabel"),
           rankingLabel: form.get("rankingLabel"),
+          rewardTrainingId: form.get("rewardTrainingId"),
           rewardLabel: form.get("rewardLabel"),
           rewardUrl: form.get("rewardUrl"),
         }),
@@ -61,8 +64,9 @@ export function NeurofitnessSettings({ settings }: { settings: Record<string, st
       <label className="neuro-admin-wide">Descripción<textarea name="popupDescription" rows={3} maxLength={320} defaultValue={settings.neurofitnessPopupDescription} required /></label>
       <label>Texto del botón<input name="popupCta" maxLength={60} defaultValue={settings.neurofitnessPopupCta} required /></label>
       <label>Nombre del ranking<input name="rankingLabel" maxLength={100} defaultValue={settings.neurofitnessRankingLabel} required /></label>
-      <label>Regalo (opcional)<input name="rewardLabel" maxLength={120} defaultValue={settings.neurofitnessRewardLabel} placeholder="Ej. Entrenamiento de 5 minutos" /></label>
-      <label>Enlace del regalo (opcional)<input name="rewardUrl" type="url" maxLength={500} defaultValue={settings.neurofitnessRewardUrl} placeholder="https://..." /></label>
+      <label className="neuro-admin-wide">Entrenamiento que se regala al crear la cuenta<select name="rewardTrainingId" defaultValue={settings.neurofitnessRewardTrainingId || ""}><option value="">No asignar automáticamente</option>{trainings.map((training) => <option key={training.id} value={training.id}>{training.name}{training.status === "HIDDEN" ? " · oculto del catálogo" : ""}</option>)}</select><small>El acceso aparecerá automáticamente dentro de “Mi cuenta”. El entrenamiento de 5 minutos está preparado como regalo predeterminado.</small></label>
+      <label>Recurso adicional (opcional)<input name="rewardLabel" maxLength={120} defaultValue={settings.neurofitnessRewardLabel} placeholder="Nombre de un recurso externo" /></label>
+      <label>Enlace adicional (opcional)<input name="rewardUrl" type="url" maxLength={500} defaultValue={settings.neurofitnessRewardUrl} placeholder="https://..." /></label>
     </div>
     <div className="neuro-admin-actions">
       <button className="button button--primary" disabled={status === "saving"}><Save />{status === "saving" ? "Guardando…" : "Guardar campaña"}</button>

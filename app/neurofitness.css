@@ -123,16 +123,25 @@
 .neuro-gate__profile > p { margin: 24px 0 0; color: #8fa4ba; line-height: 1.65; }
 .neuro-lead-form { padding: 40px; border: 1px solid rgba(94,202,255,.2); border-radius: 28px; background: linear-gradient(145deg, rgba(45,156,216,.1), rgba(255,255,255,.025)); }
 .neuro-lead-form h2 { margin: 10px 0 27px; color: white; font-size: 30px; letter-spacing: -.035em; }
+.neuro-account-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.neuro-account-fields > label { margin-top: 15px; display: grid; gap: 7px; color: #a9bbce; font-size: 12px; font-weight: 700; }
+.neuro-account-fields .neuro-account-wide { grid-column: 1 / -1; }
 .neuro-lead-form > label:not(.neuro-check) { margin-top: 15px; display: grid; gap: 7px; color: #a9bbce; font-size: 12px; font-weight: 700; }
 .neuro-lead-form label small { margin-left: 4px; color: #617a92; font-weight: 500; }
 .neuro-lead-form input:not([type="checkbox"]) { min-height: 50px; padding: 0 15px; border: 1px solid rgba(255,255,255,.14); border-radius: 13px; color: white; background: rgba(1,8,17,.55); font: inherit; font-size: 14px; outline: 0; }
 .neuro-lead-form input:focus { border-color: #59c8fa; box-shadow: 0 0 0 3px rgba(89,200,250,.12); }
+.neuro-password-field { position: relative; display: block; }
+.neuro-password-field input { width: 100%; padding-right: 52px !important; }
+.neuro-password-field button { width: 46px; height: 46px; border: 0; position: absolute; top: 2px; right: 2px; display: grid; place-items: center; color: #84a3bf; background: transparent; cursor: pointer; }
+.neuro-password-field svg { width: 18px; }
+.neuro-account-note { margin: 14px 0 4px; padding: 11px 13px; border: 1px solid rgba(89,200,250,.14); border-radius: 11px; color: #90b8cf !important; background: rgba(55,166,220,.07); font-size: 11px !important; }
 .neuro-check { margin-top: 15px; display: block; cursor: pointer; }
 .neuro-check input { position: absolute; opacity: 0; pointer-events: none; }
 .neuro-check span { display: flex; align-items: flex-start; gap: 10px; color: #a8bbcf; font-size: 12px; line-height: 1.5; }
 .neuro-check span svg { width: 19px; height: 19px; flex: 0 0 auto; padding: 3px; border: 1px solid rgba(255,255,255,.18); border-radius: 5px; color: transparent; }
 .neuro-check input:checked + span svg { border-color: #55c9fa; color: #021321; background: #55c9fa; }
 .neuro-check input:focus-visible + span svg { box-shadow: 0 0 0 3px rgba(89,200,250,.35); }
+.neuro-check a { color: #82d9ff; text-decoration: underline; }
 .neuro-lead-form > p { color: #677f97; font-size: 10px; line-height: 1.5; }
 .neuro-lead-form > p a { color: #7fd5fa; text-decoration: underline; }
 .neuro-lead-form .neuro-game__primary { width: 100%; margin-top: 20px; }
@@ -160,6 +169,12 @@
 .neuro-delivery.sent { color: #aaf0ce; background: rgba(44,165,111,.14); }
 .neuro-delivery svg { width: 15px; }
 .neuro-reward { width: 100%; margin-top: 14px; padding: 15px; border: 1px solid rgba(226,183,80,.3); border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; color: #f0d38b; font-size: 12px; font-weight: 750; }
+.neuro-account-access { width: 100%; margin-top: 14px; padding: 15px 16px; border: 1px solid rgba(89,200,250,.28); border-radius: 16px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; color: white; background: linear-gradient(135deg, rgba(38,164,224,.18), rgba(224,183,80,.08)); text-align: left; }
+.neuro-account-access > svg:first-child { width: 25px; height: 25px; color: #65d2ff; }
+.neuro-account-access > svg:last-child { width: 18px; color: #dcb65c; }
+.neuro-account-access span { display: grid; gap: 4px; }
+.neuro-account-access small { color: #78cdef; font-size: 8px; font-weight: 850; letter-spacing: .12em; }
+.neuro-account-access strong { color: white; font-size: 13px; }
 .neuro-result__ranking .neuro-game__primary { width: 100%; margin-top: 20px; }
 .neuro-share-status { margin-top: 9px; color: #8fdcb9; font-size: 11px; }
 .neuro-delivery.failed { color: #ffd27b; background: rgba(226,181,84,.1); border-color: rgba(226,181,84,.35); }
@@ -348,6 +363,8 @@
   .neuro-rule-card p { font-size: 16px; line-height: 1.35; }
   .neuro-gate, .neuro-result { width: calc(100% - 30px); min-height: calc(100svh - 66px); padding: 30px 0 55px; gap: 18px; }
   .neuro-gate__profile, .neuro-result__profile, .neuro-lead-form, .neuro-result__ranking { padding: 26px 20px; border-radius: 22px; }
+  .neuro-account-fields { grid-template-columns: 1fr; }
+  .neuro-account-fields .neuro-account-wide { grid-column: auto; }
   .neuro-gate__profile h1 { font-size: 42px; }
   .neuro-gate__blur > div, .neuro-score-bars > div { grid-template-columns: 82px 1fr 28px; gap: 8px; }
   .neuro-result__profile > h1 { font-size: 104px; }

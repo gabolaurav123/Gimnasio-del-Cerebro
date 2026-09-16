@@ -33,3 +33,36 @@ test("el anuncio se configura para aparecer en cada recarga", async () => {
   assert.match(settings, /En cada recarga/);
   assert.match(popup, /dismissedThisLoadRef/);
 });
+
+test("el resultado crea o reutiliza una cuenta real y activa el entrenamiento de regalo", async () => {
+  const challenge = await read("../app/components/NeurofitnessChallenge.tsx");
+  const claim = await read("../app/api/neurofitness/claim/route.ts");
+  const repository = await read("../db/repository.ts");
+  const dashboard = await read("../app/components/CustomerDashboard.tsx");
+  assert.match(challenge, /CREA TU CUENTA GRATUITA/);
+  assert.match(challenge, /name="email"/);
+  assert.match(challenge, /name="password"/);
+  assert.match(challenge, /acceptedTerms/);
+  assert.match(challenge, /acceptedPrivacy/);
+  assert.match(challenge, /Crear mi cuenta y ver resultado/);
+  assert.match(claim, /createCustomer/);
+  assert.match(claim, /authenticateCustomer/);
+  assert.match(claim, /setCustomerEntitlement/);
+  assert.match(claim, /customerSessionCookie/);
+  assert.match(repository, /neurofitnessRewardTrainingId: "training-neurofitness-gift"/);
+  assert.match(repository, /Entrenamiento Neurofitness · 5 minutos/);
+  assert.match(dashboard, /Regalo del Reto Neurofitness/);
+});
+
+test("el entrenamiento de regalo solo se abre dentro de Mi cuenta", async () => {
+  const page = await read("../app/mi-cuenta/entrenamiento-neurofitness/page.tsx");
+  const training = await read("../app/components/NeurofitnessGiftTraining.tsx");
+  assert.match(page, /getCustomerSession/);
+  assert.match(page, /getCustomerEntitlements/);
+  assert.match(page, /training-neurofitness-gift/);
+  assert.match(training, /TOTAL_SECONDS = 5 \* 60/);
+  assert.match(training, /Foco/);
+  assert.match(training, /Control/);
+  assert.match(training, /Memoria/);
+  assert.match(training, /Flexibilidad/);
+});

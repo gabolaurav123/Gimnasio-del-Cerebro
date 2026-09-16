@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowLeft, ArrowRight, BrainCircuit, Check, ChevronLeft, ChevronRight, LockKeyhole, RotateCcw, Share2, Sparkles, Trophy, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, BrainCircuit, Check, ChevronLeft, ChevronRight, Eye, EyeOff, Gift, LockKeyhole, RotateCcw, Share2, Sparkles, Trophy, Zap } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { neurofitnessDomainLabels, type NeurofitnessRawMetrics, type NeurofitnessScores } from "../../lib/neurofitness";
 
@@ -11,8 +11,8 @@ type ErrorAction = "start" | "complete";
 type FocusStimulus = { id: number; direction: "left" | "right"; shownAt: number; responded: boolean };
 type ControlStimulus = { id: number; word: ColorName; color: ColorName; shownAt: number; responded: boolean };
 type FlexStimulus = { id: number; shape: "circle" | "square"; expected: "left" | "right"; postSwitch: boolean; responded: boolean };
-type Result = { profile: NeurofitnessScores; rank: number | null; participantCount: number; rankingLabel: string; rankingScore: number; isPersonalBest: boolean; reward: { label: string; url: string } | null; whatsappDelivery: "sent" | "pending" | "failed" };
-type ClaimPayload = { id: string; token: string; name: FormDataEntryValue | null; phone: FormDataEntryValue | null; rankingAlias: FormDataEntryValue | null; resultConsent: boolean; marketingConsent: boolean; rankingConsent: boolean; website: FormDataEntryValue | null };
+type Result = { profile: NeurofitnessScores; rank: number | null; participantCount: number; rankingLabel: string; rankingScore: number; isPersonalBest: boolean; reward: { label: string; url: string } | null; account: { created: boolean; email: string; profileUrl: string; gift: { id: string; name: string } | null }; whatsappDelivery: "sent" | "pending" | "failed" };
+type ClaimPayload = { id: string; token: string; name: string; phone: string; country: string; email: string; password: string; acceptedTerms: boolean; acceptedPrivacy: boolean; rankingAlias: string; resultConsent: boolean; marketingConsent: boolean; rankingConsent: boolean; website: string };
 type ColorName = "rojo" | "azul" | "verde" | "amarillo";
 
 const stages = [
@@ -49,7 +49,7 @@ function shuffled<T>(values: T[], random: () => number) {
   return result;
 }
 
-export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }) {
+export function NeurofitnessChallenge({ rankingLabel, currentCustomer }: { rankingLabel: string; currentCustomer: { name: string; email: string } | null }) {
   const [phase, setPhase] = useState<GamePhase>("intro");
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const [stageIndex, setStageIndex] = useState(0);
@@ -68,6 +68,7 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [rankingConsent, setRankingConsent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "shared" | "error">("idle");
   const metricsRef = useRef<NeurofitnessRawMetrics>(emptyMetrics());
   const rngRef = useRef<() => number>(() => Math.random());
@@ -81,7 +82,6 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
   const memoryOptionsRef = useRef<HTMLDivElement>(null);
   const flexRef = useRef<FlexStimulus | null>(null);
   const phaseFocusRef = useRef<HTMLElement>(null);
-  const claimPayloadRef = useRef<ClaimPayload | null>(null);
 
   useEffect(() => {
     if (phase === "intro") return;
@@ -244,7 +244,7 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
     setRankingConsent(false);
     setShareStatus("idle");
     setSubmitting(false);
-    claimPayloadRef.current = null;
+    setShowPassword(false);
   }
 
   async function startGame() {
@@ -359,18 +359,28 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
     setSubmitting(true);
     setFormError("");
     const form = new FormData(event.currentTarget);
+    const password = String(form.get("password") || "");
+    if (!currentCustomer && password !== String(form.get("confirmPassword") || "")) {
+      setFormError("Las contraseñas no coinciden.");
+      setSubmitting(false);
+      return;
+    }
     const payload: ClaimPayload = {
       id: attempt.id,
       token: attempt.token,
-      name: form.get("name"),
-      phone: form.get("phone"),
-      rankingAlias: form.get("rankingAlias") ?? "",
+      name: String(form.get("name") || ""),
+      phone: String(form.get("phone") || ""),
+      country: String(form.get("country") || ""),
+      email: currentCustomer?.email || String(form.get("email") || ""),
+      password,
+      acceptedTerms: Boolean(currentCustomer) || form.get("acceptedTerms") === "on",
+      acceptedPrivacy: Boolean(currentCustomer) || form.get("acceptedPrivacy") === "on",
+      rankingAlias: String(form.get("rankingAlias") || ""),
       resultConsent: form.get("resultConsent") === "on",
       marketingConsent: form.get("marketingConsent") === "on",
       rankingConsent: form.get("rankingConsent") === "on",
-      website: form.get("website"),
+      website: String(form.get("website") || ""),
     };
-    claimPayloadRef.current = payload;
     await submitClaim(payload);
   }
 
@@ -421,6 +431,11 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
     setPhase("intro");
   }
 
+  async function startNewParticipant() {
+    await fetch("/api/customer/auth/logout", { method: "POST" }).catch(() => undefined);
+    window.location.assign("/reto-neurofitness");
+  }
+
   const activeStage = stages[stageIndex];
   return <div className="neuro-game">
     <div className="neuro-game__aurora" aria-hidden="true" />
@@ -437,7 +452,7 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
         <p>60 segundos. Cuatro desafíos. Un perfil orientativo para descubrir cómo respondés hoy.</p>
         <div className="neuro-intro__metrics"><span><strong>60</strong>segundos</span><span><strong>4</strong>capacidades</span><span><strong>1</strong>resultado</span></div>
         <button className="neuro-game__primary" type="button" onClick={startGame}>Iniciar reto<ArrowRight /></button>
-        <small>Al finalizar solicitaremos tu nombre y WhatsApp para mostrarte y enviarte el perfil. Experiencia lúdica; no constituye una evaluación médica ni neuropsicológica.</small>
+        <small>Al finalizar podrás crear tu cuenta, guardar tu resultado y recibir un entrenamiento de regalo. Experiencia lúdica; no constituye una evaluación médica ni neuropsicológica.</small>
       </section>
       <aside className="neuro-intro__mascot" aria-hidden="true"><div /><Image src="/images/neurofitness/neurofitness-mascot.png" alt="" width={512} height={768} priority /><span>FOCO · CONTROL · MEMORIA · FLEXIBILIDAD</span></aside>
     </main>}
@@ -498,19 +513,24 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
     {phase === "saving" && <main ref={phaseFocusRef} tabIndex={-1} className="neuro-analyzing neuro-game__phase-focus"><div className="neuro-analyzing__brain"><BrainCircuit /></div><span>ANALIZANDO TU RETO…</span><div>{stages.map((stage, index) => <i key={stage.key} style={{ animationDelay: `${index * .16}s` }} />)}</div></main>}
 
     {phase === "gate" && <main ref={phaseFocusRef} tabIndex={-1} className="neuro-gate neuro-game__phase-focus">
-      <section className="neuro-gate__profile"><div className="neuro-gate__lock"><LockKeyhole /></div><span>TU PERFIL ESTÁ LISTO</span><h1>Descubrí cómo respondiste hoy.</h1><div className="neuro-gate__blur" aria-hidden="true">{stages.map((stage, index) => <div key={stage.key}><span>{stage.label}</span><i><b style={{ width: `${62 + index * 8}%` }} /></i><strong>—</strong></div>)}</div><p>Registrate para revelar tu puntuación, recibir el perfil por WhatsApp y participar del ranking si querés.</p></section>
+      <section className="neuro-gate__profile"><div className="neuro-gate__lock"><LockKeyhole /></div><span>TU PERFIL ESTÁ LISTO</span><h1>Guardalo en tu cuenta.</h1><div className="neuro-gate__blur" aria-hidden="true">{stages.map((stage, index) => <div key={stage.key}><span>{stage.label}</span><i><b style={{ width: `${62 + index * 8}%` }} /></i><strong>—</strong></div>)}</div><p>{currentCustomer ? `Continuarás con la cuenta ${currentCustomer.email}.` : "Crea tu cuenta de Gimnasio del Cerebro para revelar tu puntuación, guardar el perfil y recibir tu entrenamiento de regalo."}</p></section>
       <form className="neuro-lead-form" onSubmit={claimResult}>
-        <span>REGISTRO DEL RESULTADO</span><h2>¿A dónde enviamos tu perfil?</h2>
-        <label>Nombre<input name="name" autoComplete="name" minLength={2} maxLength={80} required placeholder="Tu nombre" /></label>
-        <label>WhatsApp<input name="phone" inputMode="tel" autoComplete="tel" minLength={9} maxLength={30} required placeholder="Ej. +54 381 300 4167" /></label>
+        <span>{currentCustomer ? "TU CUENTA ESTÁ ACTIVA" : "CREA TU CUENTA GRATUITA"}</span><h2>{currentCustomer ? "Guarda el reto en tu perfil" : "Tu resultado y regalo, en un solo lugar"}</h2>
+        <div className="neuro-account-fields">
+          <label>Nombre<input name="name" autoComplete="name" minLength={2} maxLength={80} required defaultValue={currentCustomer?.name || ""} placeholder="Tu nombre" /></label>
+          <label>WhatsApp<input name="phone" inputMode="tel" autoComplete="tel" minLength={9} maxLength={30} required placeholder="Ej. +54 381 300 4167" /></label>
+          {!currentCustomer && <><label>Correo electrónico<input name="email" type="email" autoComplete="email" maxLength={180} required placeholder="tu@correo.com" /></label><label>País <small>Opcional</small><input name="country" autoComplete="country-name" maxLength={80} placeholder="Tu país" /></label><label className="neuro-account-wide">Contraseña <small>10 caracteres, mayúscula, minúscula y número</small><span className="neuro-password-field"><input name="password" type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={10} maxLength={128} required placeholder="Crea una contraseña segura" /><button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}>{showPassword ? <EyeOff /> : <Eye />}</button></span></label><label className="neuro-account-wide">Confirmar contraseña<input name="confirmPassword" type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={10} maxLength={128} required placeholder="Repite tu contraseña" /></label></>}
+        </div>
+        {!currentCustomer && <p className="neuro-account-note">¿Ya tienes una cuenta? Usa el mismo correo y contraseña: iniciaremos sesión y guardaremos el regalo en tu perfil actual.</p>}
         {rankingConsent && <label>Alias para el ranking <small>Opcional; si queda vacío mostraremos tu nombre e inicial.</small><input name="rankingAlias" maxLength={28} placeholder="Ej. MenteÁgil" /></label>}
         <input className="neuro-honeypot" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
+        {!currentCustomer && <><label className="neuro-check"><input name="acceptedTerms" type="checkbox" required /><span><Check />Acepto los <a href="/terminos" target="_blank">términos y condiciones</a>.</span></label><label className="neuro-check"><input name="acceptedPrivacy" type="checkbox" required /><span><Check />Acepto el <a href="/privacidad" target="_blank">aviso de privacidad</a> para crear mi cuenta.</span></label></>}
         <label className="neuro-check"><input name="resultConsent" type="checkbox" required /><span><Check />Acepto recibir mi resultado por WhatsApp.</span></label>
         <label className="neuro-check"><input name="marketingConsent" type="checkbox" /><span><Check />Quiero recibir novedades y propuestas de Neurofitness.</span></label>
         <label className="neuro-check"><input name="rankingConsent" type="checkbox" checked={rankingConsent} onChange={(event) => setRankingConsent(event.target.checked)} /><span><Check />Autorizo mostrar mi alias y puntuación en el ranking.</span></label>
-        <p>El consentimiento del resultado es necesario para enviarlo. Marketing y ranking son opcionales e independientes. Consulta el <a href="/privacidad" target="_blank">aviso de privacidad</a>.</p>
+        <p>Tu cuenta conservará los accesos que recibas. El consentimiento del resultado es necesario para enviarlo; marketing y ranking son opcionales e independientes.</p>
         {formError && <div className="neuro-form-error" role="alert">{formError}</div>}
-        <button className="neuro-game__primary" disabled={submitting}>{submitting ? "Guardando…" : "Quiero mi resultado"}<ArrowRight /></button>
+        <button className="neuro-game__primary" disabled={submitting}>{submitting ? "Creando tu espacio…" : currentCustomer ? "Guardar en mi cuenta" : "Crear mi cuenta y ver resultado"}<ArrowRight /></button>
       </form>
     </main>}
 
@@ -525,11 +545,12 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
         <Trophy /><span>{result.rankingLabel}</span>
         {result.rank ? <><h2>#{result.rank}</h2><p>de {result.participantCount} cerebros que aceptaron participar{result.rankingScore !== result.profile.total ? ` · puesto calculado con tu mejor marca de ${result.rankingScore}/100` : ""}</p><strong>{result.isPersonalBest ? "Tu mejor marca vigente" : "¿Podés mejorar tu récord?"}</strong></> : <><h2>{result.profile.total}</h2><p>Tu resultado quedó privado, tal como elegiste.</p></>}
         <div className={`neuro-delivery ${result.whatsappDelivery}`}><Check />{result.whatsappDelivery === "sent" ? "Perfil enviado por WhatsApp" : result.whatsappDelivery === "failed" ? "Perfil guardado; WhatsApp no respondió" : "Perfil guardado; el envío está pendiente"}</div>
-        {result.whatsappDelivery === "failed" && <button className="neuro-delivery-retry" type="button" disabled={submitting} onClick={() => claimPayloadRef.current && void submitClaim(claimPayloadRef.current)}><RotateCcw />{submitting ? "Reintentando…" : "Reintentar envío"}</button>}
+        {result.account.gift && <a className="neuro-account-access" href={result.account.profileUrl}><Gift /><span><small>{result.account.created ? "CUENTA CREADA · REGALO ACTIVADO" : "REGALO ACTIVADO EN TU CUENTA"}</small><strong>{result.account.gift.name}</strong></span><ArrowRight /></a>}
+        {!result.account.gift && <a className="neuro-account-access" href={result.account.profileUrl}><LockKeyhole /><span><small>RESULTADO GUARDADO</small><strong>Ir a Mi cuenta</strong></span><ArrowRight /></a>}
         {result.reward && <a className="neuro-reward" href={result.reward.url} target="_blank" rel="noreferrer">🎁 {result.reward.label}<ArrowRight /></a>}
         <button className="neuro-game__primary" type="button" onClick={shareResult}><Share2 />Compartir mi resultado</button>
         {shareStatus !== "idle" && <small className={`neuro-share-status ${shareStatus}`} role="status">{shareStatus === "copied" ? "Enlace copiado." : shareStatus === "shared" ? "Resultado compartido." : "No pudimos compartirlo; intenta nuevamente."}</small>}
-        <div className="neuro-result__actions"><a href="/reto-neurofitness/ranking"><Trophy />Ver Top 10</a><button type="button" onClick={resetGame}><RotateCcw />Nuevo participante</button></div>
+        <div className="neuro-result__actions"><a href="/reto-neurofitness/ranking"><Trophy />Ver Top 10</a><button type="button" onClick={() => void startNewParticipant()}><RotateCcw />Nuevo participante</button></div>
       </aside>
     </main>}
 

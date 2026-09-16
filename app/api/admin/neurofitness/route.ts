@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getSettings, updateSettings } from "../../../../db/repository";
+import { getSettings, getTrainings, updateSettings } from "../../../../db/repository";
 import { requestIsAdmin } from "../../../../lib/auth";
 
 const schema = z.object({
@@ -13,6 +13,7 @@ const schema = z.object({
   popupCta: z.string().trim().min(2).max(60),
   eventLabel: z.string().trim().min(2).max(100),
   rankingLabel: z.string().trim().min(2).max(100),
+  rewardTrainingId: z.string().trim().max(100),
   rewardLabel: z.string().trim().max(120),
   rewardUrl: z.union([z.literal(""), z.string().url().max(500).refine((value) => {
     try { return ["http:", "https:"].includes(new URL(value).protocol); } catch { return false; }
@@ -27,6 +28,10 @@ export async function PATCH(request: Request) {
   if (!(await requestIsAdmin(request, ["SUPERADMIN"]))) return Response.json({ error: "No autorizado" }, { status: 401 });
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Revisa los datos de la campaña." }, { status: 400 });
+  if (parsed.data.rewardTrainingId) {
+    const trainingExists = (await getTrainings(true)).some((training) => training.id === parsed.data.rewardTrainingId);
+    if (!trainingExists) return Response.json({ error: "El entrenamiento de regalo seleccionado ya no existe." }, { status: 400 });
+  }
   await updateSettings({
     neurofitnessEnabled: String(parsed.data.enabled),
     neurofitnessCampaignKey: parsed.data.campaignKey,
@@ -38,6 +43,7 @@ export async function PATCH(request: Request) {
     neurofitnessPopupCta: parsed.data.popupCta,
     neurofitnessEventLabel: parsed.data.eventLabel,
     neurofitnessRankingLabel: parsed.data.rankingLabel,
+    neurofitnessRewardTrainingId: parsed.data.rewardTrainingId,
     neurofitnessRewardLabel: parsed.data.rewardLabel,
     neurofitnessRewardUrl: parsed.data.rewardUrl,
   });
