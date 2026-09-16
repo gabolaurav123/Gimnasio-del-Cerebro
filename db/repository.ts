@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { getRuntimeDatabase, isDatabaseUnavailable, type AppDatabase } from "./runtime";
 import { getRuntimeValues } from "../lib/runtime-env";
+import { buildPurchaseEmail, PURCHASE_EMAIL_RETRYABLE_PREFIX, sendPurchaseConfirmation } from "../lib/purchase-email";
 
 export type AdminRole = "SUPERADMIN" | "EDITOR" | "COMERCIAL";
 
@@ -223,7 +224,7 @@ export const productSeeds: Product[] = [
     name: "Cartas Neurofitness Active",
     slug: "cartas-neurofitness-active",
     description: "Un recurso práctico para activar preguntas, ejercicios y conversaciones que ayudan a entrenar la atención, la comprensión y la autogestión.",
-    image: "/images/catalog/product-cards-v1.png",
+    image: "/images/catalog/cartas-neurofitness-active-hotmart-600x600.png",
     priceLabel: "Venta activa en Hotmart",
     discountLabel: null,
     resourceUrl: null,
@@ -267,10 +268,11 @@ export const trainingSeeds: Training[] = [
     heroImage: "/images/catalog/covers/neurofitness-active-v3.png",
     resourceUrl: null,
     dashboardContent: null,
-    checkoutProvider: "MANUAL",
+    checkoutProvider: "HOTMART",
     checkoutUrl: null,
+    checkoutExternalId: "6856229",
     priceCents: 0,
-    currency: "BOB",
+    currency: "USD",
     status: "PUBLISHED",
     displayOrder: 1,
   },
@@ -285,10 +287,11 @@ export const trainingSeeds: Training[] = [
     heroImage: "/images/catalog/covers/neurotraumas-v3.png",
     resourceUrl: null,
     dashboardContent: null,
-    checkoutProvider: "MANUAL",
+    checkoutProvider: "HOTMART",
     checkoutUrl: null,
+    checkoutExternalId: "6856491",
     priceCents: 0,
-    currency: "BOB",
+    currency: "USD",
     status: "PUBLISHED",
     displayOrder: 2,
   },
@@ -339,11 +342,11 @@ export const trainingSeeds: Training[] = [
     heroImage: "/images/catalog/covers/algoritmos-pedagogicos-v3.png",
     resourceUrl: null,
     dashboardContent: null,
-    checkoutProvider: "MANUAL",
+    checkoutProvider: "HOTMART",
     checkoutUrl: null,
     checkoutExternalId: "5686905",
     priceCents: 0,
-    currency: "BOB",
+    currency: "USD",
     status: "PUBLISHED",
     displayOrder: 5,
   },
@@ -433,8 +436,8 @@ export const trainingSeeds: Training[] = [
     heroImage: "/images/catalog/covers/neurotraumas-express-v3.png",
     resourceUrl: null,
     dashboardContent: "Bienvenida a Neurotraumas Express. Aquí se habilitarán las instrucciones, materiales y acceso al programa.",
-    checkoutProvider: "MANUAL",
-    checkoutUrl: null,
+    checkoutProvider: "HOTMART",
+    checkoutUrl: "https://pay.hotmart.com/J95306140W",
     checkoutExternalId: "4474668",
     priceCents: 0,
     currency: "USD",
@@ -452,8 +455,8 @@ export const trainingSeeds: Training[] = [
     heroImage: "/images/catalog/covers/tabla-radionica-del-cerebro-v3.png",
     resourceUrl: null,
     dashboardContent: "Aquí aparecerán las instrucciones, materiales y recursos habilitados para Tabla Radiónica del Cerebro.",
-    checkoutProvider: "MANUAL",
-    checkoutUrl: null,
+    checkoutProvider: "HOTMART",
+    checkoutUrl: "https://pay.hotmart.com/L95306409R",
     checkoutExternalId: "4474702",
     priceCents: 0,
     currency: "USD",
@@ -471,8 +474,9 @@ export const trainingSeeds: Training[] = [
     heroImage: "/images/catalog/covers/super-cerebro-master-class-v3.png",
     resourceUrl: null,
     dashboardContent: "Bienvenida a Super Cerebro — Master Class. Aquí se habilitarán el acceso, las indicaciones y los materiales de la clase.",
-    checkoutProvider: "MANUAL",
+    checkoutProvider: "HOTMART",
     checkoutUrl: null,
+    checkoutExternalId: "8224669",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
@@ -489,8 +493,8 @@ export const trainingSeeds: Training[] = [
     heroImage: "/images/catalog/covers/taller-neuroconstelaciones-holograficas-v3.png",
     resourceUrl: null,
     dashboardContent: "Aquí se publicarán el acceso, las indicaciones y los materiales del taller Neuroconstelaciones Holográficas.",
-    checkoutProvider: "MANUAL",
-    checkoutUrl: null,
+    checkoutProvider: "HOTMART",
+    checkoutUrl: "https://pay.hotmart.com/R98649973E",
     checkoutExternalId: "5219876",
     priceCents: 0,
     currency: "USD",
@@ -508,7 +512,7 @@ export const trainingSeeds: Training[] = [
     heroImage: "/images/catalog/covers/taller-autohipnosis-seguridad-interior-v3.png",
     resourceUrl: null,
     dashboardContent: "Aquí aparecerán las indicaciones, audios y materiales habilitados para el taller Encuentra tu seguridad interior.",
-    checkoutProvider: "MANUAL",
+    checkoutProvider: "HOTMART",
     checkoutUrl: null,
     checkoutExternalId: "4925729",
     priceCents: 0,
@@ -527,8 +531,8 @@ export const trainingSeeds: Training[] = [
     heroImage: "/images/catalog/covers/taller-autohipnosis-nivel-medio-v3.png",
     resourceUrl: null,
     dashboardContent: "Aquí se habilitarán las indicaciones, audios y materiales del nivel medio de Autohipnosis.",
-    checkoutProvider: "MANUAL",
-    checkoutUrl: null,
+    checkoutProvider: "HOTMART",
+    checkoutUrl: "https://pay.hotmart.com/K97596526D",
     checkoutExternalId: "4971920",
     priceCents: 0,
     currency: "USD",
@@ -546,8 +550,8 @@ export const trainingSeeds: Training[] = [
     heroImage: "/images/catalog/covers/taller-neurosexualidad-v3.png",
     resourceUrl: null,
     dashboardContent: "Aquí encontrarás el acceso, las indicaciones y los materiales del Taller Neurosexualidad.",
-    checkoutProvider: "MANUAL",
-    checkoutUrl: null,
+    checkoutProvider: "HOTMART",
+    checkoutUrl: "https://pay.hotmart.com/D102655163J",
     checkoutExternalId: "6527283",
     priceCents: 0,
     currency: "USD",
@@ -565,9 +569,9 @@ export const trainingSeeds: Training[] = [
     heroImage: "/images/catalog/covers/taller-recordarme-desde-adentro-v3.png",
     resourceUrl: null,
     dashboardContent: "Aquí se habilitarán el acceso y los materiales del taller Recordarme desde adentro.",
-    checkoutProvider: "MANUAL",
-    checkoutUrl: null,
-    checkoutExternalId: "6010207",
+    checkoutProvider: "HOTMART",
+    checkoutUrl: "https://pay.hotmart.com/B101203465Q",
+    checkoutExternalId: "6012007",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
@@ -584,9 +588,9 @@ export const trainingSeeds: Training[] = [
     heroImage: "/images/catalog/covers/taller-cerrando-ciclos-nuevo-tu-v3.png",
     resourceUrl: null,
     dashboardContent: "Aquí encontrarás el acceso y los materiales del taller Cerrando ciclos.",
-    checkoutProvider: "MANUAL",
-    checkoutUrl: null,
-    checkoutExternalId: "6721419",
+    checkoutProvider: "HOTMART",
+    checkoutUrl: "https://pay.hotmart.com/H103140480D",
+    checkoutExternalId: "6712419",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
@@ -603,13 +607,70 @@ export const trainingSeeds: Training[] = [
     heroImage: "/images/catalog/covers/taller-autovaloracion-v3.png",
     resourceUrl: null,
     dashboardContent: "Aquí se publicarán el acceso, las indicaciones y los materiales del Taller Autovaloración.",
-    checkoutProvider: "MANUAL",
-    checkoutUrl: null,
+    checkoutProvider: "HOTMART",
+    checkoutUrl: "https://pay.hotmart.com/U103890911J",
     checkoutExternalId: "6998704",
     priceCents: 0,
     currency: "USD",
     status: "PUBLISHED",
     displayOrder: 36,
+  },
+  {
+    id: "training-taller-sostener-realidad",
+    name: "Taller: Cómo sostener la realidad que quieres",
+    acronym: "TALLER",
+    slug: "taller-como-sostener-la-realidad-que-quieres",
+    shortDescription: "Herramientas de observación y práctica consciente para sostener decisiones, hábitos y acciones alineadas con la realidad que deseas construir.",
+    fullDescription: "Taller educativo de desarrollo personal orientado a reconocer patrones, ordenar prioridades y sostener acciones coherentes con objetivos personales.",
+    logo: "/logos/gdc-full-v2.jpg",
+    heroImage: "/images/catalog/covers/taller-como-sostener-la-realidad-v3.png",
+    resourceUrl: null,
+    dashboardContent: "Aquí encontrarás el acceso, las indicaciones y los materiales del taller Cómo sostener la realidad que quieres.",
+    checkoutProvider: "HOTMART",
+    checkoutUrl: null,
+    checkoutExternalId: "8016551",
+    priceCents: 0,
+    currency: "USD",
+    status: "PUBLISHED",
+    displayOrder: 37,
+  },
+  {
+    id: "training-taller-pensar-claridad",
+    name: "Taller: Cómo pensar con claridad cuando todo se volvió incierto",
+    acronym: "TALLER",
+    slug: "taller-como-pensar-con-claridad",
+    shortDescription: "Recursos para ordenar la atención, recuperar perspectiva y tomar decisiones con mayor claridad en contextos de incertidumbre.",
+    fullDescription: "Taller educativo para observar respuestas automáticas, organizar información y recuperar control sobre las decisiones cuando el contexto se vuelve incierto.",
+    logo: "/logos/gdc-full-v2.jpg",
+    heroImage: "/images/catalog/covers/taller-como-pensar-con-claridad-v3.png",
+    resourceUrl: null,
+    dashboardContent: "Aquí se habilitarán el acceso, las indicaciones y los materiales del taller Cómo pensar con claridad.",
+    checkoutProvider: "HOTMART",
+    checkoutUrl: null,
+    checkoutExternalId: "8178435",
+    priceCents: 0,
+    currency: "USD",
+    status: "PUBLISHED",
+    displayOrder: 38,
+  },
+  {
+    id: "training-transforma-biocomputadora",
+    name: "Transforma tu Biocomputadora",
+    acronym: "CURSO",
+    slug: "transforma-tu-biocomputadora",
+    shortDescription: "Una propuesta educativa para comprender patrones mentales, revisar automatismos y entrenar nuevas formas de interpretar y responder.",
+    fullDescription: "Curso de Gimnasio del Cerebro orientado a comprender la relación entre aprendizaje, hábitos y respuestas automáticas mediante ejercicios de observación y práctica consciente.",
+    logo: "/logos/gdc-full-v2.jpg",
+    heroImage: "/images/catalog/covers/transforma-tu-biocomputadora-v3.png",
+    resourceUrl: null,
+    dashboardContent: "Bienvenida a Transforma tu Biocomputadora. Aquí encontrarás el acceso, las indicaciones y los materiales del curso.",
+    checkoutProvider: "HOTMART",
+    checkoutUrl: "https://pay.hotmart.com/U101752830I",
+    checkoutExternalId: "6196076",
+    priceCents: 0,
+    currency: "USD",
+    status: "PUBLISHED",
+    displayOrder: 39,
   },
 ];
 
@@ -725,6 +786,7 @@ const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS customer_users (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, phone TEXT, country TEXT, active INTEGER NOT NULL DEFAULT 1, terms_version TEXT NOT NULL, terms_accepted_at TEXT NOT NULL, privacy_accepted_at TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS payments (id TEXT PRIMARY KEY, reference TEXT NOT NULL UNIQUE, payer_name TEXT NOT NULL, payer_email TEXT, payer_phone TEXT, customer_id TEXT, concept TEXT NOT NULL, item_type TEXT NOT NULL DEFAULT 'OTHER', item_id TEXT, amount_cents INTEGER NOT NULL, currency TEXT NOT NULL DEFAULT 'BOB', payment_method TEXT NOT NULL DEFAULT 'OTHER', provider_reference TEXT, status TEXT NOT NULL DEFAULT 'PENDING', paid_at TEXT, verified_at TEXT, verified_by TEXT, notes TEXT, source TEXT NOT NULL DEFAULT 'MANUAL', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS payment_webhook_events (id TEXT PRIMARY KEY, provider TEXT NOT NULL, event_id TEXT NOT NULL, event_type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'PROCESSING', payload_hash TEXT, error TEXT, processed_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS purchase_email_outbox (payment_id TEXT PRIMARY KEY, recipient TEXT NOT NULL, subject TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'PENDING', attempts INTEGER NOT NULL DEFAULT 0, provider_message_id TEXT, last_error TEXT, sent_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS customer_entitlements (id TEXT PRIMARY KEY, customer_id TEXT NOT NULL, item_type TEXT NOT NULL, item_id TEXT NOT NULL, payment_id TEXT, status TEXT NOT NULL DEFAULT 'ACTIVE', granted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, expires_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS assistant_profiles (id TEXT PRIMARY KEY, item_type TEXT NOT NULL, item_id TEXT NOT NULL, name TEXT NOT NULL, instructions TEXT NOT NULL, model TEXT NOT NULL DEFAULT 'gpt-5.6-luna', enabled INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS assistant_messages (id TEXT PRIMARY KEY, customer_id TEXT NOT NULL, assistant_profile_id TEXT NOT NULL, role TEXT NOT NULL, content TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
@@ -751,6 +813,7 @@ const schemaStatements = [
   `CREATE INDEX IF NOT EXISTS idx_payments_provider_reference ON payments(source, provider_reference)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_source_provider_reference_unique ON payments(source, provider_reference) WHERE provider_reference IS NOT NULL`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_webhook_events_provider_event ON payment_webhook_events(provider, event_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_purchase_email_outbox_status_updated ON purchase_email_outbox(status, updated_at)`,
   `CREATE INDEX IF NOT EXISTS idx_customer_users_email_active ON customer_users(email, active)`,
   `CREATE INDEX IF NOT EXISTS idx_customer_entitlements_customer_status ON customer_entitlements(customer_id, status)`,
   `CREATE INDEX IF NOT EXISTS idx_customer_entitlements_item ON customer_entitlements(item_type, item_id)`,
@@ -875,6 +938,12 @@ export function ensureDatabase() {
     const trainingLogoSyncBatch = trainingSeeds.map((item) =>
       db.prepare(`UPDATE trainings SET logo = ?, hero_image = ?, checkout_external_id = COALESCE(checkout_external_id, ?) WHERE id = ?`).bind(item.logo, item.heroImage, item.checkoutExternalId || null, item.id),
     );
+    const trainingCheckoutSyncBatch = trainingSeeds
+      .filter((item) => item.checkoutProvider === "HOTMART")
+      .map((item) =>
+        db.prepare(`UPDATE trainings SET checkout_provider = ?, checkout_url = COALESCE(?, checkout_url), checkout_external_id = ?, currency = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND (checkout_provider = 'MANUAL' OR checkout_external_id IS NULL OR checkout_external_id IN ('6010207', '6721419'))`)
+          .bind(item.checkoutProvider, item.checkoutUrl, item.checkoutExternalId || null, item.currency, item.id),
+      );
     const productCheckoutSyncBatch = productSeeds.map((item) =>
       db.prepare(`UPDATE products SET image = ?, checkout_external_id = COALESCE(checkout_external_id, ?) WHERE id = ?`).bind(item.image, item.checkoutExternalId || null, item.id),
     );
@@ -887,7 +956,7 @@ export function ensureDatabase() {
     const associateImageSyncBatch = associateSeeds.map((item) =>
       db.prepare(`UPDATE associates SET image = ? WHERE id = ?`).bind(item.image, item.id),
     );
-    await db.batch([...trainingBatch, ...postBatch, ...testimonialBatch, ...associateBatch, ...productBatch, ...trainingLogoSyncBatch, ...productCheckoutSyncBatch, ...featuredProductCopySyncBatch, ...associateImageSyncBatch]);
+    await db.batch([...trainingBatch, ...postBatch, ...testimonialBatch, ...associateBatch, ...productBatch, ...trainingLogoSyncBatch, ...trainingCheckoutSyncBatch, ...productCheckoutSyncBatch, ...featuredProductCopySyncBatch, ...associateImageSyncBatch]);
     return db;
   })().catch((error) => {
     ready = null;
@@ -1246,12 +1315,70 @@ async function setWebhookEventState(provider: string, eventId: string, status: "
     .bind(status, error, status, provider, eventId).run();
 }
 
+async function deliverPurchaseEmail(input: {
+  payment: Payment;
+  provider: "STRIPE" | "HOTMART";
+  recipient: string;
+  payerName: string;
+  providerReference?: string | null;
+  amountCents: number;
+  currency: string;
+  accountAccess: boolean;
+}) {
+  const db = await ensureDatabase();
+  const confirmation = {
+    paymentId: input.payment.id,
+    reference: input.payment.reference,
+    recipient: input.recipient.trim().toLowerCase(),
+    payerName: input.payerName,
+    concept: input.payment.concept,
+    provider: input.provider,
+    providerReference: input.providerReference,
+    amountCents: input.amountCents,
+    currency: input.currency,
+    accountAccess: input.accountAccess,
+  };
+  const email = buildPurchaseEmail(confirmation);
+  await db.prepare(`INSERT OR IGNORE INTO purchase_email_outbox (payment_id, recipient, subject) VALUES (?, ?, ?)`)
+    .bind(input.payment.id, confirmation.recipient, email.subject).run();
+  const outbox = await db.prepare(`SELECT status, last_error FROM purchase_email_outbox WHERE payment_id = ? LIMIT 1`)
+    .bind(input.payment.id).first<{ status: string; last_error: string | null }>();
+  if (outbox?.status === "SENT") return { status: "sent" as const, duplicate: true };
+  if (outbox?.status === "FAILED" && outbox.last_error?.startsWith("PERMANENT:")) {
+    return { status: "failed" as const, reason: outbox.last_error.slice("PERMANENT:".length) };
+  }
+
+  try {
+    const result = await sendPurchaseConfirmation(confirmation);
+    if (result.status === "sent") {
+      await db.prepare(`UPDATE purchase_email_outbox SET status = 'SENT', attempts = attempts + 1, provider_message_id = ?, last_error = NULL, sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE payment_id = ?`)
+        .bind(result.messageId, input.payment.id).run();
+      return result;
+    }
+    if (result.status === "skipped") {
+      await db.prepare(`UPDATE purchase_email_outbox SET status = 'SKIPPED', last_error = ?, updated_at = CURRENT_TIMESTAMP WHERE payment_id = ?`)
+        .bind(result.reason, input.payment.id).run();
+      return result;
+    }
+    await db.prepare(`UPDATE purchase_email_outbox SET status = 'FAILED', attempts = attempts + 1, last_error = ?, updated_at = CURRENT_TIMESTAMP WHERE payment_id = ?`)
+      .bind(`PERMANENT:${result.reason}`, input.payment.id).run();
+    return result;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : `${PURCHASE_EMAIL_RETRYABLE_PREFIX}Error de envío`;
+    await db.prepare(`UPDATE purchase_email_outbox SET status = 'FAILED', attempts = attempts + 1, last_error = ?, updated_at = CURRENT_TIMESTAMP WHERE payment_id = ?`)
+      .bind(message, input.payment.id).run();
+    throw error;
+  }
+}
+
 export async function reconcileProviderPayment(input: ProviderPaymentEventInput) {
   const db = await ensureDatabase();
-  const existingEvent = await db.prepare(`SELECT status FROM payment_webhook_events WHERE provider = ? AND event_id = ? LIMIT 1`).bind(input.provider, input.eventId).first<{ status: string }>();
-  if (existingEvent && existingEvent.status !== "FAILED") return { duplicate: true, status: existingEvent.status };
-  if (existingEvent?.status === "FAILED") {
-    await db.prepare(`DELETE FROM payment_webhook_events WHERE provider = ? AND event_id = ? AND status = 'FAILED'`).bind(input.provider, input.eventId).run();
+  const existingEvent = await db.prepare(`SELECT status, error, created_at FROM payment_webhook_events WHERE provider = ? AND event_id = ? LIMIT 1`).bind(input.provider, input.eventId).first<{ status: string; error: string | null; created_at: string }>();
+  const eventAgeMs = existingEvent?.created_at ? Date.now() - new Date(existingEvent.created_at.endsWith("Z") ? existingEvent.created_at : `${existingEvent.created_at.replace(" ", "T")}Z`).getTime() : 0;
+  const staleProcessing = existingEvent?.status === "PROCESSING" && eventAgeMs > 10 * 60 * 1000;
+  if (existingEvent && existingEvent.status !== "FAILED" && !staleProcessing) return { duplicate: true, status: existingEvent.status };
+  if (existingEvent?.status === "FAILED" || staleProcessing) {
+    await db.prepare(`DELETE FROM payment_webhook_events WHERE provider = ? AND event_id = ? AND status IN ('FAILED', 'PROCESSING')`).bind(input.provider, input.eventId).run();
   }
   try {
     await db.prepare(`INSERT INTO payment_webhook_events (id, provider, event_id, event_type, status, payload_hash) VALUES (?, ?, ?, ?, 'PROCESSING', ?)`)
@@ -1340,8 +1467,21 @@ export async function reconcileProviderPayment(input: ProviderPaymentEventInput)
         input.eventOccurredAt || new Date().toISOString(),
       );
     }
+    const recipient = (input.payerEmail || payment.payerEmail || "").trim();
+    const email = input.status === "VERIFIED" && !isPartialRefund && recipient
+      ? await deliverPurchaseEmail({
+        payment,
+        provider: input.provider,
+        recipient,
+        payerName: input.payerName || payment.payerName,
+        providerReference: input.providerReference || payment.providerReference,
+        amountCents: eventAmount,
+        currency: eventCurrency,
+        accountAccess: Boolean(payment.customerId || customer?.id),
+      })
+      : null;
     await setWebhookEventState(input.provider, input.eventId, "PROCESSED");
-    return { paymentId: payment.id, status: input.status, partialRefundCents: isPartialRefund ? refundAmount : null };
+    return { paymentId: payment.id, status: input.status, partialRefundCents: isPartialRefund ? refundAmount : null, email };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error de conciliación";
     await setWebhookEventState(input.provider, input.eventId, "FAILED", message);

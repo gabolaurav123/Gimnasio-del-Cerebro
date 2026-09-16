@@ -250,13 +250,16 @@ test("los clientes pueden registrarse e ingresar con una sesión separada", asyn
 test("cada entrenamiento tiene portada propia y la configuración de pago se preserva", async () => {
   const repository = await read("../db/repository.ts");
   const covers = [...repository.matchAll(/heroImage: "(\/images\/catalog\/covers\/[^"]+)"/g)].map((match) => match[1]);
-  assert.equal(covers.length, 19);
+  assert.equal(covers.length, 22);
   assert.equal(new Set(covers).size, covers.length);
   assert.match(repository, /UPDATE trainings SET logo = \?, hero_image = \?, checkout_external_id = COALESCE/);
-  assert.doesNotMatch(repository, /UPDATE trainings SET logo = \?, hero_image = \?, checkout_provider = \?, checkout_url = \?/);
+  assert.match(repository, /trainingCheckoutSyncBatch/);
+  assert.match(repository, /checkout_provider = \?, checkout_url = COALESCE\(\?, checkout_url\), checkout_external_id = \?/);
   assert.match(repository, /https:\/\/pay\.hotmart\.com\/I95298513M/);
   assert.match(repository, /https:\/\/pay\.hotmart\.com\/A102005977H/);
   assert.match(repository, /https:\/\/pay\.hotmart\.com\/V95461171E/);
+  assert.match(repository, /https:\/\/pay\.hotmart\.com\/U101752830I/);
+  assert.match(repository, /cartas-neurofitness-active-hotmart-600x600\.png/);
 });
 
 test("los webhooks de pagos validan autenticidad y concilian de forma idempotente", async () => {

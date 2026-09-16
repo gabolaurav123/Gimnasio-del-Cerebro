@@ -290,6 +290,18 @@ export const paymentWebhookEvents = sqliteTable("payment_webhook_events", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [uniqueIndex("idx_payment_webhook_events_provider_event").on(table.provider, table.eventId)]);
 
+export const purchaseEmailOutbox = sqliteTable("purchase_email_outbox", {
+  paymentId: text("payment_id").primaryKey(),
+  recipient: text("recipient").notNull(),
+  subject: text("subject").notNull(),
+  status: text("status", { enum: ["PENDING", "SENT", "FAILED", "SKIPPED"] }).notNull().default("PENDING"),
+  attempts: integer("attempts").notNull().default(0),
+  providerMessageId: text("provider_message_id"),
+  lastError: text("last_error"),
+  sentAt: text("sent_at"),
+  ...timestamps,
+}, (table) => [index("idx_purchase_email_outbox_status_updated").on(table.status, table.updatedAt)]);
+
 export const customerUsers = sqliteTable("customer_users", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),

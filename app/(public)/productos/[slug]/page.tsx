@@ -61,6 +61,17 @@ export default async function CapProductPage({ params }: { params: Promise<{ slu
       </div>
     </section>
 
+    <section className="cap-product-shift">
+      <div className="shell">
+        <div className="cap-product-section-heading cap-product-section-heading--dark"><span>Del ruido a la intención</span><h2>Una señal visible para cambiar el ritmo de tu día.</h2></div>
+        <div className="cap-product-shift__grid">
+          <article><small>Antes</small><h3>Sobrecarga y dispersión</h3><p>Demasiados estímulos, tareas abiertas y poco espacio para decidir con claridad.</p><ul><li><Check />Atención fragmentada</li><li><Check />Pausas que nunca llegan</li><li><Check />Rutinas sin intención</li></ul></article>
+          <div className="cap-product-shift__line" aria-hidden="true"><ArrowRight /></div>
+          <article className="cap-product-shift__result"><small>Tu ritual BioShield</small><h3>Enfoque, pausa y presencia</h3><p>Un objeto cotidiano que acompaña el momento en que eliges detenerte, respirar y volver a tu prioridad.</p><ul><li><Sparkles />Una señal personal</li><li><BrainCircuit />Un ritual de enfoque</li><li><Crown />Una experiencia Founder</li></ul></article>
+        </div>
+      </div>
+    </section>
+
     <section className="cap-product-tech">
       <div className="shell cap-product-tech__grid">
         <figure><img src="/images/bioshield/bioshield-layers.png" alt="Construcción por capas de BioShield by KIRYUS" width={1400} height={1000} /></figure>
@@ -75,12 +86,31 @@ export default async function CapProductPage({ params }: { params: Promise<{ slu
       </div>
     </section>
 
+    <section className="cap-product-access">
+      <div className="shell cap-product-access__grid">
+        <div><span>Acceso Founder</span><h2>Tu experiencia digital, vinculada a la compra.</h2><p>Después de validarse el pago, el equipo confirma los siguientes pasos del kit. El código premium de Telegram es personal y se entrega junto con las indicaciones de acceso a los contenidos Founder.</p></div>
+        <div className="cap-product-access__steps"><article><strong>01</strong><div><h3>Compra segura</h3><p>Continúa mediante el proveedor de pago configurado.</p></div></article><article><strong>02</strong><div><h3>Validación</h3><p>La compra queda registrada y asociada al correo utilizado.</p></div></article><article><strong>03</strong><div><h3>Acceso premium</h3><p>Recibes las indicaciones del kit, los audios y tu código personal.</p></div></article></div>
+      </div>
+    </section>
+
+    <section className="cap-product-faq">
+      <div className="shell cap-product-faq__grid">
+        <div><span>Preguntas frecuentes</span><h2>Lo esencial antes de adquirir BioShield.</h2><p>La disponibilidad, el precio final y los datos de entrega se muestran o confirman durante el proceso de compra.</p></div>
+        <div className="cap-product-faq__items">
+          <details><summary>¿Qué incluye la edición Founder?</summary><p>BioShield Founder numerado, audios Neurofocus, guía digital, código premium de Telegram y certificado Founder.</p></details>
+          <details><summary>¿Cuándo se entrega?</summary><p>La estimación comunicada para la preventa es de 25 a 40 días después de su cierre. El equipo confirma el seguimiento y cualquier actualización.</p></details>
+          <details><summary>¿Cómo debo cuidarlo?</summary><p>Lávalo a mano con agua fría y jabón neutro. Evita blanqueadores, retorcerlo o exponerlo a calor directo; sécalo a la sombra.</p></details>
+          <details><summary>¿Sustituye atención o tratamiento profesional?</summary><p>No. BioShield es un producto de bienestar y una experiencia de marca; no diagnostica, trata ni previene enfermedades.</p></details>
+        </div>
+      </div>
+    </section>
+
     <section className="cap-product-order">
       <div className="shell cap-product-order__grid">
         <div><span>Adquisición y cuidados</span><h2>Revisa la información.<br />Compra cuando estés listo.</h2><p>La entrega estimada es de 25 a 40 días después del cierre de la preventa. Se recomienda lavar a mano con agua fría y jabón neutro, y secar a la sombra. La garantía de fabricación es de 30 días.</p><div className="cap-product-care"><span><Clock3 />Entrega coordinada</span><span><Droplets />Cuidado manual</span><span><ShieldCheck />Garantía de fabricación</span></div></div>
         <aside>
           <div className="cap-product-order__price"><small>Información comercial</small><strong>{price}</strong></div>
-          <ul><li><Check />Acceso mediante tu cuenta personal</li><li><Check />Pago en el proveedor seguro configurado</li><li><Check />Confirmación automática después del pago</li></ul>
+          <ul><li><Check />Acceso mediante tu cuenta personal</li><li><Check />Pago en el proveedor seguro configurado</li><li><Check />Confirmación al validarse el pago</li></ul>
           {checkoutAvailable ? <a className="button cap-product-buy" href={`/checkout/producto/${product.slug}`}><LockKeyhole size={18} />Continuar a la compra <ArrowRight size={17} /></a> : <a className="button cap-product-buy" href={questionUrl} target="_blank" rel="noreferrer"><MessageCircle size={18} />Hablar con el equipo</a>}
         </aside>
       </div>

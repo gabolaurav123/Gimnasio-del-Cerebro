@@ -14,6 +14,13 @@ interface Env {
   SITE_URL?: string;
   OPENAI_API_KEY?: string;
   OPENAI_MODEL?: string;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
+  HOTMART_WEBHOOK_TOKEN?: string;
+  PURCHASE_EMAIL_ENABLED?: string;
+  RESEND_API_KEY?: string;
+  PURCHASE_EMAIL_FROM?: string;
+  PURCHASE_EMAIL_REPLY_TO?: string;
   TERMS_VERSION?: string;
   IMAGES: {
     input(stream: ReadableStream): {
