@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, Bell, BrainCircuit, CalendarDays, ChevronDown, Menu, MessageCircle, Tag, X } from "lucide-react";
+import { ArrowUpRight, Bell, BrainCircuit, CalendarDays, ChevronDown, Menu, MessageCircle, Tag, X, Zap } from "lucide-react";
 import { formatWhatsAppNumber, whatsappUrl } from "../../lib/whatsapp";
 import { useWhatsAppNumber } from "./WhatsAppContext";
 import type { Associate, PublicNotification } from "../../db/repository";
 
-type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
+type NavItem = { href: string; label: string; featured?: boolean; children?: { href: string; label: string }[] };
 const nav: NavItem[] = [
   { href: "/", label: "Inicio" },
+  { href: "/reto-neurofitness", label: "Evento", featured: true },
   { href: "/nosotros", label: "Nosotros" },
   { href: "/entrenamientos", label: "Entrenamientos", children: [{ href: "/entrenamientos/programas", label: "Programas" }, { href: "/entrenamientos/cursos", label: "Cursos" }, { href: "/entrenamientos/neuroretos", label: "Neuroretos" }, { href: "/entrenamientos/talleres", label: "Talleres" }, { href: "/eventos", label: "Eventos" }] },
   { href: "/productos", label: "Productos" },
@@ -46,7 +47,7 @@ export function SiteHeader({ notifications = [] }: { notifications?: PublicNotif
       <div className="shell site-header__inner">
         <Brand />
         <nav className="desktop-nav" aria-label="Navegación principal">
-          {nav.map((item) => item.children ? <div className="nav-dropdown" key={item.href}><a href={item.href}>{item.label}<ChevronDown size={13} /></a><div className="nav-dropdown__menu">{item.children.map((child) => <a href={child.href} key={child.href}>{child.label}<ArrowUpRight size={14} /></a>)}</div></div> : <a href={item.href} key={item.href}>{item.label}</a>)}
+          {nav.map((item) => item.children ? <div className="nav-dropdown" key={item.href}><a href={item.href}>{item.label}<ChevronDown size={13} /></a><div className="nav-dropdown__menu">{item.children.map((child) => <a href={child.href} key={child.href}>{child.label}<ArrowUpRight size={14} /></a>)}</div></div> : <a className={item.featured ? "nav-event-link" : undefined} href={item.href} key={item.href}>{item.featured && <Zap size={14} aria-hidden="true" />}{item.label}</a>)}
         </nav>
         <div className="site-header__actions">
           <details className="notification-menu"><summary aria-label={`Novedades${notifications.length ? `, ${notifications.length} disponibles` : ""}`}><Bell size={19} />{notifications.length > 0 && <span>{notifications.length}</span>}</summary><div className="notification-menu__panel"><div><strong>Novedades</strong><small>Eventos y descuentos</small></div>{notifications.length ? notifications.map((item) => <a href={item.href} key={item.id}>{item.kind === "event" ? <CalendarDays size={17} /> : <Tag size={17} />}<span><strong>{item.title}</strong><small>{item.detail}</small></span></a>) : <p>No hay novedades publicadas por ahora.</p>}</div></details>
@@ -61,7 +62,7 @@ export function SiteHeader({ notifications = [] }: { notifications?: PublicNotif
       </div>
       <div id="mobile-menu" className={`mobile-menu ${open ? "mobile-menu--open" : ""}`}>
         <nav className="shell" aria-label="Navegación móvil">
-          {nav.map((item) => <div className="mobile-nav-group" key={item.href}><a href={item.href} onClick={() => setOpen(false)}>{item.label}<ArrowUpRight size={17} /></a>{item.children?.filter((child) => child.href !== item.href).map((child) => <a className="mobile-nav-child" href={child.href} key={child.href} onClick={() => setOpen(false)}>{child.label}<ArrowUpRight size={15} /></a>)}</div>)}
+          {nav.map((item) => <div className="mobile-nav-group" key={item.href}><a className={item.featured ? "nav-event-link" : undefined} href={item.href} onClick={() => setOpen(false)}><span>{item.featured && <Zap size={16} aria-hidden="true" />}{item.label}</span><ArrowUpRight size={17} /></a>{item.children?.filter((child) => child.href !== item.href).map((child) => <a className="mobile-nav-child" href={child.href} key={child.href} onClick={() => setOpen(false)}>{child.label}<ArrowUpRight size={15} /></a>)}</div>)}
           <a href="/login" onClick={() => setOpen(false)}>Ingresar o crear cuenta<ArrowUpRight size={17} /></a>
         </nav>
       </div>

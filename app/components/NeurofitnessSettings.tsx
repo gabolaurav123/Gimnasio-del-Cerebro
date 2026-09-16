@@ -53,7 +53,7 @@ export function NeurofitnessSettings({ settings }: { settings: Record<string, st
     </div>
     <div className="neuro-admin-grid">
       <label>Clave de campaña<input name="campaignKey" pattern="[a-z0-9-]+" defaultValue={settings.neurofitnessCampaignKey} required /><small>Cámbiala solo al lanzar una campaña nueva: también iniciará un conjunto separado de participantes y ranking.</small></label>
-      <label>Frecuencia<select name="popupFrequency" defaultValue={settings.neurofitnessPopupFrequency || "session"}><option value="session">Una vez por sesión</option><option value="day">Una vez por día</option><option value="always">En cada ingreso</option></select></label>
+      <label>Frecuencia<input value="En cada recarga" readOnly aria-readonly="true" /><input name="popupFrequency" type="hidden" value="always" /><small>El anuncio vuelve a mostrarse cada vez que alguien recarga la web.</small></label>
       <label>Demora antes de abrir<input name="popupDelayMs" type="number" min={0} max={15000} step={100} defaultValue={settings.neurofitnessPopupDelayMs || "1400"} /><small>Milisegundos. Recomendado: 1400.</small></label>
       <label>Etiqueta superior<input name="popupEyebrow" maxLength={80} defaultValue={settings.neurofitnessPopupEyebrow} required /></label>
       <label>Título<input name="popupTitle" maxLength={100} defaultValue={settings.neurofitnessPopupTitle} required /></label>

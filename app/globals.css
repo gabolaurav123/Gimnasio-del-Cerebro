@@ -63,6 +63,8 @@ em { color: var(--blue-600); font-style: normal; }
 .desktop-nav a, .login-link { font-size: 13px; font-weight: 650; opacity: .82; transition: opacity .2s ease, color .2s ease; }
 .desktop-nav a:hover, .login-link:hover { opacity: 1; color: #8fc4ff; }
 .site-header--scrolled .desktop-nav a:hover, .site-header--scrolled .login-link:hover, .site-header--solid .desktop-nav a:hover, .site-header--solid .login-link:hover { color: var(--blue-700); }
+.desktop-nav .nav-event-link { min-height: 36px; padding: 0 13px; border: 1px solid rgba(255,216,106,.54); border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; color: #07172b; background: linear-gradient(135deg, #f0c35a, #ffe28a); opacity: 1; box-shadow: 0 8px 22px rgba(226,181,84,.23); font-weight: 850; }
+.desktop-nav .nav-event-link:hover, .site-header--scrolled .desktop-nav .nav-event-link:hover, .site-header--solid .desktop-nav .nav-event-link:hover { color: #07172b; background: linear-gradient(135deg, #ffd66c, #fff0b4); transform: translateY(-1px); }
 .site-header__actions { display: flex; align-items: center; gap: 15px; }
 .menu-button { display: none; padding: 8px; border: 0; color: inherit; background: transparent; cursor: pointer; }
 .mobile-menu { display: none; }
@@ -786,6 +788,8 @@ em { color: var(--blue-600); font-style: normal; }
   .mobile-menu--open { max-height: calc(100svh - 74px); overflow-y: auto; border-bottom: 1px solid var(--line); box-shadow: var(--shadow); }
   .mobile-menu nav { padding-block: 12px 18px; display: flex; flex-direction: column; }
   .mobile-menu a { padding: 13px 0; border-bottom: 1px solid #e7edf4; display: flex; justify-content: space-between; font-size: 14px; }
+  .mobile-menu .nav-event-link { margin: 7px 0; padding: 13px 15px; border: 1px solid #e4bd55; border-radius: 12px; align-items: center; color: #07172b; background: linear-gradient(135deg, #f0c35a, #ffe9a7); font-weight: 850; box-shadow: 0 8px 20px rgba(226,181,84,.18); }
+  .mobile-menu .nav-event-link span { display: inline-flex; align-items: center; gap: 8px; }
   .hero { min-height: max(740px, calc(100svh - 74px)); margin-top: 74px; align-items: flex-end; }
   .hero__image img { object-position: 69% center; }
   .hero__wash { background: linear-gradient(0deg, rgba(4,16,31,1) 17%, rgba(4,16,31,.78) 48%, rgba(4,16,31,.05) 85%); }

@@ -40,9 +40,11 @@ export function NeurofitnessPopup({ config }: { config: NeurofitnessPublicConfig
   const [open, setOpen] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const dismissedThisLoadRef = useRef(false);
 
   useEffect(() => {
     if (!config.enabled || excludedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) return;
+    if (dismissedThisLoadRef.current) return;
     if (shouldSuppress(config)) return;
     const timer = window.setTimeout(() => setOpen(true), config.delayMs);
     return () => window.clearTimeout(timer);
@@ -74,11 +76,13 @@ export function NeurofitnessPopup({ config }: { config: NeurofitnessPublicConfig
   }, [open]);
 
   function dismiss() {
+    dismissedThisLoadRef.current = true;
     rememberDismissal(config);
     setOpen(false);
   }
 
   function start() {
+    dismissedThisLoadRef.current = true;
     rememberDismissal(config);
     setOpen(false);
     router.push("/reto-neurofitness");

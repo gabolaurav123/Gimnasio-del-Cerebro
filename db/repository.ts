@@ -1843,7 +1843,7 @@ export const defaultSettings: Record<string, string> = {
   whatsappCatalogPath: "/entrenamientos",
   neurofitnessEnabled: "true",
   neurofitnessCampaignKey: "ccm-2026",
-  neurofitnessPopupFrequency: "session",
+  neurofitnessPopupFrequency: "always",
   neurofitnessPopupDelayMs: "1400",
   neurofitnessPopupEyebrow: "Juego del evento",
   neurofitnessPopupTitle: "Reto Neurofitness",
@@ -1866,6 +1866,8 @@ export async function getSettings() {
       ["heroTitle", "Entrena tu cerebro. Transforma tu vida.", defaultSettings.heroTitle],
       ["heroDescription", "Más de una década acompañando a personas en el desarrollo de una vida más consciente.", defaultSettings.heroDescription],
       ["whatsappAiGreeting", "¡Hola! 😊 Soy el asistente de Gimnasio del Cerebro. Cuéntame qué te gustaría mejorar o sobre qué entrenamiento deseas información.", defaultSettings.whatsappAiGreeting],
+      ["neurofitnessPopupFrequency", "session", "always"],
+      ["neurofitnessPopupFrequency", "day", "always"],
     ].map(([key, oldValue, newValue]) => db.prepare(`UPDATE site_settings SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ? AND value = ?`).bind(newValue, key, oldValue));
     await db.batch([...inserts, ...legacySettingMigrations]);
     const result = await db.prepare(`SELECT key, value FROM site_settings`).all<{ key: string; value: string }>();
