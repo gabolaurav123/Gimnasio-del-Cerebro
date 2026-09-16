@@ -9,8 +9,8 @@ import type { Associate, PublicNotification } from "../../db/repository";
 
 type NavItem = { href: string; label: string; featured?: boolean; children?: { href: string; label: string }[] };
 const nav: NavItem[] = [
-  { href: "/", label: "Inicio" },
   { href: "/reto-neurofitness", label: "Evento", featured: true },
+  { href: "/", label: "Inicio" },
   { href: "/nosotros", label: "Nosotros" },
   { href: "/entrenamientos", label: "Entrenamientos", children: [{ href: "/entrenamientos/programas", label: "Programas" }, { href: "/entrenamientos/cursos", label: "Cursos" }, { href: "/entrenamientos/neuroretos", label: "Neuroretos" }, { href: "/entrenamientos/talleres", label: "Talleres" }, { href: "/eventos", label: "Eventos" }] },
   { href: "/productos", label: "Productos" },

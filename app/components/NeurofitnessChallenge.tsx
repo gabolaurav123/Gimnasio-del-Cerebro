@@ -6,7 +6,8 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { neurofitnessDomainLabels, type NeurofitnessRawMetrics, type NeurofitnessScores } from "../../lib/neurofitness";
 
 type Attempt = { id: string; token: string; seed: number };
-type GamePhase = "intro" | "starting" | "countdown" | "playing" | "between" | "saving" | "gate" | "result" | "error";
+type GamePhase = "intro" | "starting" | "briefing" | "countdown" | "playing" | "between" | "saving" | "gate" | "result" | "error";
+type ErrorAction = "start" | "complete";
 type FocusStimulus = { id: number; direction: "left" | "right"; shownAt: number; responded: boolean };
 type ControlStimulus = { id: number; word: ColorName; color: ColorName; shownAt: number; responded: boolean };
 type FlexStimulus = { id: number; shape: "circle" | "square"; expected: "left" | "right"; postSwitch: boolean; responded: boolean };
@@ -55,6 +56,7 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
   const [countdown, setCountdown] = useState(3);
   const [timeLeft, setTimeLeft] = useState(15);
   const [message, setMessage] = useState("");
+  const [errorAction, setErrorAction] = useState<ErrorAction>("start");
   const [focusStimulus, setFocusStimulus] = useState<FocusStimulus | null>(null);
   const [controlStimulus, setControlStimulus] = useState<ControlStimulus | null>(null);
   const [memorySequence, setMemorySequence] = useState<string[]>([]);
@@ -75,6 +77,7 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
   const memoryAnswerRef = useRef("");
   const memoryQuestionRef = useRef(0);
   const memoryAnswerTimerRef = useRef<number | null>(null);
+  const memoryLockedRef = useRef(false);
   const memoryOptionsRef = useRef<HTMLDivElement>(null);
   const flexRef = useRef<FlexStimulus | null>(null);
   const phaseFocusRef = useRef<HTMLElement>(null);
@@ -110,8 +113,8 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
       setStageIndex((value) => value + 1);
       setTimeLeft(15);
       setMessage("");
-      setPhase("playing");
-    }, 1600);
+      setPhase("briefing");
+    }, 950);
     return () => window.clearTimeout(timer);
   }, [phase]);
 
@@ -215,6 +218,7 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
     const absent = shuffled(memoryPool.filter((value) => !sequence.includes(value)), rngRef.current)[0];
     const options = shuffled([...shuffled(sequence, rngRef.current).slice(0, 3), absent], rngRef.current);
     memoryAnswerRef.current = absent;
+    memoryLockedRef.current = false;
     setMemoryOptions(options);
     setMemoryFeedback(null);
   }
@@ -229,6 +233,7 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
     memoryAnswerRef.current = "";
     memoryQuestionRef.current = 0;
     memoryAnswerTimerRef.current = null;
+    memoryLockedRef.current = false;
     setFocusStimulus(null);
     setControlStimulus(null);
     setFlexStimulus(null);
@@ -255,22 +260,36 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
       setStageIndex(0);
       setResult(null);
       setCountdown(3);
-      setPhase("countdown");
+      setErrorAction("start");
+      setPhase("briefing");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No pudimos iniciar el reto.");
+      setErrorAction("start");
       setPhase("error");
     }
   }
 
+  function beginStage() {
+    setCountdown(3);
+    setMessage("");
+    setPhase("countdown");
+  }
+
   async function completeAttempt() {
-    if (!attempt) { setMessage("El intento perdió su identificación. Inicia nuevamente."); setPhase("error"); return; }
+    if (!attempt) { setMessage("El intento perdió su identificación. Inicia nuevamente."); setErrorAction("start"); setPhase("error"); return; }
     try {
       const response = await fetch("/api/neurofitness/complete", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: attempt.id, token: attempt.token, metrics: metricsRef.current }) });
       const payload = await response.json() as { error?: string };
-      if (!response.ok) throw new Error(payload.error || "No pudimos analizar el reto.");
+      if (!response.ok) {
+        setMessage(payload.error || "No pudimos analizar el reto.");
+        setErrorAction(response.status >= 500 ? "complete" : "start");
+        setPhase("error");
+        return;
+      }
       setPhase("gate");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No pudimos analizar el reto.");
+      setErrorAction("complete");
       setPhase("error");
     }
   }
@@ -306,7 +325,8 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
   }
 
   function chooseMemory(option: string) {
-    if (memoryMode !== "quiz" || memoryFeedback) return;
+    if (memoryMode !== "quiz" || memoryFeedback || memoryLockedRef.current) return;
+    memoryLockedRef.current = true;
     const correct = option === memoryAnswerRef.current;
     if (correct) metricsRef.current.memory.correct += 1;
     else metricsRef.current.memory.incorrect += 1;
@@ -423,26 +443,41 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
     </main>}
 
     {phase === "starting" && <main ref={phaseFocusRef} tabIndex={-1} className="neuro-analyzing neuro-game__phase-focus"><div className="neuro-analyzing__brain"><BrainCircuit /></div><span>PREPARANDO TU RETO…</span><p>Estamos creando una partida segura para vos.</p></main>}
-    {phase === "countdown" && <main ref={phaseFocusRef} tabIndex={-1} className="neuro-countdown neuro-game__phase-focus"><span>Prepará tu atención</span><strong>{countdown || "¡YA!"}</strong><p>El reto comienza ahora.</p></main>}
+    {phase === "briefing" && <main ref={phaseFocusRef} tabIndex={-1} className="neuro-briefing neuro-game__phase-focus">
+      <section>
+        <span>DESAFÍO {stageIndex + 1} DE 4 · 15 SEGUNDOS</span>
+        <h1>{activeStage.label}</h1>
+        <p>{stageIndex === 0 ? "Tocá la tarjeta grande únicamente cuando veas una flecha hacia la izquierda. Si apunta a la derecha, esperá." : stageIndex === 1 ? "Mirá el color de la tinta y tocá el botón de ese color. Ignorá lo que dice la palabra." : stageIndex === 2 ? "Primero memorizá los cinco elementos. Después tocá cuál de las opciones es nuevo." : "Mirá la figura y tocá IZQUIERDA o DERECHA según la regla. Cuando aparezca CAMBIO, invertí la respuesta."}</p>
+        <div className={`neuro-briefing__demo neuro-briefing__demo--${activeStage.key}`} aria-hidden="true">
+          {stageIndex === 0 && <><i>→</i><i>→</i><i className="is-target">←</i><i>→</i></>}
+          {stageIndex === 1 && <><strong style={{ color: colorMap.azul }}>ROJO</strong><b>TOCÁ: AZUL</b></>}
+          {stageIndex === 2 && <><i>🍋</i><i>7</i><i>★</i><i>🔑</i><i>3</i></>}
+          {stageIndex === 3 && <><b>○ → IZQUIERDA</b><strong>🔄 CAMBIO</strong><b>○ → DERECHA</b></>}
+        </div>
+        <button className="neuro-game__primary" type="button" onClick={beginStage}>Entendido, comenzar {activeStage.label}<ArrowRight /></button>
+      </section>
+    </main>}
+    {phase === "countdown" && <main ref={phaseFocusRef} tabIndex={-1} className="neuro-countdown neuro-game__phase-focus"><span>{activeStage.label} · Prepará tu atención</span><strong>{countdown || "¡YA!"}</strong><p>{activeStage.instruction}</p></main>}
 
     {phase === "playing" && <main ref={phaseFocusRef} tabIndex={-1} className="neuro-stage neuro-game__phase-focus">
       <div className="neuro-stage__header">
-        <div><span>DESAFÍO {stageIndex + 1} / 4</span><h1>{activeStage.label}</h1><p>{activeStage.instruction}</p></div>
+        <div><span>DESAFÍO {stageIndex + 1} / 4 · 15 SEGUNDOS</span><h1>{activeStage.label}</h1><p>{activeStage.instruction}</p></div>
         <div className="neuro-stage__timer"><strong>{Math.ceil(timeLeft)}</strong><span>seg</span></div>
       </div>
       <div className="neuro-stage__progress"><span style={{ width: `${(timeLeft / 15) * 100}%` }} /></div>
 
       {stageIndex === 0 && <section className="neuro-play neuro-play--focus">
-        <p>TOCÁ SOLO SI APUNTA A LA IZQUIERDA</p>
+        <p>TOCÁ LA TARJETA SOLO SI VES ←</p>
         <button type="button" className={`neuro-focus-target ${focusStimulus?.responded ? "answered" : ""}`} onClick={tapFocus} aria-label={`Flecha hacia la ${focusStimulus?.direction === "left" ? "izquierda; responder" : "derecha; no responder"}`}>
-          {focusStimulus?.direction === "left" ? <ChevronLeft /> : <ChevronRight />}
+          <span className="neuro-stimulus-in" key={focusStimulus?.id}>{focusStimulus?.direction === "left" ? <ChevronLeft /> : <ChevronRight />}</span>
+          <b>TOCAR ESTA TARJETA</b>
         </button>
         <span role="status" aria-live="polite">{message || "Observá con atención"}</span>
       </section>}
 
       {stageIndex === 1 && <section className="neuro-play neuro-play--control">
         <p>NO LEAS LA PALABRA. TOCÁ EL COLOR.</p>
-        <strong role="img" aria-label={`${controlStimulus?.word || "palabra"}, escrita en color ${controlStimulus?.color || "azul"}`} style={{ color: colorMap[controlStimulus?.color || "azul"] }}>{controlStimulus?.word.toUpperCase()}</strong>
+        <strong className="neuro-stimulus-in" key={controlStimulus?.id} role="img" aria-label={`${controlStimulus?.word || "palabra"}, escrita en color ${controlStimulus?.color || "azul"}`} style={{ color: colorMap[controlStimulus?.color || "azul"] }}>{controlStimulus?.word.toUpperCase()}</strong>
         <div>{(Object.keys(colorMap) as ColorName[]).map((color) => <button type="button" aria-label={`Elegir color ${color}`} key={color} onClick={() => chooseColor(color)} style={{ "--choice-color": colorMap[color] } as React.CSSProperties}>{color.toUpperCase()}</button>)}</div>
         <span role="status" aria-live="polite">{message || "Elegí el color de la tinta"}</span>
       </section>}
@@ -453,7 +488,7 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
 
       {stageIndex === 3 && <section className="neuro-play neuro-play--flex">
         <div className={`neuro-rule-card ${flexStimulus?.postSwitch ? "changed" : ""}`} aria-live="assertive"><span>{flexStimulus?.postSwitch ? "🔄 CAMBIO DE REGLA" : "REGLA ACTUAL"}</span><p>{flexStimulus?.postSwitch ? "Círculo → derecha · Cuadrado → izquierda" : "Círculo → izquierda · Cuadrado → derecha"}</p></div>
-        <strong className={`neuro-shape neuro-shape--${flexStimulus?.shape || "circle"}`} aria-label={flexStimulus?.shape === "square" ? "Cuadrado" : "Círculo"} />
+        <strong key={flexStimulus?.id} className={`neuro-shape neuro-stimulus-in neuro-shape--${flexStimulus?.shape || "circle"}`} aria-label={flexStimulus?.shape === "square" ? "Cuadrado" : "Círculo"} />
         <div className="neuro-flex-actions"><button type="button" onClick={() => chooseSide("left")}><ChevronLeft />IZQUIERDA</button><button type="button" onClick={() => chooseSide("right")}>DERECHA<ChevronRight /></button></div>
         <span role="status" aria-live="polite">{message || "Aplicá la regla"}</span>
       </section>}
@@ -498,6 +533,6 @@ export function NeurofitnessChallenge({ rankingLabel }: { rankingLabel: string }
       </aside>
     </main>}
 
-    {phase === "error" && <main ref={phaseFocusRef} tabIndex={-1} className="neuro-error neuro-game__phase-focus"><BrainCircuit /><h1>No pudimos continuar</h1><p>{message}</p><div className="neuro-error__actions"><button className="neuro-game__primary" type="button" onClick={() => { if (attempt) { setPhase("saving"); void completeAttempt(); } else resetGame(); }}><RotateCcw />{attempt ? "Reintentar el análisis" : "Volver a intentar"}</button>{attempt && <button type="button" onClick={resetGame}>Comenzar un reto nuevo</button>}</div></main>}
+    {phase === "error" && <main ref={phaseFocusRef} tabIndex={-1} className="neuro-error neuro-game__phase-focus"><BrainCircuit /><h1>No pudimos continuar</h1><p>{message}</p><div className="neuro-error__actions"><button className="neuro-game__primary" type="button" onClick={() => { if (errorAction === "complete" && attempt) { setPhase("saving"); void completeAttempt(); } else void startGame(); }}><RotateCcw />{errorAction === "complete" && attempt ? "Reintentar el análisis" : "Reiniciar reto"}</button><button type="button" onClick={resetGame}>Volver al inicio</button></div></main>}
   </div>;
 }

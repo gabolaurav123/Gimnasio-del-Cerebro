@@ -3,7 +3,10 @@ import { completeNeurofitnessAttempt, NeurofitnessDataError } from "../../../../
 import { requestIsSameOrigin } from "../../../../lib/auth";
 
 const counter = z.number().int().min(0).max(120);
-const reactionTimes = z.array(z.number().int().min(80).max(5000)).max(80);
+// Mobile browsers can legitimately report a sub-80 ms tap when a finger is already
+// moving as the stimulus changes. Scoring already clamps implausibly fast values,
+// so accepting the raw non-negative measurement avoids discarding a full run.
+const reactionTimes = z.array(z.number().int().min(0).max(5000)).max(80);
 const metricsSchema = z.object({
   focus: z.object({ correct: counter, incorrect: counter, reactionTimes }),
   control: z.object({ correct: counter, incorrect: counter, reactionTimes }),
@@ -19,9 +22,8 @@ const metricsSchema = z.object({
   for (const [domain, total, maximum] of limits) {
     if (total > maximum) context.addIssue({ code: "custom", path: [domain], message: "Cantidad de respuestas no válida." });
   }
-  if (metrics.focus.correct + metrics.focus.incorrect < 3) context.addIssue({ code: "custom", path: ["focus"], message: "El desafío de foco quedó incompleto." });
-  if (metrics.control.correct + metrics.control.incorrect < 8) context.addIssue({ code: "custom", path: ["control"], message: "El desafío de control quedó incompleto." });
-  if (metrics.flexibility.correct + metrics.flexibility.incorrect < 9) context.addIssue({ code: "custom", path: ["flexibility"], message: "El desafío de flexibilidad quedó incompleto." });
+  // Do not reject slower devices merely because timer throttling produced fewer
+  // stimuli. Duration and structural checks below still protect the attempt.
   if (metrics.focus.reactionTimes.length !== metrics.focus.correct) context.addIssue({ code: "custom", path: ["focus", "reactionTimes"], message: "Tiempos de reacción no válidos." });
   if (metrics.control.reactionTimes.length !== metrics.control.correct) context.addIssue({ code: "custom", path: ["control", "reactionTimes"], message: "Tiempos de reacción no válidos." });
   if (metrics.memory.correct + metrics.memory.incorrect !== 5) context.addIssue({ code: "custom", path: ["memory"], message: "Respuestas de memoria incompletas." });
