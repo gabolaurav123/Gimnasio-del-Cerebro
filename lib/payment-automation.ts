@@ -1,4 +1,5 @@
 import { reconcileProviderPayment } from "../db/repository";
+import { buildTrackedHotmartUrl, parseHotmartWebhook } from "./hotmart-automation";
 import { classifyStripeChargeRefund } from "./payment-refunds";
 import { getRuntimeValues } from "./runtime-env";
 import { sha256, verifyHotmartToken, verifyStripeSignature } from "./payment-security";
@@ -19,10 +20,7 @@ function trackedProviderUrl(input: CheckoutDestinationInput) {
   if (input.provider === "STRIPE") {
     url.searchParams.set("client_reference_id", input.paymentId);
     url.searchParams.set("prefilled_email", input.payerEmail);
-  } else {
-    url.searchParams.set("sck", input.paymentId);
-    url.searchParams.set("src", "gdc_web");
-  }
+  } else return buildTrackedHotmartUrl(input.checkoutUrl, input.paymentId);
   return url.toString();
 }
 
@@ -128,52 +126,15 @@ export async function processStripeWebhook(rawBody: string, signature: string | 
   });
 }
 
-type HotmartPayload = Record<string, unknown> & { data?: Record<string, unknown> };
-
-function decimalToCents(value: unknown) {
-  const number = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(number) ? Math.max(0, Math.round(number * 100)) : null;
-}
-
 export async function processHotmartWebhook(rawBody: string, receivedToken: string | null) {
   const runtime = await getRuntimeValues(["HOTMART_WEBHOOK_TOKEN"]);
   if (!verifyHotmartToken(receivedToken, runtime.HOTMART_WEBHOOK_TOKEN)) throw new Error("Token de Hotmart inválido.");
-  const payload = JSON.parse(rawBody) as HotmartPayload;
-  const data = objectValue(payload.data);
-  const purchase = objectValue(data.purchase);
-  const buyer = objectValue(data.buyer);
-  const product = objectValue(data.product);
-  const price = objectValue(purchase.price);
-  const payment = objectValue(purchase.payment);
-  const tracking = objectValue(purchase.tracking);
-  const eventType = (stringValue(payload.event) || stringValue(purchase.status) || "UNKNOWN").toUpperCase();
-  let status: "PENDING" | "VERIFIED" | "REJECTED" | "REFUNDED" = "PENDING";
-  if (["PURCHASE_APPROVED", "PURCHASE_COMPLETE", "APPROVED", "COMPLETE"].includes(eventType)) status = "VERIFIED";
-  if (["PURCHASE_REFUNDED", "PURCHASE_CHARGEBACK", "PURCHASE_PROTEST", "REFUNDED", "CHARGEBACK"].includes(eventType)) status = "REFUNDED";
-  if (["PURCHASE_CANCELED", "PURCHASE_CANCELLED", "PURCHASE_EXPIRED", "CANCELED", "CANCELLED", "EXPIRED"].includes(eventType)) status = "REJECTED";
-  const transaction = stringValue(purchase.transaction) || stringValue(payload.transaction);
-  const eventId = payload.id == null ? `${eventType}:${transaction || await sha256(rawBody)}` : String(payload.id);
-  const approvedDate = typeof purchase.approved_date === "number"
-    ? new Date(purchase.approved_date).toISOString()
-    : stringValue(purchase.approved_date) && Number.isFinite(new Date(String(purchase.approved_date)).getTime())
-      ? new Date(String(purchase.approved_date)).toISOString()
-      : null;
-  const paymentType = stringValue(payment.type)?.replaceAll("_", " ") || "Hotmart";
+  const payload = JSON.parse(rawBody) as unknown;
+  const payloadHash = await sha256(rawBody);
+  const event = parseHotmartWebhook(payload, payloadHash);
   return reconcileProviderPayment({
     provider: "HOTMART",
-    eventId,
-    eventType,
-    payloadHash: await sha256(rawBody),
-    localPaymentId: stringValue(tracking.source_sck) || stringValue(purchase.sck),
-    providerReference: transaction,
-    externalItemId: product.id == null ? null : String(product.id),
-    status,
-    payerName: stringValue(buyer.name),
-    payerEmail: stringValue(buyer.email),
-    payerPhone: stringValue(buyer.checkout_phone) || stringValue(buyer.phone),
-    amountCents: decimalToCents(price.value),
-    currency: stringValue(price.currency_code),
-    paidAt: status === "VERIFIED" ? approvedDate || new Date().toISOString() : null,
-    paymentMethod: paymentType,
+    ...event,
+    payloadHash,
   });
 }

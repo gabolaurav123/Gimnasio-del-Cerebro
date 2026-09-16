@@ -263,17 +263,18 @@ test("cada entrenamiento tiene portada propia y la configuración de pago se pre
 });
 
 test("los webhooks de pagos validan autenticidad y concilian de forma idempotente", async () => {
-  const [automation, stripeRoute, hotmartRoute, repository, resultPage] = await Promise.all([
+  const [automation, hotmartAutomation, stripeRoute, hotmartRoute, repository, resultPage] = await Promise.all([
     read("../lib/payment-automation.ts"),
+    read("../lib/hotmart-automation.ts"),
     read("../app/api/webhooks/stripe/route.ts"),
     read("../app/api/webhooks/hotmart/route.ts"),
     read("../db/repository.ts"),
     read("../app/pago/resultado/page.tsx"),
   ]);
   assert.match(automation, /checkout\.session\.completed/);
-  assert.match(automation, /PURCHASE_APPROVED/);
+  assert.match(hotmartAutomation, /PURCHASE_APPROVED/);
   assert.match(automation, /client_reference_id/);
-  assert.match(automation, /source_sck/);
+  assert.match(hotmartAutomation, /source_sck/);
   assert.match(stripeRoute, /stripe-signature/);
   assert.match(hotmartRoute, /x-hotmart-hottok/);
   assert.match(repository, /idx_payment_webhook_events_provider_event/);
