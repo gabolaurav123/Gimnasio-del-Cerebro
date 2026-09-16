@@ -793,6 +793,8 @@ const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS accounting_entries (id TEXT PRIMARY KEY, payment_id TEXT, entry_type TEXT NOT NULL, category TEXT NOT NULL, item_type TEXT NOT NULL DEFAULT 'GENERAL', item_id TEXT, description TEXT NOT NULL, amount_cents INTEGER NOT NULL, currency TEXT NOT NULL DEFAULT 'BOB', occurred_at TEXT NOT NULL, created_by TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, title TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT NOT NULL, image TEXT, starts_at TEXT NOT NULL, location TEXT NOT NULL, registration_url TEXT, status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS associates (id TEXT PRIMARY KEY, name TEXT NOT NULL, url TEXT NOT NULL, description TEXT NOT NULL, image TEXT, status TEXT NOT NULL DEFAULT 'DRAFT', display_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS neurofitness_attempts (id TEXT PRIMARY KEY, campaign_key TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 1, token_hash TEXT NOT NULL UNIQUE, seed INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'STARTED', metrics_json TEXT, focus_score INTEGER, control_score INTEGER, memory_score INTEGER, flexibility_score INTEGER, total_score INTEGER, best_domain TEXT, participant_id TEXT, duration_ms INTEGER, started_at TEXT NOT NULL, completed_at TEXT, claimed_at TEXT, whatsapp_delivery_status TEXT NOT NULL DEFAULT 'PENDING', whatsapp_delivery_started_at TEXT, whatsapp_message_id TEXT, whatsapp_delivery_error TEXT, whatsapp_delivered_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
+  `CREATE TABLE IF NOT EXISTS neurofitness_participants (id TEXT PRIMARY KEY, campaign_key TEXT NOT NULL, name TEXT NOT NULL, ranking_alias TEXT, phone TEXT NOT NULL, phone_hash TEXT NOT NULL, best_attempt_id TEXT NOT NULL, result_consent_at TEXT NOT NULL, marketing_consent_at TEXT, ranking_consent_at TEXT, consent_version TEXT NOT NULL DEFAULT 'neurofitness-2026-09', source_event TEXT NOT NULL DEFAULT 'CCM', whatsapp_delivery_status TEXT NOT NULL DEFAULT 'PENDING', whatsapp_attempt_id TEXT, whatsapp_message_id TEXT, whatsapp_delivery_error TEXT, whatsapp_delivered_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
   `CREATE INDEX IF NOT EXISTS idx_contacts_status_created_at ON contacts(status, created_at)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_whatsapp_auth_keys_unique ON whatsapp_auth_keys(category, key_id)`,
   `CREATE INDEX IF NOT EXISTS idx_whatsapp_conversations_updated ON whatsapp_conversations(last_message_at)`,
@@ -825,6 +827,12 @@ const schemaStatements = [
   `CREATE INDEX IF NOT EXISTS idx_accounting_entries_item ON accounting_entries(item_type, item_id)`,
   `CREATE INDEX IF NOT EXISTS idx_events_status_date ON events(status, starts_at)`,
   `CREATE INDEX IF NOT EXISTS idx_associates_status_order ON associates(status, display_order)`,
+  `CREATE INDEX IF NOT EXISTS idx_neurofitness_attempts_campaign_status ON neurofitness_attempts(campaign_key, status)`,
+  `CREATE INDEX IF NOT EXISTS idx_neurofitness_attempts_campaign_score ON neurofitness_attempts(campaign_key, total_score)`,
+  `CREATE INDEX IF NOT EXISTS idx_neurofitness_attempts_created_at ON neurofitness_attempts(created_at)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_neurofitness_participants_campaign_phone ON neurofitness_participants(campaign_key, phone_hash)`,
+  `CREATE INDEX IF NOT EXISTS idx_neurofitness_participants_best_attempt ON neurofitness_participants(best_attempt_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_neurofitness_participants_ranking ON neurofitness_participants(campaign_key, ranking_consent_at)`,
 ];
 
 const postgresSchemaStatements = [
@@ -855,6 +863,11 @@ const additiveMigrations = [
   `ALTER TABLE appointment_blocks ADD COLUMN end_date TEXT`,
   `ALTER TABLE products ADD COLUMN deleted_at TEXT`,
   `ALTER TABLE events ADD COLUMN deleted_at TEXT`,
+  `ALTER TABLE neurofitness_attempts ADD COLUMN whatsapp_delivery_status TEXT NOT NULL DEFAULT 'PENDING'`,
+  `ALTER TABLE neurofitness_attempts ADD COLUMN whatsapp_delivery_started_at TEXT`,
+  `ALTER TABLE neurofitness_attempts ADD COLUMN whatsapp_message_id TEXT`,
+  `ALTER TABLE neurofitness_attempts ADD COLUMN whatsapp_delivery_error TEXT`,
+  `ALTER TABLE neurofitness_attempts ADD COLUMN whatsapp_delivered_at TEXT`,
   `CREATE INDEX IF NOT EXISTS idx_appointment_blocks_recurrence_active ON appointment_blocks(recurrence, weekday, active)`,
 ];
 
@@ -876,7 +889,14 @@ export function ensureDatabase() {
   ready = (async () => {
     const db = await getRuntimeDatabase();
     const statements = db.dialect === "postgres" ? [...schemaStatements, ...postgresSchemaStatements] : schemaStatements;
-    for (const statement of statements) {
+    const indexStatementPattern = /^\s*CREATE\s+(?:UNIQUE\s+)?INDEX\b/i;
+    const tableStatements = statements.filter((statement) => !indexStatementPattern.test(statement));
+    const indexStatements = statements.filter((statement) => indexStatementPattern.test(statement));
+
+    // Older installations can be missing columns introduced by the additive
+    // migrations below. Create tables first, add those columns, and only then
+    // build indexes that reference them.
+    for (const statement of tableStatements) {
       try {
         await db.prepare(statement).run();
       } catch (error) {
@@ -891,6 +911,16 @@ export function ensureDatabase() {
         await db.prepare(statement).run();
       } catch (error) {
         if (!isExistingColumnError(error)) throw error;
+      }
+    }
+    for (const statement of indexStatements) {
+      try {
+        await db.prepare(statement).run();
+      } catch (error) {
+        // Existing production data can temporarily prevent a new unique index
+        // from being built. That index must not take the whole website down.
+        if (!isNonFatalUniqueIndexError(error, statement)) throw error;
+        console.error("Deferred unique index migration because existing rows conflict.", error);
       }
     }
     const adminConfig = await getRuntimeValues(["ADMIN_EMAIL", "ADMIN_PASSWORD", "ADMIN_PASSWORD_HASH"]);
@@ -1811,6 +1841,18 @@ export const defaultSettings: Record<string, string> = {
   whatsappAiBusinessHours: "Atención humana según disponibilidad del equipo. La IA puede orientar en cualquier momento.",
   whatsappCurrentCampaignSlug: "super-cerebro-master-class",
   whatsappCatalogPath: "/entrenamientos",
+  neurofitnessEnabled: "true",
+  neurofitnessCampaignKey: "ccm-2026",
+  neurofitnessPopupFrequency: "session",
+  neurofitnessPopupDelayMs: "1400",
+  neurofitnessPopupEyebrow: "Juego del evento",
+  neurofitnessPopupTitle: "Reto Neurofitness",
+  neurofitnessPopupDescription: "¿Qué tan entrenado está tu cerebro? 60 segundos · 4 desafíos · 1 resultado.",
+  neurofitnessPopupCta: "Iniciar reto",
+  neurofitnessEventLabel: "Conferencia especial · CCM",
+  neurofitnessRankingLabel: "NEUROFITNESS LIVE · CCM",
+  neurofitnessRewardLabel: "",
+  neurofitnessRewardUrl: "",
 };
 
 export async function getSettings() {
@@ -1833,6 +1875,17 @@ export async function getSettings() {
       const runtime = await getRuntimeValues(["WHATSAPP_NUMBER"]);
       return { ...defaultSettings, whatsapp: runtime.WHATSAPP_NUMBER?.trim() || defaultSettings.whatsapp };
     }
+    throw error;
+  }
+}
+
+export async function getSettingsReadOnly() {
+  try {
+    const db = await ensureDatabase();
+    const result = await db.prepare(`SELECT key, value FROM site_settings`).all<{ key: string; value: string }>();
+    return { ...defaultSettings, ...Object.fromEntries(result.results.map((row) => [row.key, row.value])) };
+  } catch (error) {
+    if (canUsePublicFallback(error)) return { ...defaultSettings };
     throw error;
   }
 }

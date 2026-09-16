@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, BookOpen, Bot, BrainCircuit, Calculator, CalendarDays, ChevronRight, ContactRound, CreditCard, FileText, Gauge, Handshake, ImageIcon, LogOut, Menu, MessageCircleMore, MessageSquareQuote, Search, Settings2, ShoppingBag, UserRoundCheck, UsersRound, X } from "lucide-react";
+import { ArrowLeft, BookOpen, Bot, BrainCircuit, Calculator, CalendarDays, ChevronRight, ContactRound, CreditCard, FileText, Gauge, Gamepad2, Handshake, ImageIcon, LogOut, Menu, MessageCircleMore, MessageSquareQuote, Search, Settings2, ShoppingBag, UserRoundCheck, UsersRound, X } from "lucide-react";
 import { FormEvent, useState } from "react";
 import type { AdminRole } from "../../db/repository";
 
@@ -11,6 +11,7 @@ const items = [
   { href: "/admin/crm", label: "Contactos y citas", icon: ContactRound, roles: ["SUPERADMIN", "COMERCIAL"] },
   { href: "/admin/entrenamientos", label: "Entrenamientos", icon: BrainCircuit, roles: ["SUPERADMIN", "EDITOR"] },
   { href: "/admin/eventos", label: "Eventos", icon: CalendarDays, roles: ["SUPERADMIN", "EDITOR"] },
+  { href: "/admin/reto-neurofitness", label: "Reto Neurofitness", icon: Gamepad2, roles: ["SUPERADMIN", "COMERCIAL"] },
   { href: "/admin/productos", label: "Productos", icon: ShoppingBag, roles: ["SUPERADMIN", "EDITOR"] },
   { href: "/admin/pagos", label: "Pagos", icon: CreditCard, roles: ["SUPERADMIN", "COMERCIAL"] },
   { href: "/admin/contabilidad", label: "Contabilidad", icon: Calculator, roles: ["SUPERADMIN"] },
