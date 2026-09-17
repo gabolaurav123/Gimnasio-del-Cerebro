@@ -211,11 +211,12 @@ export function WhatsAppAdmin({ settings, initialConnection, campaigns, openAISt
   }
 
   const connected = connection.state === "connected";
+  const canRecoverSession = !connection.qr && Boolean(connection.phoneNumber && connection.lastConnectedAt);
   const status = statusCopy[connection.state];
   const statusIcon = connected ? <Wifi /> : connection.state === "error" || connection.state === "service_unavailable" ? <CircleAlert /> : transientStates.has(connection.state) ? <Loader2 className="spin" /> : <WifiOff />;
   const campaignName = campaigns.find((campaign) => campaign.slug === campaignSlug)?.name || "Sin campaña destacada";
   const setupReady = connected && connection.openAiConfigured && assistantEnabled;
-  const missingSteps = [!connected ? "vincular el número" : "", !connection.openAiConfigured ? "configurar OpenAI" : "", !assistantEnabled ? "activar las respuestas automáticas" : ""].filter(Boolean);
+  const missingSteps = [!connected ? canRecoverSession ? "recuperar la conexión guardada" : "vincular el número" : "", !connection.openAiConfigured ? "configurar OpenAI" : "", !assistantEnabled ? "activar las respuestas automáticas" : ""].filter(Boolean);
   const responseDelayLabel = responseDelayMs === "0" ? "Inmediata" : responseDelayMs === "900" ? "Aprox. 1 segundo" : responseDelayMs === "2000" ? "Aprox. 2 segundos" : "Aprox. 5 segundos";
 
   return <div className="whatsapp-workspace">
@@ -248,8 +249,8 @@ export function WhatsAppAdmin({ settings, initialConnection, campaigns, openAISt
 
       <section className="admin-card whatsapp-link-card">
         <div className="admin-card__heading"><div><h2><QrCode size={20} /> Vinculación</h2><p>Escanea un QR real como al vincular WhatsApp Web.</p></div></div>
-        {connected ? <div className="wa-connected-panel"><CheckCircle2 /><h3>Sesión vinculada</h3><p>El QR se oculta mientras la conexión permanece válida. La sesión se recuperará automáticamente al reiniciar el servidor.</p></div> : connection.qr ? <div className="wa-qr-panel"><div className="wa-qr-frame"><img src={connection.qr} alt="Código QR para vincular WhatsApp" /></div><strong>Esperando vinculación…</strong><p>El código se renueva automáticamente cuando expira.</p></div> : <div className="wa-link-empty">{transientStates.has(connection.state) ? <Loader2 className="spin" /> : <QrCode />}<h3>{status.title}</h3><p>{connection.available ? "Pulsa el botón para iniciar una nueva vinculación." : "La vinculación QR necesita el servidor Node de producción."}</p></div>}
-        {!connected && <button className="button button--primary wa-link-button" type="button" disabled={Boolean(busy) || !connection.available || ["initializing", "generating_qr", "connecting", "reconnecting"].includes(connection.state)} onClick={generateQr}><QrCode size={18} />{connection.qr ? "Generar nuevo QR" : busy === "connect" ? "Iniciando…" : "Vincular WhatsApp"}</button>}
+        {connected ? <div className="wa-connected-panel"><CheckCircle2 /><h3>Sesión vinculada</h3><p>El QR se oculta mientras la conexión permanece válida. La sesión se recuperará automáticamente al reiniciar el servidor.</p></div> : connection.qr ? <div className="wa-qr-panel"><div className="wa-qr-frame"><img src={connection.qr} alt="Código QR para vincular WhatsApp" /></div><strong>Esperando vinculación…</strong><p>El código se renueva automáticamente cuando expira.</p></div> : <div className="wa-link-empty">{transientStates.has(connection.state) ? <Loader2 className="spin" /> : <QrCode />}<h3>{status.title}</h3><p>{connection.available ? canRecoverSession ? "La sesión está guardada. Puedes recuperar la conexión sin desvincular el teléfono." : "Pulsa el botón para iniciar una nueva vinculación." : "La vinculación QR necesita el servidor Node de producción."}</p></div>}
+        {!connected && <button className="button button--primary wa-link-button" type="button" disabled={Boolean(busy) || !connection.available || transientStates.has(connection.state)} onClick={canRecoverSession ? () => void sessionAction("reconnect") : generateQr}>{canRecoverSession ? <RotateCcw size={18} /> : <QrCode size={18} />}{busy ? "Conectando…" : canRecoverSession ? "Reconectar sesión guardada" : connection.qr ? "Generar nuevo QR" : "Vincular WhatsApp"}</button>}
         <div className="wa-link-instructions"><strong>Cómo vincularlo</strong><ol><li>Abre WhatsApp en tu teléfono.</li><li>Entra en <b>Dispositivos vinculados</b>.</li><li>Pulsa <b>Vincular dispositivo</b>.</li><li>Escanea este código QR.</li></ol></div>
       </section>
     </div>

@@ -17,6 +17,12 @@ const serviceLog = (event, detail = {}) => console.info(JSON.stringify({ scope: 
 const safeError = (error) => String(error instanceof Error ? error.message : error || "Error desconocido").replace(/[\r\n]+/g, " ").slice(0, 260);
 const maskPhone = (phone) => phone ? `***${String(phone).replace(/\D/g, "").slice(-4)}` : "unknown";
 
+// Baileys QR pairing persists `me`, but does not always set `registered`.
+// Match Baileys' own login decision so a restart reuses the linked session.
+export function hasLinkedWhatsAppIdentity(creds) {
+  return typeof creds?.me?.id === "string" && creds.me.id.length > 0;
+}
+
 function databaseClient() {
   const url = (process.env.DATABASE_URL || process.env.POSTGRES_URL || "").trim();
   if (!url) throw new Error("DATABASE_URL no está configurada para persistir la sesión de WhatsApp.");
@@ -212,7 +218,8 @@ export async function startWhatsAppBridge({ port, applicationPort, token }) {
       const currentGeneration = generation;
       updateState({ available: true, state: recoveredSession ? "reconnecting" : "initializing", qr: null, qrExpiresAt: null, error: null, recoveredSession });
       const { state: authState, saveCreds } = await createDatabaseAuthState(sql);
-      updateState({ state: authState.creds.registered ? "connecting" : "generating_qr" });
+      if (currentGeneration !== generation) return publicStatus();
+      updateState({ state: hasLinkedWhatsAppIdentity(authState.creds) ? "connecting" : "generating_qr" });
       const nextSocket = makeWASocket({
         auth: { creds: authState.creds, keys: makeCacheableSignalKeyStore(authState.keys, logger) },
         browser: Browsers.macOS("Gimnasio del Cerebro"),
@@ -225,9 +232,11 @@ export async function startWhatsAppBridge({ port, applicationPort, token }) {
       });
       socket = nextSocket;
       nextSocket.ev.on("creds.update", async () => {
+        if (currentGeneration !== generation) return;
         try { await saveCreds(); } catch (error) { serviceLog("session_save_error", { error: safeError(error) }); }
       });
       nextSocket.ev.on("messages.upsert", async ({ messages, type }) => {
+        if (currentGeneration !== generation) return;
         if (type !== "notify") return;
         for (const message of messages) await forwardInbound(message);
       });
@@ -294,6 +303,7 @@ export async function startWhatsAppBridge({ port, applicationPort, token }) {
   }
 
   async function reconnect() {
+    if (connectPromise) return connectPromise;
     closeCurrentSocket();
     updateState({ state: "reconnecting", qr: null, qrExpiresAt: null, error: null });
     return connect(true);
@@ -352,7 +362,7 @@ export async function startWhatsAppBridge({ port, applicationPort, token }) {
       if (storedMetadata[0]) metadata = { phoneNumber: storedMetadata[0].phone_number || null, accountName: storedMetadata[0].account_name || null, lastConnectedAt: storedMetadata[0].last_connected_at || null };
       const auth = await createDatabaseAuthState(sql);
       updateState({ available: true, state: "disconnected", phoneNumber: metadata.phoneNumber, accountName: metadata.accountName, lastConnectedAt: metadata.lastConnectedAt, error: null });
-      if (auth.state.creds.registered) await connect(true);
+      if (hasLinkedWhatsAppIdentity(auth.state.creds)) await connect(true);
     } catch (error) {
       updateState({ available: false, state: "error", error: safeError(error) });
       serviceLog("initialization_error", { error: safeError(error) });
