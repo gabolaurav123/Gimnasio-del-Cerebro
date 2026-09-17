@@ -4,64 +4,20 @@ import { classifyStripeChargeRefund } from "./payment-refunds";
 import { getRuntimeValues } from "./runtime-env";
 import { sha256, verifyHotmartToken, verifyStripeSignature } from "./payment-security";
 import { getSiteOrigin } from "./site-url";
+import { buildStripeCheckoutDestination, stripeExternalItemId, type StripeCheckoutInput } from "./stripe-checkout";
 
-type CheckoutDestinationInput = {
+export { StripeCheckoutError } from "./stripe-checkout";
+
+type CheckoutDestinationInput = StripeCheckoutInput & {
   provider: "STRIPE" | "HOTMART";
-  checkoutUrl: string;
-  paymentId: string;
-  payerEmail: string;
-  itemName: string;
-  amountCents: number;
-  currency: string;
 };
-
-function trackedProviderUrl(input: CheckoutDestinationInput) {
-  const url = new URL(input.checkoutUrl);
-  if (input.provider === "STRIPE") {
-    url.searchParams.set("client_reference_id", input.paymentId);
-    url.searchParams.set("prefilled_email", input.payerEmail);
-  } else return buildTrackedHotmartUrl(input.checkoutUrl, input.paymentId);
-  return url.toString();
-}
-
-async function createStripeCheckoutSession(input: CheckoutDestinationInput) {
-  const runtime = await getRuntimeValues(["STRIPE_SECRET_KEY"]);
-  const secret = runtime.STRIPE_SECRET_KEY?.trim() || "";
-  if (!secret.startsWith("sk_") || input.amountCents <= 0) return null;
-  const origin = await getSiteOrigin();
-  const body = new URLSearchParams({
-    mode: "payment",
-    client_reference_id: input.paymentId,
-    customer_email: input.payerEmail,
-    success_url: `${origin}/pago/resultado?provider=stripe&payment_id=${encodeURIComponent(input.paymentId)}&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/pago/resultado?provider=stripe&payment_id=${encodeURIComponent(input.paymentId)}&state=cancelled`,
-    "line_items[0][quantity]": "1",
-    "line_items[0][price_data][currency]": input.currency.toLowerCase(),
-    "line_items[0][price_data][unit_amount]": String(input.amountCents),
-    "line_items[0][price_data][product_data][name]": input.itemName,
-    "metadata[gdc_payment_id]": input.paymentId,
-  });
-  const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-    method: "POST",
-    headers: { authorization: `Bearer ${secret}`, "content-type": "application/x-www-form-urlencoded" },
-    body,
-    signal: AbortSignal.timeout(20_000),
-  });
-  const payload = await response.json().catch(() => ({})) as { url?: string; error?: { message?: string } };
-  if (!response.ok || !payload.url) throw new Error(payload.error?.message || "Stripe no pudo crear la sesión de pago.");
-  return payload.url;
-}
 
 export async function buildCheckoutDestination(input: CheckoutDestinationInput) {
   if (input.provider === "STRIPE") {
-    try {
-      const sessionUrl = await createStripeCheckoutSession(input);
-      if (sessionUrl) return sessionUrl;
-    } catch (error) {
-      console.error("Stripe Checkout Session fallback", error instanceof Error ? error.message : error);
-    }
+    const [runtime, origin] = await Promise.all([getRuntimeValues(["STRIPE_SECRET_KEY"]), getSiteOrigin()]);
+    return buildStripeCheckoutDestination(input, { secret: runtime.STRIPE_SECRET_KEY?.trim() || "", origin });
   }
-  return trackedProviderUrl(input);
+  return buildTrackedHotmartUrl(input.checkoutUrl, input.paymentId);
 }
 
 type StripeEvent = { id?: string; type?: string; data?: { object?: Record<string, unknown> } };
@@ -111,6 +67,7 @@ export async function processStripeWebhook(rawBody: string, signature: string | 
     eventType,
     payloadHash: await sha256(rawBody),
     localPaymentId: stringValue(object.client_reference_id) || stringValue(metadata.gdc_payment_id),
+    externalItemId: stripeExternalItemId(metadata),
     providerReference,
     status,
     payerName: stringValue(customerDetails.name) || stringValue(billingDetails.name),

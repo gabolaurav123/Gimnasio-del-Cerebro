@@ -9,3 +9,12 @@ export function normalizeWhatsAppReply(value: string) {
 export function isRetryableOpenAIStatus(status: number) {
   return [408, 409, 429, 500, 502, 503, 504].includes(status);
 }
+
+export function whatsAppGenerationOptions(model: string) {
+  // These models default to medium reasoning, which can consume a short reply's
+  // entire token budget before any text is returned to the person.
+  return {
+    max_output_tokens: 1200,
+    ...(/^gpt-5\.6(?:[-.]|$)/.test(model) ? { reasoning: { effort: "none" as const } } : {}),
+  };
+}

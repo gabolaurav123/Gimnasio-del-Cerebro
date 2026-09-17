@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { AppointmentUnavailableError, createAppointment, createPayment } from "../../../db/repository";
+import { AppointmentUnavailableError, createAppointment, createPayment, updateAppointmentStatus, updatePaymentStatus } from "../../../db/repository";
 import { appointmentSlotsForDate, getAppointmentAvailability } from "../../../db/scheduling";
 import { requestIsSameOrigin } from "../../../lib/auth";
-import { buildCheckoutDestination } from "../../../lib/payment-automation";
+import { buildCheckoutDestination, StripeCheckoutError } from "../../../lib/payment-automation";
 import { checkRateLimit, rateLimitKey, recordRateLimitFailure } from "../../../lib/rate-limit";
 import { getRuntimeValues } from "../../../lib/runtime-env";
 
@@ -23,6 +23,8 @@ const schema = z.object({
 const limit = { max: 4, windowMs: 60 * 60 * 1000, blockMs: 60 * 60 * 1000 };
 
 export async function POST(request: Request) {
+  let createdAppointmentId: string | null = null;
+  let createdPaymentId: string | null = null;
   try {
     if (!requestIsSameOrigin(request)) return Response.json({ error: "Solicitud no permitida." }, { status: 403 });
     const key = rateLimitKey(request, "public-appointment");
@@ -42,10 +44,13 @@ export async function POST(request: Request) {
       trainingInterest: parsed.data.trainingInterest || null, appointmentType: parsed.data.appointmentType,
       disclaimerAcceptedAt: new Date().toISOString(), message: parsed.data.message,
     });
+    createdAppointmentId = id;
     let paymentUrl: string | null = null;
     if (parsed.data.appointmentType === "CONSULTATION") {
-      const runtime = await getRuntimeValues(["STRIPE_CONSULTATION_LINK", "STRIPE_CONSULTATION_AMOUNT_CENTS", "STRIPE_CONSULTATION_CURRENCY"]);
-      const checkoutUrl = runtime.STRIPE_CONSULTATION_LINK?.trim() || "https://buy.stripe.com/aFa5kD6No1as7OK5l997H01";
+      const runtime = await getRuntimeValues(["STRIPE_CONSULTATION_LINK", "STRIPE_CONSULTATION_PRICE_ID", "STRIPE_CONSULTATION_AMOUNT_CENTS", "STRIPE_CONSULTATION_CURRENCY"]);
+      const checkoutUrl = runtime.STRIPE_CONSULTATION_LINK?.trim() || "";
+      const checkoutExternalId = runtime.STRIPE_CONSULTATION_PRICE_ID?.trim() || "";
+      if (!checkoutUrl && !/^price_[A-Za-z0-9]+$/.test(checkoutExternalId)) throw new StripeCheckoutError("El pago de consultas todavía no está disponible. Contacta con el equipo.");
       const amountCents = Math.max(0, Number.parseInt(runtime.STRIPE_CONSULTATION_AMOUNT_CENTS || "0", 10) || 0);
       const currency = (runtime.STRIPE_CONSULTATION_CURRENCY?.trim() || "USD").toUpperCase();
       const payment = await createPayment({
@@ -63,12 +68,21 @@ export async function POST(request: Request) {
         notes: "Pago Stripe asociado a una cita. La cita se confirma únicamente tras el webhook firmado.",
         source: "STRIPE",
       });
-      paymentUrl = await buildCheckoutDestination({ provider: "STRIPE", checkoutUrl, paymentId: payment.id, payerEmail: parsed.data.email, itemName: "Consulta personalizada · Gimnasio del Cerebro", amountCents, currency });
+      createdPaymentId = payment.id;
+      paymentUrl = await buildCheckoutDestination({ provider: "STRIPE", checkoutUrl, checkoutExternalId, paymentId: payment.id, payerEmail: parsed.data.email, itemName: "Consulta personalizada · Gimnasio del Cerebro", amountCents, currency });
     }
     recordRateLimitFailure(key, limit);
     return Response.json({ id, paymentUrl, message: paymentUrl ? "Tu horario quedó reservado provisionalmente. Completa el pago seguro para confirmarlo." : "Tu cita quedó registrada. Te contactaremos para confirmarla." }, { status: 201, headers: { "cache-control": "no-store" } });
   } catch (error) {
+    if (createdAppointmentId) {
+      const cleanup = await Promise.allSettled([
+        updateAppointmentStatus(createdAppointmentId, "CANCELLED"),
+        ...(createdPaymentId ? [updatePaymentStatus(createdPaymentId, "REJECTED", "No se pudo iniciar el pago")] : []),
+      ]);
+      if (cleanup.some((result) => result.status === "rejected")) console.error("No se pudo liberar por completo la reserva tras un error de pago.");
+    }
     if (error instanceof AppointmentUnavailableError) return Response.json({ error: "Ese horario ya no está disponible. Elige otro." }, { status: 409 });
+    if (error instanceof StripeCheckoutError) return Response.json({ error: error.message }, { status: 503, headers: { "cache-control": "no-store" } });
     return Response.json({ error: "No pudimos registrar la cita. Inténtalo nuevamente." }, { status: 500 });
   }
 }

@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { getCustomerById } from "../../../../db/customer-repository";
-import { createPayment, getDatabase } from "../../../../db/repository";
+import { createPayment, getDatabase, updatePaymentStatus } from "../../../../db/repository";
 import { getRequestAdmin } from "../../../../lib/auth";
 import { getRequestCustomer } from "../../../../lib/customer-auth";
-import { buildCheckoutDestination } from "../../../../lib/payment-automation";
+import { buildCheckoutDestination, StripeCheckoutError } from "../../../../lib/payment-automation";
 import { checkRateLimit, rateLimitKey } from "../../../../lib/rate-limit";
 
 const schema = z.object({ itemType: z.enum(["PRODUCT", "TRAINING"]), itemId: z.string().min(1).max(100) });
@@ -17,8 +17,9 @@ export async function POST(request: Request) {
   if (!parsed.success) return Response.json({ error: "Producto inválido." }, { status: 400 });
   const db = await getDatabase();
   const table = parsed.data.itemType === "PRODUCT" ? "products" : "trainings";
-  const row = await db.prepare(`SELECT id, name, checkout_provider, checkout_url, price_cents, currency FROM ${table} WHERE id = ? AND status = 'PUBLISHED' AND deleted_at IS NULL LIMIT 1`).bind(parsed.data.itemId).first<{ id: string; name: string; checkout_provider: string; checkout_url: string | null; price_cents: number; currency: string }>();
-  if (!row || !["STRIPE", "HOTMART"].includes(row.checkout_provider) || !row.checkout_url) return Response.json({ error: "El método de pago todavía no está disponible." }, { status: 409 });
+  const row = await db.prepare(`SELECT id, name, checkout_provider, checkout_url, checkout_external_id, price_cents, currency FROM ${table} WHERE id = ? AND status = 'PUBLISHED' AND deleted_at IS NULL LIMIT 1`).bind(parsed.data.itemId).first<{ id: string; name: string; checkout_provider: string; checkout_url: string | null; checkout_external_id: string | null; price_cents: number; currency: string }>();
+  const stripePriceConfigured = row?.checkout_provider === "STRIPE" && /^price_[A-Za-z0-9]+$/.test(row.checkout_external_id || "");
+  if (!row || !["STRIPE", "HOTMART"].includes(row.checkout_provider) || (!row.checkout_url && !stripePriceConfigured)) return Response.json({ error: "El método de pago todavía no está disponible." }, { status: 409 });
   const customer = session ? await getCustomerById(session.customerId) : null;
   if (session && !customer) return Response.json({ error: "Cuenta no encontrada." }, { status: 401 });
   const payer = customer
@@ -40,14 +41,20 @@ export async function POST(request: Request) {
     notes: `Intento de pago iniciado mediante ${row.checkout_provider}. La confirmación y el acceso dependen del webhook firmado del proveedor.`,
     source: row.checkout_provider,
   });
-  const url = await buildCheckoutDestination({
-    provider: row.checkout_provider as "STRIPE" | "HOTMART",
-    checkoutUrl: row.checkout_url,
-    paymentId: payment.id,
-    payerEmail: payer.email,
-    itemName: row.name,
-    amountCents: Number(row.price_cents),
-    currency: row.currency,
-  });
-  return Response.json({ url, paymentId: payment.id }, { headers: { "cache-control": "no-store" } });
+  try {
+    const url = await buildCheckoutDestination({
+      provider: row.checkout_provider as "STRIPE" | "HOTMART",
+      checkoutUrl: row.checkout_url || "",
+      checkoutExternalId: row.checkout_external_id,
+      paymentId: payment.id,
+      payerEmail: payer.email,
+      itemName: row.name,
+      amountCents: Number(row.price_cents),
+      currency: row.currency,
+    });
+    return Response.json({ url, paymentId: payment.id }, { headers: { "cache-control": "no-store" } });
+  } catch (error) {
+    await updatePaymentStatus(payment.id, "REJECTED", "No se pudo iniciar el pago");
+    return Response.json({ error: error instanceof StripeCheckoutError ? error.message : "No pudimos abrir el pago seguro. Inténtalo de nuevo en unos minutos." }, { status: 503, headers: { "cache-control": "no-store" } });
+  }
 }

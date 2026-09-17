@@ -87,7 +87,8 @@ test("el catálogo separa programas, cursos, neuroretos y talleres con pagos pú
   assert.match(repository, /Neuroreto: 21 d.as de merecimiento/);
   assert.match(repository, /Taller Autohipnosis/);
   assert.match(repository, /https:\/\/pay\.hotmart\.com\/V96727899W/);
-  assert.match(repository, /https:\/\/buy\.stripe\.com\/6oU3cvb3E9GYglgcNB97H03/);
+  assert.match(repository, /BioShield by KIRYUS/);
+  assert.match(checkout, /checkout_external_id/);
   assert.doesNotMatch(repository, /app\.hotmart\.com\/products\/manage/);
   assert.match(trainings, /training-category-hub/);
   assert.match(categories, /Programas.*Cursos.*Neuroretos.*Talleres/s);

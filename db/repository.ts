@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { getRuntimeDatabase, isDatabaseUnavailable, type AppDatabase } from "./runtime";
 import { getRuntimeValues } from "../lib/runtime-env";
 import { buildPurchaseEmail, PURCHASE_EMAIL_RETRYABLE_PREFIX, sendPurchaseConfirmation } from "../lib/purchase-email";
+import { DEFAULT_WHATSAPP_GREETING } from "../lib/whatsapp-ai-config";
 
 export type AdminRole = "SUPERADMIN" | "EDITOR" | "COMERCIAL";
 
@@ -243,16 +244,35 @@ export const productSeeds: Product[] = [
     slug: "gorro-gimnasio-del-cerebro",
     description: "Un gorro técnico de edición Founder creado por KIRYUS para acompañar momentos de enfoque, pausa y presencia.",
     image: "/images/bioshield/hero-wellness.png",
-    priceLabel: "Precio mostrado por Stripe",
+    priceLabel: "USD 47",
     discountLabel: "Edición Founder",
     resourceUrl: null,
     dashboardContent: "Información de compra, cuidados, entrega y acceso al kit digital de BioShield by KIRYUS™.",
     checkoutProvider: "STRIPE",
-    checkoutUrl: "https://buy.stripe.com/6oU3cvb3E9GYglgcNB97H03",
-    priceCents: 0,
+    checkoutUrl: null,
+    checkoutExternalId: "price_1UAefNF9mp7cRELfXVXhIiOn",
+    priceCents: 4700,
     currency: "USD",
     status: "PUBLISHED",
     displayOrder: 3,
+  },
+  {
+    id: "product-session-package",
+    name: "Paquete especial de sesiones",
+    slug: "paquete-especial-sesiones",
+    description: "Paquete especial de sesiones del Gimnasio del Cerebro. Consulta con el equipo el alcance y la coordinación de tus sesiones antes de comprar.",
+    image: "/logos/gdc-full-v2.jpg",
+    priceLabel: "EUR 150",
+    discountLabel: null,
+    resourceUrl: null,
+    dashboardContent: "Tu compra del paquete especial de sesiones está registrada. Contacta con el equipo desde la web para coordinar tus sesiones y horarios. La compra del paquete no reserva automáticamente un turno.",
+    checkoutProvider: "STRIPE",
+    checkoutUrl: null,
+    checkoutExternalId: "price_1UG1eZF9mp7cRELftCyFVhPc",
+    priceCents: 15000,
+    currency: "EUR",
+    status: "PUBLISHED",
+    displayOrder: 4,
   },
 ];
 
@@ -997,6 +1017,8 @@ export function ensureDatabase() {
     );
     const cap = productSeeds.find((item) => item.id === "product-gdc-cap");
     const featuredProductCopySyncBatch = cap ? [
+      db.prepare(`UPDATE products SET checkout_provider = 'STRIPE', checkout_url = NULL, checkout_external_id = ?, price_cents = ?, currency = ?, price_label = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND checkout_url = ?`)
+        .bind(cap.checkoutExternalId, cap.priceCents, cap.currency, cap.priceLabel, cap.id, "https://buy.stripe.com/6oU3cvb3E9GYglgcNB97H03"),
       db.prepare(`UPDATE products SET name = ?, description = ?, price_label = ?, discount_label = ?, dashboard_content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND name IN (?, ?)`)
         .bind(cap.name, cap.description, cap.priceLabel, cap.discountLabel, cap.dashboardContent, cap.id, "Gorro Gimnasio del Cerebro", "Gorro Gimnasio del Cerebro by Kirius"),
       db.prepare(`UPDATE products SET status = 'HIDDEN', updated_at = CURRENT_TIMESTAMP WHERE id = 'product-bioshield-kirius' AND checkout_provider = 'MANUAL' AND checkout_url IS NULL`),
@@ -1853,7 +1875,7 @@ export const defaultSettings: Record<string, string> = {
   whatsappAiEnabled: "false",
   whatsappAiModel: "gpt-5.6-luna",
   whatsappAiInstructions: "Responde en español de forma clara, cercana y breve como asistente de Gimnasio del Cerebro. Orienta sobre los entrenamientos sin inventar precios, certificaciones, resultados ni afirmaciones médicas. Si la consulta requiere decisión humana, pide los datos de contacto y avisa que un asesor continuará.",
-  whatsappAiGreeting: "¡Hola! Soy el asistente automático de Gimnasio del Cerebro. ¿Qué producto, programa, curso, neuroreto o taller te interesa? 😊",
+  whatsappAiGreeting: DEFAULT_WHATSAPP_GREETING,
   whatsappAiHandoffMessage: "Gracias por contármelo. Voy a dejar esta conversación en atención humana para que una persona del equipo pueda ayudarte con cuidado.",
   whatsappAiResponseDelayMs: "900",
   whatsappAiBusinessHours: "Atención humana según disponibilidad del equipo. La IA puede orientar en cualquier momento.",
@@ -1885,6 +1907,7 @@ export async function getSettings() {
       ["heroTitle", "Entrena tu cerebro. Transforma tu vida.", defaultSettings.heroTitle],
       ["heroDescription", "Más de una década acompañando a personas en el desarrollo de una vida más consciente.", defaultSettings.heroDescription],
       ["whatsappAiGreeting", "¡Hola! 😊 Soy el asistente de Gimnasio del Cerebro. Cuéntame qué te gustaría mejorar o sobre qué entrenamiento deseas información.", defaultSettings.whatsappAiGreeting],
+      ["whatsappAiGreeting", "¡Hola! Soy el asistente automático de Gimnasio del Cerebro. ¿Qué producto, programa, curso, neuroreto o taller te interesa? 😊", defaultSettings.whatsappAiGreeting],
       ["neurofitnessPopupFrequency", "session", "always"],
       ["neurofitnessPopupFrequency", "day", "always"],
     ].map(([key, oldValue, newValue]) => db.prepare(`UPDATE site_settings SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ? AND value = ?`).bind(newValue, key, oldValue));

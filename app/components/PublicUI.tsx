@@ -4,11 +4,12 @@ import { ArrowRight, CalendarCheck, Check, MessageCircle, Search, Send, Shopping
 import { FormEvent, useMemo, useState } from "react";
 import type { BlogPost, Training } from "../../db/repository";
 import { whatsappUrl } from "../../lib/whatsapp";
+import { hasOnlineCheckout } from "../../lib/checkout-availability";
 import { useWhatsAppNumber } from "./WhatsAppContext";
 
 export function TrainingCard({ training, index }: { training: Training; index: number }) {
   const image = training.heroImage || training.logo;
-  const checkoutAvailable = training.checkoutProvider !== "MANUAL" && Boolean(training.checkoutUrl);
+  const checkoutAvailable = hasOnlineCheckout(training);
   return (
     <article className="training-card" style={{ "--order": index } as React.CSSProperties}>
       <div className="training-card__top"><span>{String(index + 1).padStart(2, "0")}</span><strong>{training.acronym}</strong></div>

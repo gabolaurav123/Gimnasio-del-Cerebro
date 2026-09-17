@@ -115,5 +115,5 @@ export function catalogContext(catalog: WhatsAppCatalog) {
   const campaign = catalog.currentCampaign
     ? `${catalog.currentCampaign.name}\nDescripción: ${catalog.currentCampaign.description}\nPrecio: ${catalog.currentCampaign.price}\nEnlace: ${catalog.currentCampaign.acquisitionUrl}`
     : "No hay campaña destacada configurada.";
-  return `INFORMACIÓN DINÁMICA CONFIRMADA DEL SISTEMA\nSitio: ${catalog.websiteUrl}\nCatálogo completo: ${catalog.catalogUrl}\n\nCAMPAÑA DESTACADA ACTUAL\n${campaign}\n\nCATÁLOGO DE ENTRENAMIENTOS\n${categoryText}\n\nOTROS PRODUCTOS\n${products}`;
+  return `INFORMACIÓN DINÁMICA CONFIRMADA DEL SISTEMA\nSitio: ${catalog.websiteUrl}\nCatálogo completo: ${catalog.catalogUrl}\n\nCONSULTAS Y SESIONES\nPara consultar horarios disponibles y solicitar una cita: ${catalog.websiteUrl}/agenda\nLos horarios, importes y modalidades deben confirmarse en la agenda; no inventes disponibilidad ni confirmes una reserva desde este chat.\n\nCAMPAÑA DESTACADA ACTUAL\n${campaign}\n\nCATÁLOGO DE ENTRENAMIENTOS\n${categoryText}\n\nOTROS PRODUCTOS\n${products}`;
 }

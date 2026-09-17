@@ -2,8 +2,8 @@ import { getSettings, getWhatsAppMessages, type WhatsAppConversation } from "../
 import { catalogContext, getWhatsAppCatalog } from "./catalog-service";
 import { getRuntimeValues } from "./runtime-env";
 import { getOpenAIConfiguration } from "./openai-config";
-import { AI_CONFIG } from "./whatsapp-ai-config";
-import { isRetryableOpenAIStatus, normalizeWhatsAppReply } from "./whatsapp-ai-safety";
+import { AI_CONFIG, getWhatsAppGreeting, isGeneralWhatsAppEnquiry } from "./whatsapp-ai-config";
+import { isRetryableOpenAIStatus, normalizeWhatsAppReply, whatsAppGenerationOptions } from "./whatsapp-ai-safety";
 
 function outputText(payload: Record<string, unknown>) {
   if (typeof payload.output_text === "string") return payload.output_text.trim();
@@ -63,6 +63,8 @@ async function fetchOpenAIWithRetry(apiKey: string, body: string) {
 }
 
 async function requestWhatsAppReply(input: { phoneNumber: string; history: { role: "user" | "assistant"; content: string }[]; settings: Record<string, string>; catalog: Awaited<ReturnType<typeof getWhatsAppCatalog>> }) {
+  const latestMessage = [...input.history].reverse().find((message) => message.role === "user");
+  if (latestMessage && isGeneralWhatsAppEnquiry(latestMessage.content)) return getWhatsAppGreeting(input.settings);
   const [configuration, runtime] = await Promise.all([getOpenAIConfiguration(), getRuntimeValues(["OPENAI_MODEL"])]);
   if (!configuration.apiKey) throw new Error("La API de OpenAI no está configurada.");
   const model = input.settings.whatsappAiModel?.trim() || runtime.OPENAI_MODEL?.trim() || input.settings.openAiDefaultModel?.trim() || "gpt-5.6-luna";
@@ -70,7 +72,7 @@ async function requestWhatsAppReply(input: { phoneNumber: string; history: { rol
   const response = await fetchOpenAIWithRetry(configuration.apiKey, JSON.stringify({
       model,
       store: false,
-      max_output_tokens: 450,
+      ...whatsAppGenerationOptions(model),
       safety_identifier: await safetyIdentifier(input.phoneNumber),
       instructions: buildWhatsAppInstructions(input.settings, input.catalog, isFirstTurn),
       input: input.history,

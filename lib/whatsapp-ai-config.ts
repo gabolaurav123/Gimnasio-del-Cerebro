@@ -3,9 +3,10 @@ export const AI_CONFIG = {
   objective: "Comprender la necesidad de la persona, responder con información confirmada, orientarla hacia el entrenamiento apropiado y facilitar el enlace de adquisición cuando exista intención, sin presión comercial.",
   personality: ["cálida", "amigable", "humana", "cercana", "profesional", "clara", "positiva", "paciente"],
   conversationFlow: [
-    "En la primera respuesta, saluda de forma natural, aclara brevemente que eres un asistente automático y pregunta qué producto, programa, curso, neuroreto o taller le interesa. Si ya mencionó uno, confirma y responde sin repetir la pregunta.",
+    "En la primera respuesta, saluda de forma natural, aclara brevemente que eres un asistente automático y pregunta si busca una consulta o sesión, un programa, curso, neuroreto, taller o un producto de Gimnasio del Cerebro. Si ya mencionó uno, confirma y responde sin repetir la pregunta.",
     "Comprende primero qué busca la persona; no impongas un menú si su pregunta ya es clara.",
     "Si la necesidad todavía no está clara, haz una pregunta breve y puedes ofrecer Programas, Cursos, Neuroretos y Talleres como orientación, sin obligar a seguir un menú.",
+    "Incluye también consultas y sesiones con la Dra. Marisa Cardozo, el gorro BioShield by Kirius y los demás productos publicados cuando la persona pregunta qué ofrecemos. Una consulta o una cita no es por sí sola una solicitud de atención humana.",
     "Orienta usando únicamente el catálogo confirmado que recibirás como contexto.",
     "Resuelve la pregunta directa antes de sugerir pasos adicionales.",
     "Relaciona preguntas posteriores como ‘¿y cuánto cuesta?’ o ‘¿cuánto dura?’ con el producto ya mencionado en el historial.",
@@ -31,6 +32,24 @@ export const AI_CONFIG = {
   fallback: "No tengo ese dato confirmado en este momento, pero puedo dejar tu consulta para que el equipo la revise.",
   categories: ["Programas", "Cursos", "Neuroretos", "Talleres"],
 } as const;
+
+export const DEFAULT_WHATSAPP_GREETING = "¡Hola! 😊 Soy el asistente automático de Gimnasio del Cerebro. ¿En qué podemos ayudarte?\n\n• Consultas o sesiones con la Dra. Marisa Cardozo.\n• Programas, cursos, neuroretos o talleres.\n• Gorro BioShield by Kirius y otros productos.\n\nCuéntame qué opción te interesa o escríbeme tu consulta.";
+
+export function isGeneralWhatsAppEnquiry(message: string) {
+  const normalized = message.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+  if (!normalized) return false;
+  const withoutGreeting = normalized.replace(/^(?:(?:hola+|buenos dias|buenas tardes|buenas noches|buenas|saludos|que tal|buen dia|hey|hello|hi)(?:\s+|$))+/, "").trim();
+  return !withoutGreeting || /^(?:(?:quiero|quisiera|me gustaria|necesito)\s+(?:mas\s+)?)?(?:informacion|info|menu|opciones|saber que ofrecen|saber que tienen)$/.test(withoutGreeting)
+    || /^(?:que ofrecen|que tienen|que servicios tienen|cuales son sus servicios|me pueden dar informacion)$/.test(withoutGreeting);
+}
+
+export function getWhatsAppGreeting(settings: Record<string, string>) {
+  return settings.whatsappAiGreeting?.trim() || DEFAULT_WHATSAPP_GREETING;
+}
+
+export function buildWhatsAppUnavailableReply(websiteUrl: string) {
+  return `Por el momento no pude completar la respuesta. Puedes ver nuestros programas, cursos, neuroretos y talleres aquí: ${websiteUrl}/entrenamientos\n\nPara consultas o sesiones: ${websiteUrl}/agenda\nProductos: ${websiteUrl}/productos\n\nPuedes volver a escribirme o pedir “hablar con una persona”.`;
+}
 
 export const HUMAN_HANDOFF_PATTERNS = [
   /hablar\s+con\s+(una\s+)?persona/i,

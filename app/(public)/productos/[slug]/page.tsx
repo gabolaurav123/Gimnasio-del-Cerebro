@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getProduct, getSettings } from "../../../../db/repository";
 import { KIRIUS_CAP_SLUG } from "../../../../lib/product-routes";
 import { whatsappUrl } from "../../../../lib/whatsapp";
+import { hasOnlineCheckout } from "../../../../lib/checkout-availability";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -17,7 +18,7 @@ export default async function CapProductPage({ params }: { params: Promise<{ slu
   const [product, settings] = await Promise.all([getProduct(slug), getSettings()]);
   if (!product || product.status !== "PUBLISHED") notFound();
 
-  const checkoutAvailable = product.checkoutProvider !== "MANUAL" && Boolean(product.checkoutUrl);
+  const checkoutAvailable = hasOnlineCheckout(product);
   const price = product.priceCents > 0
     ? new Intl.NumberFormat("es-BO", { style: "currency", currency: product.currency }).format(product.priceCents / 100)
     : "Precio mostrado por Stripe";
