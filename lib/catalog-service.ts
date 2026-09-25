@@ -2,6 +2,7 @@ import { getProducts, getSettings, getTrainings, type Product, type Training } f
 import { trainingBelongsTo, trainingCategories, type TrainingCategoryKey } from "./training-categories";
 import { productCatalogActionPath } from "./product-routes";
 import { getSiteOrigin } from "./site-url";
+import { WHATSAPP_KNOWLEDGE, matchWhatsAppKnowledge, normalizeKnowledgeText, publishedKnowledgeItem } from "./whatsapp-knowledge";
 
 export type WhatsAppCatalogItem = {
   id: string;
@@ -82,38 +83,43 @@ export async function getWhatsAppCatalog(): Promise<WhatsAppCatalog> {
   };
 }
 
-function searchable(value: string) {
-  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-}
-
 export function detectCatalogInterest(message: string, catalog: WhatsAppCatalog) {
-  const normalized = searchable(message);
-  const direct = catalog.allItems.find((item) => {
-    const name = searchable(item.name).replace(/[^a-z0-9]+/g, " ").trim();
-    const slug = searchable(item.slug).replace(/-/g, " ");
-    return (name.length >= 5 && normalized.includes(name)) || (slug.length >= 5 && normalized.includes(slug));
-  });
-  if (direct) return direct.name;
-  if (/super\s*cerebro/.test(normalized)) return catalog.currentCampaign?.name || "Super Cerebro";
-  return null;
+  const normalized = ` ${normalizeKnowledgeText(message)} `;
+  const direct = catalog.allItems.filter((item) => {
+    const entry = matchWhatsAppKnowledge(item.name);
+    return !entry?.excluded?.some((term) => normalized.includes(` ${normalizeKnowledgeText(term)} `));
+  }).flatMap((item) => [item.name, item.slug]
+    .map(normalizeKnowledgeText)
+    .filter((term) => term.length >= 5 && normalized.includes(` ${term} `))
+    .map((term) => ({ name: item.name, length: term.length })))
+    .sort((a, b) => b.length - a.length)[0];
+  const editorial = matchWhatsAppKnowledge(message);
+  // Express editions must beat a shorter base name even when the base occurs
+  // first in the database; the campaign is never a fallback for another title.
+  if (editorial && (!direct || normalizeKnowledgeText(editorial.name).length >= direct.length)) return editorial.name;
+  return direct?.name || null;
 }
 
 export function catalogContext(catalog: WhatsAppCatalog) {
+  const editorialFor = (item: WhatsAppCatalogItem) => WHATSAPP_KNOWLEDGE.find((entry) => publishedKnowledgeItem(entry, catalog) === item);
   const categoryText = trainingCategories.map((category) => {
     const items = catalog.categories[category.key];
-    const rows = items.length ? items.map((item) => [
-      `- ${item.name}`,
-      `  Descripción confirmada: ${item.description}`,
-      item.details ? `  Detalle confirmado: ${item.details}` : "",
-      `  Precio confirmado: ${item.price}`,
-      `  Método configurado: ${item.checkoutProvider}`,
-      `  Enlace de información y adquisición: ${item.acquisitionUrl}`,
-    ].filter(Boolean).join("\n")).join("\n") : "- No hay elementos publicados en esta categoría.";
+    const rows = items.length ? items.map((item) => {
+      const editorial = editorialFor(item);
+      return [
+        `- ${item.name}`,
+        `  Descripción confirmada: ${editorial?.summary || item.description}`,
+        editorial ? `  Detalle editorial GDC: ${editorial.proposal}` : item.details ? `  Detalle confirmado: ${item.details}` : "",
+        `  Precio confirmado: ${item.price}`,
+        `  Método configurado: ${item.checkoutProvider}`,
+        `  Enlace de información y adquisición: ${item.acquisitionUrl}`,
+      ].filter(Boolean).join("\n");
+    }).join("\n") : "- No hay elementos publicados en esta categoría.";
     return `${category.label.toUpperCase()}\n${rows}`;
   }).join("\n\n");
-  const products = catalog.products.length ? catalog.products.map((item) => `- ${item.name}\n  Descripción confirmada: ${item.description}\n  Precio confirmado: ${item.price}\n  Enlace: ${item.acquisitionUrl}`).join("\n") : "- No hay productos publicados.";
+  const products = catalog.products.length ? catalog.products.map((item) => `- ${item.name}\n  Descripción confirmada: ${editorialFor(item)?.summary || item.description}\n  Precio confirmado: ${item.price}\n  Enlace: ${item.acquisitionUrl}`).join("\n") : "- No hay productos publicados.";
   const campaign = catalog.currentCampaign
-    ? `${catalog.currentCampaign.name}\nDescripción: ${catalog.currentCampaign.description}\nPrecio: ${catalog.currentCampaign.price}\nEnlace: ${catalog.currentCampaign.acquisitionUrl}`
+    ? `${catalog.currentCampaign.name}\nDescripción: ${editorialFor(catalog.currentCampaign)?.summary || catalog.currentCampaign.description}\nPrecio: ${catalog.currentCampaign.price}\nEnlace: ${catalog.currentCampaign.acquisitionUrl}`
     : "No hay campaña destacada configurada.";
   return `INFORMACIÓN DINÁMICA CONFIRMADA DEL SISTEMA\nSitio: ${catalog.websiteUrl}\nCatálogo completo: ${catalog.catalogUrl}\n\nCONSULTAS Y SESIONES\nPara consultar horarios disponibles y solicitar una cita: ${catalog.websiteUrl}/agenda\nLos horarios, importes y modalidades deben confirmarse en la agenda; no inventes disponibilidad ni confirmes una reserva desde este chat.\n\nCAMPAÑA DESTACADA ACTUAL\n${campaign}\n\nCATÁLOGO DE ENTRENAMIENTOS\n${categoryText}\n\nOTROS PRODUCTOS\n${products}`;
 }

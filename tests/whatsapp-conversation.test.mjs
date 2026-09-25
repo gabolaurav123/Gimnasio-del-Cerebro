@@ -78,6 +78,16 @@ test("una pregunta concreta conserva su contexto y se envía a la IA", async () 
   assert.equal(state.sent[0], "Puedes consultar los horarios en la agenda.");
 });
 
+test("las preguntas de catálogo no quedan atrapadas en el saludo configurado", async () => {
+  for (const message of ["¿Qué ofrecen?", "Quiero información", "Menú", "¿Qué programas tienen?"]) {
+    const { state, receive } = harness({ greeting: "Saludo personalizado" });
+    await receive(message);
+    assert.equal(state.aiCalls, 1, message);
+    assert.equal(state.catalogCalls, 1, message);
+    assert.notEqual(state.sent[0], "Saludo personalizado", message);
+  }
+});
+
 test("un fallo temporal ofrece enlaces y permite responder al siguiente mensaje", async () => {
   const { state, receive } = harness({ failAI: true });
   const result = await receive("¿Cuánto dura Neurofitness Active?");
@@ -98,6 +108,18 @@ test("una conversación atendida por una persona no se reactiva por un saludo", 
   assert.equal(result.replied, false);
   assert.equal(state.sent.length, 0);
   assert.equal(state.modeChanges.length, 0);
+});
+
+test("el menú y las selecciones tampoco se envían en conversaciones pausadas", async () => {
+  for (const options of [{ mode: "HUMAN" }, { enabled: false }, { duplicate: true }]) {
+    for (const message of ["¿Qué ofrecen?", "Me interesa Neurofitness Active"]) {
+      const { state, receive } = harness(options);
+      await receive(message);
+      assert.equal(state.sent.length, 0);
+      assert.equal(state.aiCalls, 0);
+      assert.equal(state.modeChanges.length, 0);
+    }
+  }
 });
 
 test("se respetan la desactivación global y los eventos duplicados", async () => {
@@ -126,6 +148,21 @@ test("la bienvenida distingue saludos y preguntas generales de consultas especí
   }
   for (const message of ["Hola, quiero información del gorro", "¿Qué cursos tienen?", "Necesito una consulta", "No quiero recibir mensajes", "Quiero hablar con una persona", "hola 123", ""]) {
     assert.equal(policy.isGeneralWhatsAppEnquiry(message), false, message);
+  }
+});
+
+test("solo el saludo puro usa la bienvenida; las opciones tienen otra respuesta", () => {
+  for (const message of ["Hola", "hola buenos días", "¡Buenas tardes! 😊"]) {
+    assert.equal(policy.isWhatsAppGreeting(message), true, message);
+    assert.equal(policy.isWhatsAppCatalogEnquiry(message), false, message);
+  }
+  for (const message of ["Quiero información", "Hola, ¿qué ofrecen?", "¿Cuáles son sus servicios?", "Programas", "catálogo por favor"]) {
+    assert.equal(policy.isWhatsAppGreeting(message), false, message);
+    assert.equal(policy.isWhatsAppCatalogEnquiry(message), true, message);
+  }
+  for (const message of ["Necesito una consulta", "¿Qué cursos tienen?", "Quiero Neurofitness Active", "¿Cuánto cuesta?", "2"]) {
+    assert.equal(policy.isWhatsAppGreeting(message), false, message);
+    assert.equal(policy.isWhatsAppCatalogEnquiry(message), false, message);
   }
 });
 

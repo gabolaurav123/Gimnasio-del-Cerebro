@@ -10,7 +10,7 @@ import {
 import { detectCatalogInterest, getWhatsAppCatalog } from "./catalog-service";
 import { sendWhatsAppMessage } from "./whatsapp-bridge";
 import { generateWhatsAppReply } from "./whatsapp-ai-service";
-import { buildWhatsAppUnavailableReply, CRISIS_RESPONSE, getWhatsAppGreeting, isCrisisMessage, isGeneralWhatsAppEnquiry, isOptOutRequest, needsHumanHandoff } from "./whatsapp-ai-config";
+import { buildWhatsAppUnavailableReply, CRISIS_RESPONSE, getWhatsAppGreeting, isCrisisMessage, isWhatsAppGreeting, isOptOutRequest, needsHumanHandoff } from "./whatsapp-ai-config";
 import { getSiteOrigin } from "./site-url";
 
 export type IncomingWhatsAppMessage = {
@@ -54,7 +54,7 @@ export async function processIncomingWhatsApp(input: IncomingWhatsAppMessage) {
       return { accepted: true, mode: "HUMAN", replied: true };
     }
     if (settings.whatsappAiEnabled !== "true") return { accepted: true, mode: "AI", replied: false };
-    if (isGeneralWhatsAppEnquiry(input.content)) {
+    if (isWhatsAppGreeting(input.content)) {
       const reply = getWhatsAppGreeting(settings);
       const sent = await sendWhatsAppMessage(conversation.jid, reply);
       await recordWhatsAppOutgoing({ conversationId: conversation.id, providerMessageId: sent.id, content: reply, senderType: "AI", sentAt: sent.sentAt });
